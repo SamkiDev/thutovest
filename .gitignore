@@ -1,0 +1,23 @@
+# Dependencies and builds
+node_modules
+dist
+*.tsbuildinfo
+
+# Secrets: never commit real keys. Copy .env.example to .env.local instead.
+.env
+.env.*
+!.env.example
+*.local
+*.pem
+*.key
+
+# Supabase CLI local state (project link, branches)
+supabase/.temp
+supabase/.branches
+
+# Editors and OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.log

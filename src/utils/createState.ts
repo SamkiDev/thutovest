@@ -1,0 +1,176 @@
+import type { StudentProfile, StudentState, TaskEvent, TaskStatus } from '../types';
+import { FUNDING_OPPORTUNITIES } from '../data/fundingOpportunities';
+import { TASKS } from '../data/journey';
+import { estimateCosts } from './funding';
+import { addDays, todayISO } from './dates';
+import { matchAll } from './matching';
+import { emptyVerification } from './trust';
+import { DEMO_ACCOUNTS } from '../data/platformSeed';
+
+export const BUDGET_SOURCE_ID = 'src-own';
+
+export function makeId(prefix = 'id'): string {
+  return `${prefix}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+/** Turns onboarding answers into starting task statuses. */
+export function seedTaskStatus(profile: StudentProfile): Record<string, TaskStatus> {
+  const status: Record<string, TaskStatus> = {};
+  for (const t of TASKS) {
+    if (t.document && profile.documentsReady.includes(t.document)) status[t.id] = 'completed';
+  }
+  switch (profile.applicationProgress) {
+    case 'researching':
+      status['t-shortlist'] = 'in-progress';
+      break;
+    case 'started':
+      status['t-shortlist'] = 'completed';
+      status['t-app-first'] = 'in-progress';
+      break;
+    case 'submitted':
+      status['t-shortlist'] = 'completed';
+      status['t-aps'] = 'completed';
+      status['t-app-first'] = 'completed';
+      break;
+    case 'accepted':
+      for (const id of ['t-shortlist', 't-aps', 't-app-first', 't-app-backup', 't-track', 't-accept']) status[id] = 'completed';
+      break;
+    default:
+      break;
+  }
+  return status;
+}
+
+export function createStateFromProfile(profile: StudentProfile, isDemoStudent = false, id = makeId('stu')): StudentState {
+  const now = new Date().toISOString();
+  const topMatches = matchAll(profile).filter((m) => m.option.field === profile.field).slice(0, 2);
+  const taskStatus = seedTaskStatus(profile);
+  return {
+    version: 1,
+    id,
+    onboarded: true,
+    isDemoStudent,
+    demoStart: todayISO(),
+    profile,
+    costs: estimateCosts(profile),
+    costsCustomised: false,
+    fundingSources:
+      profile.annualBudget > 0
+        ? [{ id: BUDGET_SOURCE_ID, label: 'Family / own contribution', kind: 'family', amount: profile.annualBudget }]
+        : [],
+    opportunityStatus: Object.fromEntries(FUNDING_OPPORTUNITIES.map((o) => [o.id, 'not-started'])),
+    awardedAmounts: {},
+    taskStatus,
+    savedOptionIds: profile.applicationProgress === 'not-started' ? [] : topMatches.map((m) => m.option.id),
+    compareIds: [],
+    activity: [{ id: makeId('act'), at: now, text: 'Built your personal pathway from your answers', kind: 'system' }],
+    taskHistory: Object.entries(taskStatus).map(([taskId, status]) => ({ taskId, status, at: now })),
+    verification: emptyVerification(),
+    discoverable: false,
+    agentDecisions: {},
+    documents: [],
+  };
+}
+
+/** Thando — the coherent fictional student used throughout the demo. */
+export const DEMO_PROFILE: StudentProfile = {
+  firstName: 'Thando',
+  province: 'Gauteng',
+  educationStage: 'grade12',
+  field: 'computing',
+  studyMode: 'contact',
+  preferredInstitutionIds: ['uj', 'wits', 'up'],
+  apsEstimate: 32,
+  annualBudget: 18000,
+  fundingNeed: 'yes',
+  householdIncome: 'under-350k',
+  livingArrangement: 'residence',
+  applicationProgress: 'started',
+  documentsReady: ['id-copy'],
+  isAdult: false,
+};
+
+/** A timestamp n days ago at a given local hour — Thando mostly works on weekday evenings. */
+function daysAgoAt(days: number, hour: number, minute = 10): string {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  d.setHours(hour, minute, 0, 0);
+  return d.toISOString();
+}
+
+export function createDemoState(): StudentState {
+  const base = createStateFromProfile(DEMO_PROFILE, true, DEMO_ACCOUNTS.student.userId);
+  const start = base.demoStart;
+  const history: TaskEvent[] = [
+    { taskId: 't-shortlist', status: 'in-progress', at: daysAgoAt(19, 19, 40) },
+    { taskId: 't-aps', status: 'completed', at: daysAgoAt(16, 20, 5) },
+    { taskId: 't-fund-review', status: 'in-progress', at: daysAgoAt(12, 19, 20) },
+    { taskId: 't-doc-id', status: 'completed', at: daysAgoAt(2, 18, 45), dueDate: addDays(start, 6) },
+    { taskId: 't-fund-review', status: 'completed', at: daysAgoAt(1, 20, 30) },
+    { taskId: 't-app-first', status: 'in-progress', at: daysAgoAt(0, Math.min(new Date().getHours(), 19), 0) },
+  ];
+  return {
+    ...base,
+    costs: { tuition: 58200, accommodation: 42000, books: 6500, transport: 4800, other: 5400 },
+    fundingSources: [
+      { id: BUDGET_SOURCE_ID, label: 'Family contribution', kind: 'family', amount: 18000 },
+      { id: 'src-holiday', label: 'Holiday job savings', kind: 'savings', amount: 6500 },
+    ],
+    taskStatus: {
+      ...base.taskStatus,
+      't-shortlist': 'in-progress',
+      't-aps': 'completed',
+      't-fund-review': 'completed',
+    },
+    savedOptionIds: ['uj-bsc-it', 'up-bsc-cs'],
+    taskHistory: history,
+    verification: {
+      identity: { status: 'verified', updatedAt: daysAgoAt(9, 19), note: 'Document, face match and liveness passed' },
+      guardian: { status: 'verified', updatedAt: daysAgoAt(9, 20), note: 'Consent recorded' },
+      enrolment: { status: 'not-started', note: 'Available once you receive an offer' },
+      results: { status: 'not-started' },
+      income: { status: 'not-started' },
+      guardianName: 'Nomsa',
+      guardianRelationship: 'Mother',
+    },
+    discoverable: true,
+    documents: [
+      {
+        id: 'doc-thando-id',
+        kind: 'id-copy',
+        fileName: 'certified_ID_copy_Thando.pdf',
+        mimeType: 'application/pdf',
+        size: 214_000,
+        uploadedAt: daysAgoAt(2, 18, 44),
+        isSample: true,
+        issuer: 'not-started',
+        check: {
+          status: 'passed',
+          detectedKind: 'id-copy',
+          checkedAt: daysAgoAt(2, 18, 44),
+          extracted: [
+            { label: 'Name', value: 'Thando (surname hidden)' },
+            { label: 'ID number', value: 'Hidden. Never shown to sponsors' },
+          ],
+          findings: [
+            { label: 'File type', ok: true, detail: 'PDF or photo' },
+            { label: 'Readability', ok: true, detail: 'Text is readable' },
+            { label: 'Document type', ok: true, detail: 'Recognised as certified copy of ID' },
+            { label: 'Name matches your profile', ok: true },
+            { label: 'Certified within 3 months', ok: true },
+            { label: 'Signs of editing', ok: true, detail: 'None found' },
+          ],
+        },
+      },
+    ],
+    activity: [
+      { id: 'a1', at: daysAgoAt(0, 19, 5), text: 'Saved BSc Computer Science at UP to your shortlist', kind: 'explore' },
+      { id: 'a2', at: daysAgoAt(0, 19, 0), text: 'Started your first-choice application', kind: 'task' },
+      { id: 'a6', at: daysAgoAt(3, 9, 0), text: 'Blocked a fee request from QuickBursary SA and suspended the sender', kind: 'alert' },
+      { id: 'a3', at: daysAgoAt(1, 20, 30), text: 'Reviewed your estimated funding gap', kind: 'funding' },
+      { id: 'a4', at: daysAgoAt(2, 18, 45), text: 'Marked “Upload a certified copy of your ID” as done', kind: 'task' },
+      { id: 'a7', at: daysAgoAt(9, 19, 30), text: 'Identity verified and guardian consent recorded', kind: 'profile' },
+      { id: 'a5', at: daysAgoAt(19, 19, 40), text: 'Built your personal pathway from your answers', kind: 'system' },
+    ],
+  };
+}
