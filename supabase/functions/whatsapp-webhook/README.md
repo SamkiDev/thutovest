@@ -66,6 +66,28 @@ Then try `2` (deadlines), `3` (offers), `6` (when you need data), a photo
 | Leaking data | The bot only knows a minimal snapshot (no surname, ID, documents or message contents); message text and numbers are never logged |
 | Scams on WhatsApp | The bot never asks for money or documents and says so; `SCAM …` reports go to the safety team |
 
+## Twilio Sandbox (what runs for the hackathon)
+
+Meta's free test number failed to generate, so the demo bot runs through
+Twilio's WhatsApp Sandbox with the same bot logic: `supabase/functions/whatsapp-twilio`.
+
+1. Twilio Console (classic): https://console.twilio.com/us1/develop/sms/try-it-out/whatsapp-learn
+2. **Sandbox settings → When a message comes in:**
+   `https://<project-ref>.supabase.co/functions/v1/whatsapp-twilio`, method POST, Save.
+3. From a phone, send the sandbox join code (for example `join salmon-castle`) to the sandbox number.
+4. Secrets: `npx.cmd supabase@latest secrets set TWILIO_AUTH_TOKEN=<auth token> DEMO_OPEN=true APP_URL=https://thutovest.vercel.app`
+5. Deploy: `npx.cmd supabase@latest functions deploy whatsapp-twilio --no-verify-jwt --use-api`
+
+Security: every request must carry a valid `X-Twilio-Signature` (HMAC-SHA1 of
+the URL and form, keyed with the Auth Token, compared in constant time), so
+forged or tampered messages get 403. Replies go back as TwiML in the same
+response, so no sending credentials are stored. Logs record only the outcome
+(replied, not allowed, bad signature), never numbers or text.
+
+Limits: the trial includes about 100 free WhatsApp messages, the sandbox may
+deliver international messages unreliably, and people must re-send the join
+code after about 3 days without messaging.
+
 ## Going live (after Supabase Auth)
 
 1. `supabase db push` creates `whatsapp_links`, `whatsapp_link_codes`, `bot_snapshots` and `scam_reports`, all with RLS.

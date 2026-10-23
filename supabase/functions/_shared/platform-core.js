@@ -222,6 +222,7 @@ function sanitizeFund(f, sponsorId, existing) {
 		provinces: listOrAll(f.provinces),
 		incomeBands: listOrAll(f.incomeBands),
 		minTrust: isTrust(f.minTrust) ? f.minTrust : 2,
+		...f.disabilityOnly === true ? { disabilityOnly: true } : {},
 		closesOn,
 		status: existing?.status ?? "open",
 		createdAt: existing?.createdAt ?? (/* @__PURE__ */ new Date()).toISOString()
@@ -358,9 +359,7 @@ var BRAND = {
 // src/data/platformSeed.ts
 /**
 * DEMONSTRATION MARKETPLACE. Every sponsor, fund and student below is
-* fictional, except FNB and the FNB App of the Year Hackathon, which appear by
-* name as illustrations. Their funds are not real FNB offers and the UI says
-* so. Other registration numbers follow real formats but are invented.
+* fictional. Registration numbers follow real formats but are invented.
 */
 var hoursAgo = (h) => (/* @__PURE__ */ new Date(Date.now() - h * 36e5)).toISOString();
 var verified = {
@@ -369,8 +368,7 @@ var verified = {
 };
 var DEMO_SPONSOR_ID = "sp-ridgeline";
 var SCAM_SPONSOR_ID = "sp-quickbursary";
-var FNB_SPONSOR_ID = "sp-fnb";
-var FNB_HACKATHON_ID = "sp-fnb-hackathon";
+var RESHOKETSWE_ID = "sp-reshoketswe";
 `${BRAND.demoDomain}`;
 function sponsors() {
 	return [
@@ -391,12 +389,12 @@ function sponsors() {
 			createdAt: hoursAgo(2880)
 		},
 		{
-			id: FNB_SPONSOR_ID,
-			name: "FNB",
-			type: "company",
-			registrationNumber: "1929/001225/06",
-			contactName: "FNB bursary team",
-			about: "First National Bank, shown as an illustrative sponsor for the FNB App of the Year Hackathon 2026. This listing shows how a bank could fund students through ThutoVest. It is not an actual FNB bursary.",
+			id: RESHOKETSWE_ID,
+			name: "Reshoketswe Foundation",
+			type: "trust",
+			registrationNumber: "IT0417/2019",
+			contactName: "Reshoketswe",
+			about: "A fictional trust funding students with disabilities, including assistive devices and campus support.",
 			verification: {
 				organisation: verified,
 				representative: verified,
@@ -405,22 +403,6 @@ function sponsors() {
 			status: "active",
 			isDemo: true,
 			createdAt: hoursAgo(1440)
-		},
-		{
-			id: FNB_HACKATHON_ID,
-			name: "FNB App of the Year Hackathon",
-			type: "company",
-			registrationNumber: "1929/001225/06",
-			contactName: "Hackathon organisers",
-			about: "The FNB App of the Year Hackathon 2026, where ThutoVest was built, shown as an illustrative sponsor. This listing shows how a hackathon prize could become student funding. It is not an actual FNB award or bursary.",
-			verification: {
-				organisation: verified,
-				representative: verified,
-				bank: verified
-			},
-			status: "active",
-			isDemo: true,
-			createdAt: hoursAgo(72)
 		},
 		{
 			id: "sp-community",
@@ -502,36 +484,21 @@ function funds(start) {
 			createdAt: hoursAgo(216)
 		},
 		{
-			id: "fund-fnb-fintech",
-			sponsorId: FNB_SPONSOR_ID,
-			name: "Future in Fintech Bursary (demo)",
-			description: "Illustrative demo, not an actual FNB offer. Tuition and books for computing and commerce.",
-			budget: 12e5,
-			maxPerStudent: 8e4,
-			places: 15,
-			fields: ["computing", "commerce"],
+			id: "fund-reshoketswe",
+			sponsorId: RESHOKETSWE_ID,
+			name: "Reshoketswe Bursary for Students with Disabilities",
+			description: "Tuition, assistive devices and support for students with disabilities. Any field.",
+			budget: 4e5,
+			maxPerStudent: 5e4,
+			places: 10,
+			fields: "all",
 			provinces: "all",
 			incomeBands: ["under-350k", "350k-600k"],
 			minTrust: 2,
-			closesOn: addDays(start, 40),
+			disabilityOnly: true,
+			closesOn: addDays(start, 38),
 			status: "open",
 			createdAt: hoursAgo(336)
-		},
-		{
-			id: "fund-fnb-hackathon",
-			sponsorId: FNB_HACKATHON_ID,
-			name: "Young Builders Award (demo)",
-			description: "Illustrative demo, not an actual FNB award. For computing and engineering students who build apps.",
-			budget: 3e5,
-			maxPerStudent: 25e3,
-			places: 12,
-			fields: ["computing", "engineering"],
-			provinces: "all",
-			incomeBands: "all",
-			minTrust: 2,
-			closesOn: addDays(start, 35),
-			status: "open",
-			createdAt: hoursAgo(72)
 		},
 		{
 			id: "fund-community-first",

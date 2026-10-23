@@ -420,6 +420,10 @@ enabled = true
 [functions.platform]
 verify_jwt = false
 
+# Twilio can't send a Supabase JWT either. The function checks Twilio's signature on every POST.
+[functions.whatsapp-twilio]
+verify_jwt = false
+
 # Meta can't send a Supabase JWT. The function checks Meta's HMAC signature on every POST instead.
 [functions.whatsapp-webhook]
 verify_jwt = false

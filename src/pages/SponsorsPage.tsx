@@ -78,7 +78,7 @@ export default function SponsorsPage() {
       <PageHeader
         title="Sponsors"
         description="Verified sponsors. Money goes to your institution, never to you."
-        kicker={<DemoTag>Demo records. FNB listings are illustrative</DemoTag>}
+        kicker={<DemoTag>Demo records</DemoTag>}
       />
 
       {blockers.length > 0 && (

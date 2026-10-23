@@ -64,6 +64,10 @@ export function fundFit(fund: Fund, c: CandidateProfile, platform: PlatformState
   const sponsor = platform.sponsors.find((s) => s.id === fund.sponsorId);
   if (!sponsor || sponsor.status !== 'active') blockers.push('Sponsor not active');
   if (fund.status !== 'open' || daysUntil(fund.closesOn) < 0) blockers.push('Fund closed');
+  if (fund.disabilityOnly) {
+    if (c.hasDisability) reasons.push('Supports students with a disability');
+    else blockers.push('Only for students with a disability');
+  }
 
   if (fund.fields === 'all') reasons.push('Open to all fields');
   else if (fund.fields.includes(c.field)) reasons.push(`Funds ${fieldName(c.field)}`);

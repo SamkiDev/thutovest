@@ -408,6 +408,8 @@ export interface Fund {
   provinces: Province[] | 'all';
   incomeBands: IncomeBand[] | 'all';
   minTrust: TrustLevel;
+  /** Only students who have told us they have a disability can match. */
+  disabilityOnly?: boolean;
   closesOn: string;
   status: 'open' | 'closed';
   createdAt: string;
@@ -422,6 +424,7 @@ export interface CandidateProfile {
   educationStage: EducationStage;
   institutionId: string | null;
   householdIncome: IncomeBand;
+  hasDisability?: boolean;
   apsEstimate: number | null;
   isAdult: boolean;
   trust: TrustLevel;

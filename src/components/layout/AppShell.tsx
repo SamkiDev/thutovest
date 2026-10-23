@@ -208,7 +208,7 @@ export function AppShell() {
       {menuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" id="mobile-menu" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 bg-ink/40" onClick={() => setMenuOpen(false)} aria-hidden />
-          <div className="rise absolute inset-y-0 right-0 flex w-[min(20rem,88vw)] flex-col bg-ink p-4 text-white">
+          <div className="rise absolute inset-y-0 right-0 flex w-[min(20rem,88vw)] flex-col overflow-y-auto overscroll-contain bg-ink p-4 text-white">
             <div className="mb-6 flex items-center justify-between">
               <Logo dark />
               <button type="button" onClick={() => setMenuOpen(false)} className="grid size-11 place-items-center rounded-full hover:bg-white/10" aria-label="Close menu" autoFocus>

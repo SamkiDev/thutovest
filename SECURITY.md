@@ -49,6 +49,7 @@ Live on 23 October 2026. Checked against the live project: signed-out callers ge
 - **Data access:** the bot only reads a minimal snapshot, with no surname, ID, documents or message contents. Tables have RLS, and a column grant lets students change only `opted_out` and `alert_prefs` (`supabase/migrations/20261023120000_whatsapp.sql`).
 - **Logging:** message text and phone numbers are never logged. Secrets live only in Supabase function secrets.
 - **Tests:** 37 bot and signature tests and 10 webhook tests passed. The webhook tests run the real function against a mocked Graph API.
+- **Twilio channel (live for the hackathon):** `whatsapp-twilio` verifies `X-Twilio-Signature` on every request in constant time (forged, re-signed or tampered messages get 403), answers each MessageSid once, and replies with escaped TwiML. 16 tests against signed form posts passed. `DEMO_OPEN=true` lets anyone who joins the sandbox chat with the fictional demo student only; no real student data is reachable through it.
 
 ## Required when the Supabase backend lands
 

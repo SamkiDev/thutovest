@@ -177,6 +177,7 @@ function sanitizeFund(f: Fund, sponsorId: string, existing?: Fund): Fund | null 
     provinces: listOrAll<Province>(f.provinces),
     incomeBands: listOrAll<IncomeBand>(f.incomeBands),
     minTrust: isTrust(f.minTrust) ? f.minTrust : 2,
+    ...(f.disabilityOnly === true ? { disabilityOnly: true } : {}),
     closesOn,
     status: existing?.status ?? 'open',
     createdAt: existing?.createdAt ?? new Date().toISOString(),

@@ -5,8 +5,8 @@
  *   POST → incoming messages: verify signature, answer with the shared bot
  *
  * Modes (env BOT_MODE):
- *   demo (default): numbers in DEMO_ALLOWED_NUMBERS act as the demo student.
- *                   For the hackathon with Meta's free test number.
+ *   demo (default): numbers in DEMO_ALLOWED_NUMBERS act as the demo student
+ *                   (or every number when DEMO_OPEN=true, for judges).
  *   live:           real students, read from the tables in
  *                   supabase/migrations/*_whatsapp.sql with the service role.
  *
@@ -24,7 +24,9 @@ const MODE = env('BOT_MODE') === 'live' ? 'live' : 'demo';
 const APP_URL = env('APP_URL') || 'https://thutovest.vercel.app';
 const send = { token: env('WHATSAPP_TOKEN'), phoneNumberId: env('WHATSAPP_PHONE_NUMBER_ID'), apiVersion: env('GRAPH_API_VERSION') || 'v23.0' };
 
-const allowed = (n: string) => env('DEMO_ALLOWED_NUMBERS').split(',').map((s) => s.replace(/\D/g, '')).filter(Boolean).includes(n);
+// DEMO_OPEN=true lets anyone (e.g. judges) chat with the fictional demo student. Rate limits and safety refusals still apply.
+const DEMO_OPEN = env('DEMO_OPEN') === 'true';
+const allowed = (n: string) => DEMO_OPEN || env('DEMO_ALLOWED_NUMBERS').split(',').map((s) => s.replace(/\D/g, '')).filter(Boolean).includes(n);
 const limit = createRateLimiter(15, 10 * 60_000); // 15 messages per 10 minutes per number
 const seen = new Set<string>(); // Meta retries webhooks; answer each message once
 const demoOptedOut = new Set<string>();
