@@ -327,7 +327,7 @@ function NoProfile() {
         <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
           <ButtonLink to="/start">Build my student pathway</ButtonLink>
           <Button variant="secondary" onClick={() => dispatch({ type: 'loadDemo' })}>
-            Explore as Tatenda (demo)
+            Explore as Tatenda
           </Button>
         </div>
       </div>

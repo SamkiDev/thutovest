@@ -80,7 +80,7 @@ export default function ExplorePage() {
     <div>
       <PageHeader
         title="Study Pathway Explorer"
-        description="Search qualifications and see exactly why each one fits your goals, marks and budget."
+        description="Qualifications ranked by fit with your marks and budget."
         kicker={<DemoTag>Fees and entry guides are demonstration figures</DemoTag>}
       />
 

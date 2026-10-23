@@ -52,7 +52,7 @@ export default function SponsorOverviewPage() {
     <div>
       <PageHeader
         title={`Good to see you, ${sponsor.contactName}`}
-        description="Your funds, the students waiting on you, and what the assistant has noticed."
+        description="Your funds, waiting students and what the assistant noticed."
         kicker={<DemoTag>Demo sponsor and students</DemoTag>}
         actions={<ButtonLink to="/sponsor/candidates">Review candidates</ButtonLink>}
       />

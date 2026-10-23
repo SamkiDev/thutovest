@@ -103,6 +103,10 @@ ThutoVest helps South African matriculants get from "I want to study" to "I can 
   - rows of icon boxes, coloured-border cards, or emojis in UI or bot text
   - **em dashes in copy**, or buzzwords
 - **Text style:** sentence-case buttons ("Build my plan"). Copy must be specific and honest; demo data is always labelled.
+- **Copy limits (copy diet, 23 Oct):** users are teenagers skimming on phones.
+  - Page header descriptions: 12 words or fewer. Card body text: 15 words or fewer, leading with the number or status ("R92,400 still unfunded", "6 days left"). Buttons: 1 to 3 words.
+  - Explanations (Risk Radar reasons, forecasts, assistant evidence, sponsor ranking, study-option fit, funding eligibility) go behind a closed "Why?" toggle: `src/components/ui/Why.tsx`. Never delete them; they carry the Intelligence score.
+  - Background for judges (honesty note, business model, trust principles) lives on `/about`, linked from the footer.
 - **Spacing:** Tailwind scale 0.5, 1, 1.5, 2, 3, 4, 5, 6, 8, 10, 12, 16, 20, 24. Half steps only for text and icon nudges.
 - **Contrast:** at least 4.5:1 for text (`subtle` #5f6a85 and `ink-400` #5a6994 were adjusted for this).
 - **Layout:** mobile first; check at 390 px wide with no horizontal scroll.

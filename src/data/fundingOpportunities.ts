@@ -16,7 +16,7 @@ export const FUNDING_OPPORTUNITIES: FundingOpportunity[] = [
     name: 'NSFAS Bursary',
     provider: 'National Student Financial Aid Scheme',
     type: 'Government bursary',
-    summary: 'Government bursary for eligible students at public universities and TVET colleges. Can cover tuition and approved allowances.',
+    summary: 'Government bursary for public universities and TVET colleges.',
     eligibilitySummary:
       'Published criteria have included South African citizenship and a combined household income of up to R350,000 a year (R600,000 for students with disabilities). Confirm the current rules and closing date on the NSFAS website.',
     officialUrl: 'https://www.nsfas.org.za',
@@ -32,7 +32,7 @@ export const FUNDING_OPPORTUNITIES: FundingOpportunity[] = [
     name: 'ISFAP Funding',
     provider: 'Ikusasa Student Financial Aid Programme',
     type: 'Bursary',
-    summary: 'Funding plus mentorship and support for students heading into high-demand careers at partner public universities.',
+    summary: 'Funding and mentoring for high-demand careers.',
     eligibilitySummary:
       'Has focused on "missing middle" households that earn above NSFAS thresholds, in selected scarce-skills fields. Fields, partner institutions and income limits change, so check the ISFAP website.',
     officialUrl: 'https://www.isfap.org.za',
@@ -48,7 +48,7 @@ export const FUNDING_OPPORTUNITIES: FundingOpportunity[] = [
     name: 'Funza Lushaka Bursary',
     provider: 'Department of Basic Education',
     type: 'Government bursary',
-    summary: 'Bursary for students training to become teachers in priority subject areas, with a commitment to teach in a public school afterwards.',
+    summary: 'Bursary for future teachers, who then teach in public schools.',
     eligibilitySummary:
       'For initial teacher-education qualifications such as a BEd. Priority subjects, academic requirements and service conditions apply. Confirm on the official Funza Lushaka website.',
     officialUrl: 'https://www.funzalushaka.doe.gov.za',
@@ -64,7 +64,7 @@ export const FUNDING_OPPORTUNITIES: FundingOpportunity[] = [
     name: 'Institutional financial aid & merit awards',
     provider: 'Your chosen institution',
     type: 'Institutional aid',
-    summary: 'Most universities run a financial aid office with needs-based support, merit awards and emergency funds.',
+    summary: 'Needs-based support, merit awards and emergency funds.',
     eligibilitySummary:
       'Rules differ per institution. Look for the financial aid or bursaries page on your institution’s official website.',
     isDemoRecord: false,
@@ -79,7 +79,7 @@ export const FUNDING_OPPORTUNITIES: FundingOpportunity[] = [
     name: 'Bank student loan',
     provider: 'Various South African banks',
     type: 'Loan',
-    summary: 'A loan for fees and study costs, repaid with interest. Usually needs a parent or guardian as surety.',
+    summary: 'Repaid with interest. Usually needs a parent as surety.',
     eligibilitySummary:
       'Banks run affordability and credit checks on the surety. Compare interest rates and repayment terms across providers before committing.',
     isDemoRecord: false,

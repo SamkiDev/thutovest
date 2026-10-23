@@ -58,7 +58,7 @@ export function AboutSection({ draft, update, errors }: SectionProps) {
       />
       <ChoiceCards<'yes' | 'no'>
         legend="Are you 18 or older?"
-        description="If you’re under 18, a parent or guardian gives consent before any sponsor can contact you."
+        description="Under 18? A guardian consents before any sponsor contact."
         options={[
           { value: 'yes', label: 'Yes, 18 or older' },
           { value: 'no', label: 'No, under 18' },
@@ -211,7 +211,7 @@ export function MoneySection({ draft, update, errors }: SectionProps) {
       />
       <ChoiceCards<IncomeBand>
         legend="Combined household income (optional)"
-        description="Helps show which funding opportunities may be worth checking. Stored only on this device. You can choose not to say."
+        description="Helps match funding. You can choose not to say."
         options={INCOME_BANDS}
         value={draft.householdIncome}
         onChange={(v) => update({ householdIncome: v })}
@@ -233,7 +233,7 @@ export function ApplicationSection({ draft, update }: SectionProps) {
       />
       <ChipGroup<DocumentKey>
         legend="Which documents do you already have ready?"
-        description="We’ll leave these off your to-do list. Don’t upload anything here. This is only a checklist."
+        description="Checklist only. Don’t upload anything here."
         options={DOCUMENTS}
         selected={draft.documentsReady}
         multiple

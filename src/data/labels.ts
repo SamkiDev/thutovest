@@ -143,7 +143,7 @@ export const PRIORITY_LABEL: Record<Priority, string> = {
 export const SEVERITY_LABEL: Record<Severity, string> = {
   urgent: 'Act now',
   soon: 'Coming up',
-  watch: 'Keep an eye on',
+  watch: 'To watch',
 };
 
 export const APPLICATION_STATUS_LABEL: Record<ApplicationStatus, string> = {

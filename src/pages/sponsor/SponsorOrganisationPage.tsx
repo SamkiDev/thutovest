@@ -45,7 +45,7 @@ export default function SponsorOrganisationPage() {
     <div>
       <PageHeader
         title="Organisation & checks"
-        description="Students only see sponsors that pass all three checks. It stops fake bursary offers before they reach anyone."
+        description="Students only see sponsors that pass all three checks."
       />
       <section className="card p-5 sm:p-6" aria-labelledby="org-heading">
         <div className="flex flex-wrap items-start justify-between gap-3">

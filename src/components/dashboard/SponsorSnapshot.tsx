@@ -51,7 +51,7 @@ export function SponsorSnapshot({ state }: { state: StudentState }) {
         </p>
       ) : (
         <p className="mt-3 text-sm text-body">
-          {shared === 0 ? 'You haven’t shared your profile with a sponsor yet.' : `Shared with ${shared} ${shared === 1 ? 'sponsor' : 'sponsors'}.`} Awards are paid straight to your institution.
+          {shared === 0 ? 'Not shared yet.' : `Shared with ${shared} ${shared === 1 ? 'sponsor' : 'sponsors'}.`} Awards go straight to your institution.
         </p>
       )}
       {lastEvent && (

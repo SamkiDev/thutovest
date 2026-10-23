@@ -56,19 +56,19 @@ function deadlineSeverity(daysLeft: number): Severity {
 const KIND_COPY = {
   application: {
     title: 'Application deadline approaching',
-    impact: 'Late applications are usually not accepted, which could cost you a place next year.',
+    impact: 'Late applications are usually rejected.',
   },
   funding: {
     title: 'Funding deadline approaching',
-    impact: 'Missing a funding closing date can leave you without support for the whole year.',
+    impact: 'Miss it and you could go a year without support.',
   },
   registration: {
     title: 'Registration deadline approaching',
-    impact: 'Unfinished registration steps can delay access to classes, residence and funding payments.',
+    impact: 'Unfinished steps can delay classes, residence and funding.',
   },
   planning: {
     title: 'Planning step due soon',
-    impact: 'Leaving this late adds pressure just before the academic year starts.',
+    impact: 'Leaving this late adds pressure before the year starts.',
   },
 } as const;
 
@@ -90,7 +90,7 @@ export function buildAlerts(state: StudentState, tasks: JourneyTask[]): RiskAler
         severity: deadlineSeverity(t.daysLeft),
         title: 'Required document still outstanding',
         subject: t.title,
-        impact: 'Applications without required documents are often marked incomplete and may not be considered.',
+        impact: 'Applications missing documents are often marked incomplete.',
         why: `Flagged because this document is marked “${TASK_STATUS_LABEL[t.status]}” and it is needed by ${formatDate(t.dueDate)}.`,
         recommendedAction: t.description,
         dueDate: t.dueDate,
@@ -131,13 +131,13 @@ export function buildAlerts(state: StudentState, tasks: JourneyTask[]): RiskAler
       severity,
       title: 'Estimated funding shortfall',
       subject: `${formatZAR(funding.gap)} of next year’s costs not yet covered`,
-      impact: 'An unfunded gap can block registration or force a student to pause studies mid-year.',
+      impact: 'An unfunded gap can block registration.',
       why: `Flagged because your estimated costs are ${formatZAR(funding.totalCost)} and the funding you’ve identified is ${formatZAR(
         funding.identifiedFunding,
       )}. ${applied === 0 ? 'No funding applications are marked as submitted yet.' : `${applied} funding ${applied === 1 ? 'application is' : 'applications are'} submitted or awarded.`}`,
       recommendedAction: 'Review your cost estimate and start an application for your strongest possible funding match.',
       route: '/app/funding',
-      routeLabel: 'Open Funding Gap Solver',
+      routeLabel: 'Open funding',
     });
   }
 
@@ -156,7 +156,7 @@ export function buildAlerts(state: StudentState, tasks: JourneyTask[]): RiskAler
         severity: 'soon',
         title: 'Registration step not completed',
         subject: t.title,
-        impact: 'Registration opens for a short window. Students who are not ready can lose their place or residence offer.',
+        impact: 'Registration windows are short. You could lose your place.',
         why: `Flagged because you are ready to register and “${t.title}” ${statusPhrase(t)}.`,
         recommendedAction: t.description,
         dueDate: t.dueDate,
@@ -185,10 +185,7 @@ function nextActionFrom(alerts: RiskAlert[], tasks: JourneyTask[], gap: number):
     if (t) {
       return {
         title: t.title,
-        reason:
-          t.daysLeft != null
-            ? `${top.title}, due ${formatDate(t.dueDate!)}. ${top.impact}`
-            : `${top.title}. ${top.impact}`,
+        reason: top.impact,
         dueDate: t.dueDate,
         daysLeft: t.daysLeft,
         severity: top.severity,
@@ -204,7 +201,7 @@ function nextActionFrom(alerts: RiskAlert[], tasks: JourneyTask[], gap: number):
     if (fundingTask) {
       return {
         title: fundingTask.title,
-        reason: `Your estimated funding gap is ${formatZAR(gap)}. Starting an application for a possible match is the most direct way to reduce it.`,
+        reason: `${formatZAR(gap)} still unfunded. Applying for a possible match is the fastest fix.`,
         dueDate: fundingTask.dueDate,
         daysLeft: fundingTask.daysLeft,
         severity: top.severity,
@@ -213,7 +210,7 @@ function nextActionFrom(alerts: RiskAlert[], tasks: JourneyTask[], gap: number):
         routeLabel: fundingTask.action.label,
       };
     }
-    return { title: 'Close your funding gap', reason: top.why, severity: top.severity, route: top.route, routeLabel: top.routeLabel };
+    return { title: 'Close your funding gap', reason: `${formatZAR(gap)} still unfunded.`, severity: top.severity, route: top.route, routeLabel: top.routeLabel };
   }
 
   const next = [...open].sort(
@@ -225,7 +222,7 @@ function nextActionFrom(alerts: RiskAlert[], tasks: JourneyTask[], gap: number):
   const stage = STAGES.find((s) => s.id === next.stageId)!;
   return {
     title: next.title,
-    reason: `Nothing urgent is flagged. This is the next open step in “${stage.title}”.`,
+    reason: `Nothing urgent. Next open step in “${stage.title}”.`,
     dueDate: next.dueDate,
     daysLeft: next.daysLeft,
     taskId: next.id,

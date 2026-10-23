@@ -47,7 +47,7 @@ export function sponsorBrief(sponsor: SponsorOrg, platform: PlatformState, candi
       id: 'review',
       tone: 'action',
       title: `${toReview.length} shared ${toReview.length === 1 ? 'document is' : 'documents are'} ready for review`,
-      detail: `From ${names.join(', ')}. Each one has already been checked automatically${issuerOk ? `, and ${issuerOk} ${issuerOk === 1 ? 'is' : 'are'} confirmed by the issuer` : ''}.`,
+      detail: `From ${names.join(', ')}. All checked automatically${issuerOk ? `, ${issuerOk} confirmed by the issuer` : ''}.`,
       evidence: toReview.map((d) => `${nameOf(platform.applications.find((a) => a.id === d.applicationId)!.studentId)}: ${d.snapshot?.fileName ?? d.kind} (check ${d.snapshot?.check.status ?? 'pending'})`),
       link: { label: 'Review documents', to: '/sponsor/pipeline' },
     });

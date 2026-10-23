@@ -43,7 +43,7 @@ export function RiskSummary({ alerts }: { alerts: RiskAlert[] }) {
       </div>
       {alerts.length === 0 ? (
         <EmptyState className="mt-4" icon={<ShieldCheck aria-hidden className="size-5" />} title="No risks flagged">
-          The engine checks deadlines, documents and your funding gap every time something changes.
+          Checked again every time something changes.
         </EmptyState>
       ) : (
         <ul className="mt-2 divide-y divide-line">
@@ -62,7 +62,7 @@ export function FundingSnapshot({ engine, needsFunding }: { engine: EngineResult
   return (
     <section className="card flex h-full flex-col p-5 sm:p-6" aria-labelledby="funding-heading">
       <PanelHeader id="funding-heading" title="Funding gap" link="/app/funding" linkLabel="Open solver" />
-      <p className="mt-4 text-sm text-muted">Estimated amount still to find for next year</p>
+      <p className="mt-4 text-sm text-muted">Still to find for next year</p>
       <p className={cn('num mt-1 font-display text-[2.5rem] leading-none font-bold', f.gap > 0 ? 'text-ink' : 'text-veld-700')}>
         {formatZAR(f.gap)}
       </p>
@@ -98,7 +98,7 @@ export function DeadlinesCard({ deadlines }: { deadlines: JourneyTask[] }) {
       <PanelHeader id="deadline-heading" title="Upcoming deadlines" link="/app/journey" linkLabel="Journey" />
       {deadlines.length === 0 ? (
         <EmptyState className="mt-4" icon={<CalendarDays aria-hidden className="size-5" />} title="No open deadlines">
-          Dated steps you still need to finish will appear here.
+          Dated steps will show here.
         </EmptyState>
       ) : (
         <ul className="mt-4 space-y-3">
@@ -127,7 +127,7 @@ export function DeadlinesCard({ deadlines }: { deadlines: JourneyTask[] }) {
           })}
         </ul>
       )}
-      <p className="mt-4 text-xs text-subtle">Deadlines are demo dates counted from when this pathway was created.</p>
+      <DemoTag className="mt-4">Demo dates</DemoTag>
     </section>
   );
 }
@@ -203,7 +203,7 @@ export function NavigatorPrompt() {
         <MessagesSquare aria-hidden className="size-5 text-veld-200" />
         Ask the Student Navigator
       </h2>
-      <p className="mt-1 text-sm text-white/80">Plain-language answers that use your own pathway data.</p>
+      <p className="mt-1 text-sm text-white/80">Answers based on your own plan.</p>
       <div className="mt-4 flex flex-col items-start gap-2">
         {questions.map((q) => (
           <button

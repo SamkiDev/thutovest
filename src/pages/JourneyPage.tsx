@@ -30,7 +30,7 @@ export default function JourneyPage() {
     <div>
       <PageHeader
         title="Adaptive Student Journey"
-        description="Your plan is built from your profile. Change any step’s status and your dashboard, progress and Risk Radar update straight away."
+        description="Change a step and your whole plan updates."
       />
 
       <section className="card p-5 sm:p-6" aria-label="Journey progress">
@@ -147,11 +147,11 @@ export default function JourneyPage() {
             {engine.hiddenTasks.length} steps hidden for your profile
           </h2>
           <p className="mt-1 text-sm text-muted">
-            These don’t apply to you right now.{' '}
+            Not relevant right now.{' '}
             <Link to="/app/profile" className="font-semibold text-veld-700 hover:underline">
-              Change your profile
+              Edit profile
             </Link>{' '}
-            and they’ll return if they become relevant.
+            to bring them back.
           </p>
           <ul className="mt-3 grid gap-2 sm:grid-cols-2">
             {engine.hiddenTasks.map(({ task, reason }) => (

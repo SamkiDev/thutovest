@@ -54,13 +54,13 @@ export default function RiskRadarPage() {
     <div>
       <PageHeader
         title="Student Risk Radar"
-        description="Specific, explainable flags rather than a prediction score. Each alert says why it was raised and what clears it."
+        description="Each alert says why it fired and how to clear it."
       />
 
       <div className="grid gap-3 sm:grid-cols-3">
         <SummaryTile tone="clay" count={counts.urgent} label="Act now" detail="Due within 7 days or a large unfunded gap" />
         <SummaryTile tone="amber" count={counts.soon} label="Coming up" detail="Due within 3 weeks or partly funded" />
-        <SummaryTile tone="neutral" count={counts.watch} label="Keep an eye on" detail="Not urgent yet" />
+        <SummaryTile tone="neutral" count={counts.watch} label="To watch" detail="Not urgent yet" />
       </div>
 
       <div className="mt-4 rounded-2xl border border-line bg-surface">
@@ -71,7 +71,7 @@ export default function RiskRadarPage() {
           aria-controls="radar-rules"
           className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left text-sm font-semibold text-ink sm:px-5"
         >
-          How the radar decides what to flag
+          How flags work
           <ChevronDown aria-hidden className={cn('size-4 transition-transform', rulesOpen && 'rotate-180')} />
         </button>
         <div id="radar-rules" hidden={!rulesOpen} className="grid gap-4 border-t border-line px-4 py-4 sm:grid-cols-2 sm:px-5">
@@ -114,7 +114,7 @@ export default function RiskRadarPage() {
               : 'Try another filter to see the rest of your alerts.'}
           </EmptyState>
         ) : (
-          shown.map((a, i) => <AlertCard key={a.id} alert={a} onResolve={resolve} defaultOpen={i === 0 && filter === 'all'} />)
+          shown.map((a) => <AlertCard key={a.id} alert={a} onResolve={resolve} />)
         )}
       </div>
 

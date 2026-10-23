@@ -19,7 +19,7 @@ import { cn } from '../utils/cn';
 const TABS = [
   { id: 'universities', label: 'Universities' },
   { id: 'tvet', label: 'TVET colleges' },
-  { id: 'private', label: 'Check a private college' },
+  { id: 'private', label: 'Private colleges' },
 ] as const;
 type TabId = (typeof TABS)[number]['id'];
 
@@ -33,7 +33,7 @@ export default function InstitutionsPage() {
     <div>
       <PageHeader
         title="Universities and colleges"
-        description="Official application, funding and residence pages for public universities and all 50 public TVET colleges, plus a check for private colleges. Apply on the institution’s own site; keep your documents and deadlines here."
+        description="Official apply, funding and residence links. Apply on their sites."
       />
 
       <div role="tablist" aria-label="Institution type" className="mb-6 flex gap-1.5 overflow-x-auto pb-1">
@@ -132,11 +132,11 @@ function Universities() {
       </div>
 
       <p className="mt-4 rounded-xl bg-paper p-3 text-sm text-muted">
-        KwaZulu-Natal institutions such as DUT and UKZN take applications through the{' '}
+        DUT and UKZN apply through the{' '}
         <a href={CAO_LINK.url} target="_blank" rel="noreferrer" className="font-semibold text-veld-700 hover:underline">
           Central Applications Office
         </a>
-        . Closing dates differ per programme, so check them on each official site.
+        . Closing dates differ per programme.
       </p>
 
       {list.length === 0 ? (
@@ -191,7 +191,7 @@ function Universities() {
           })}
         </ul>
       )}
-      <p className="mt-6 text-xs text-subtle">Official links checked on {LINKS_CHECKED_ON}. If a page has moved, use the institution’s website link.</p>
+      <p className="mt-6 text-xs text-subtle">Links checked {LINKS_CHECKED_ON}. Page moved? Use the website link.</p>
     </div>
   );
 }

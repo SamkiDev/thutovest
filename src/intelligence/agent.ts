@@ -40,9 +40,9 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
     items.push({
       id: `safety-${appId}`,
       kind: 'warning',
-      title: `Blocked a scam attempt from ${sponsor?.name ?? 'a sender'}`,
-      detail: 'They asked you to pay a fee to release a bursary. I hid the message and the sender is suspended. You don’t need to do anything.',
-      evidence: ['Message asked for an “admin fee”', 'Message contained a phone number for off-platform payment', 'Sender had not finished verification'],
+      title: `Scam blocked: ${sponsor?.name ?? 'a sender'}`,
+      detail: 'They asked for a fee. Message hidden, sender suspended.',
+      evidence: ['Message asked for an “admin fee”', 'Message contained a phone number for off-platform payment', 'Sender had not finished verification', 'You don’t need to do anything'],
       mode: 'auto',
       effect: { type: 'none' },
       link: { label: 'See what happened', to: '/app/sponsors#messages' },
@@ -57,9 +57,9 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
     items.push({
       id: `offer-${app.id}`,
       kind: 'match',
-      title: `Offer waiting: ${formatZAR(app.amount ?? 0)} from ${sponsor?.name}`,
-      detail: `It would cover ${Math.round(cover * 100)}% of your estimated gap and is paid straight to your institution. Only you can accept it.`,
-      evidence: [`Sponsor verified: ${sponsor?.status === 'active' ? 'yes' : 'no'}`, `Your gap today: ${formatZAR(engine.funding.gap)}`, `Fund: ${fund?.name}`],
+      title: `${formatZAR(app.amount ?? 0)} offer from ${sponsor?.name}`,
+      detail: `Covers ${Math.round(cover * 100)}% of your gap. Only you can accept it.`,
+      evidence: ['Paid straight to your institution', `Sponsor verified: ${sponsor?.status === 'active' ? 'yes' : 'no'}`, `Your gap today: ${formatZAR(engine.funding.gap)}`, `Fund: ${fund?.name}`],
       mode: 'approval',
       effect: { type: 'none' },
       link: { label: 'Review offer', to: '/app/sponsors' },
@@ -77,9 +77,10 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
       items.push({
         id: `share-${share.id}-${inVault.id}`,
         kind: 'document',
-        title: `${sponsor?.name} needs your ${label.toLowerCase()}. It’s already in your vault`,
-        detail: `I matched “${inVault.fileName}” to the request. Share it in the app and ${sponsor?.name} can review it straight away. Due ${formatDate(share.dueOn)}.`,
+        title: `${sponsor?.name} needs your ${label.toLowerCase()}`,
+        detail: `Already in your vault. Due ${formatDate(share.dueOn)}.`,
         evidence: [
+          `Matched “${inVault.fileName}” to the request`,
           `Automatic check: ${inVault.check.status === 'passed' ? 'passed' : 'passed with notes'}`,
           DOCUMENT_INFO[share.kind].issuerCheck ? `Issuer confirmation: ${inVault.issuer === 'verified' ? 'confirmed' : 'not yet'}` : 'No issuer confirmation needed',
           `Payment is released only after every required document is approved`,
@@ -94,8 +95,8 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
         id: `upload-${share.id}-${share.status}`,
         kind: 'document',
         title: share.status === 'resubmit' ? `${sponsor?.name} asked for a new ${label.toLowerCase()}` : `Upload your ${label.toLowerCase()} for ${sponsor?.name}`,
-        detail: `${share.reviewNote ? `Sponsor’s note: “${share.reviewNote}”. ` : ''}Take a photo or choose a file. I’ll check it before it’s shared. Due ${formatDate(share.dueOn)}.`,
-        evidence: [`Requested ${formatDate(share.requestedAt.slice(0, 10))}`, 'Your award is paid only after the sponsor approves this document'],
+        detail: `${share.reviewNote ? `Note: “${share.reviewNote}”. ` : ''}Due ${formatDate(share.dueOn)}. Checked before it’s shared.`,
+        evidence: [`Requested ${formatDate(share.requestedAt.slice(0, 10))}`, 'Take a photo or choose a file', 'Your award is paid only after the sponsor approves this document'],
         mode: 'approval',
         effect: { type: 'none' },
         link: { label: 'Upload now', to: `/app/documents?upload=${share.kind}&share=${share.id}` },
@@ -109,9 +110,10 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
     items.push({
       id: `pace-${fl.task.id}-${pace.lateCount}`,
       kind: 'forecast',
-      title: `At your pace, ${pace.lateCount} ${pace.lateCount === 1 ? 'deadline is' : 'deadlines are'} likely to be missed`,
-      detail: `“${fl.task.title}” would be done around ${formatDate(fl.projectedDate)}, ${fl.daysLate} ${fl.daysLate === 1 ? 'day' : 'days'} after it’s due. I moved the deadline-critical steps to the top of your plan. You need about ${pace.requiredPerWeek} tasks a week to make every deadline.`,
+      title: `${pace.lateCount} ${pace.lateCount === 1 ? 'deadline' : 'deadlines'} at risk at your pace`,
+      detail: `Aim for ${pace.requiredPerWeek} tasks a week. Urgent steps moved to the top.`,
       evidence: [
+        `“${fl.task.title}” would finish ${formatDate(fl.projectedDate)}, ${fl.daysLate} ${fl.daysLate === 1 ? 'day' : 'days'} late`,
         pace.basis === 'history'
           ? `You finished ${pace.completions} ${pace.completions === 1 ? 'task' : 'tasks'} in the last ${pace.windowDays} days (${pace.perWeek} a week)`
           : `Not enough history yet, so I assumed ${pace.perWeek} tasks a week`,
@@ -129,8 +131,8 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
     items.push({
       id: `reminder-${engine.nextAction.taskId ?? 'next'}`,
       kind: 'reminder',
-      title: `Reminder set for ${timeFmt.format(rhythm.nextNudge)}`,
-      detail: `I’ll remind you about “${engine.nextAction.title}” then, because that’s when you usually work on your plan.`,
+      title: `Reminder: ${timeFmt.format(rhythm.nextNudge)}`,
+      detail: `For “${engine.nextAction.title}”, when you usually work.`,
       evidence: [
         `${Math.round(rhythm.peakShare * 100)}% of your last ${rhythm.sample} actions were on ${rhythm.peakLabel} (${rhythm.peakRange})`,
         `${Math.round(rhythm.weekdayShare * 100)}% happened on weekdays`,
@@ -152,15 +154,16 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
       items.push({
         id: `prepare-${best.id}`,
         kind: 'prepared',
-        title: `I pre-filled your ${best.name} application`,
-        detail: `${comp.filled} of ${comp.total} details are ready from your profile and documents. Review the rest, then submit on the official website.`,
+        title: `${best.name}: ${comp.filled} of ${comp.total} details ready`,
+        detail: 'Check the rest, then submit on the official site.',
         evidence: [
+          'Pre-filled from your profile and documents',
           `Income band: ${INCOME_BANDS.find((b) => b.value === state.profile.householdIncome)?.label}`,
           `Estimated gap: ${formatZAR(engine.funding.gap)}`,
           task?.daysLeft != null ? `Funding task ${relativeDays(task.daysLeft).toLowerCase()}` : 'Funding task open',
         ],
         mode: 'approval',
-        approveLabel: 'Start this application',
+        approveLabel: 'Start application',
         effect: { type: 'prepareOpportunity', opportunityId: best.id },
         link: { label: 'View funding', to: '/app/funding#opportunities' },
       });
@@ -175,9 +178,9 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
       kind: 'replan',
       title: `${op.name} was unsuccessful, so I re-planned`,
       detail: alternatives.length
-        ? `You match ${alternatives.length} verified sponsor ${alternatives.length === 1 ? 'fund' : 'funds'}: ${alternatives.join(', ')}. Your gap and next steps are updated.`
-        : 'I updated your gap and moved institutional aid and a backup bursary up your plan.',
-      evidence: [`${op.name} status: unsuccessful`, `Gap now ${formatZAR(engine.funding.gap)}`],
+        ? `${alternatives.length} sponsor ${alternatives.length === 1 ? 'fund matches' : 'funds match'} you instead.`
+        : 'Institutional aid and a backup bursary moved up your plan.',
+      evidence: [`${op.name} status: unsuccessful`, `Gap now ${formatZAR(engine.funding.gap)}`, ...alternatives.map((a) => `Matching fund: ${a}`)],
       mode: 'auto',
       effect: { type: 'none' },
       link: { label: 'See sponsor matches', to: '/app/sponsors' },
@@ -195,8 +198,8 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
         id: `match-${fund.id}`,
         kind: 'match',
         title: `${sponsor?.name}’s ${fund.name} matches you`,
-        detail: `Up to ${formatZAR(fit.suggestedAmount)} towards your gap. Closes ${formatDate(fund.closesOn)}. I can share your verified, anonymised profile (no surname, ID number or contact details).`,
-        evidence: fit.reasons.slice(0, 4),
+        detail: `Up to ${formatZAR(fit.suggestedAmount)}. Closes ${formatDate(fund.closesOn)}. Anonymised profile only.`,
+        evidence: [...fit.reasons.slice(0, 4), 'Shared without your surname, ID number or contact details'],
         mode: 'approval',
         approveLabel: 'Share my profile',
         effect: { type: 'expressInterest', fundId: fund.id },
@@ -205,9 +208,9 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
       items.push({
         id: `unlock-${fund.id}`,
         kind: 'match',
-        title: `Verify more details to unlock ${fund.name}`,
-        detail: `You match everything except the verification level. ${sponsor?.name} needs “${TRUST_LABEL[fund.minTrust]}”; you’re “${TRUST_LABEL[trust]}”. Verifying your results and income takes a few minutes.`,
-        evidence: fit.reasons.slice(0, 3),
+        title: `Unlock ${fund.name}`,
+        detail: `Needs “${TRUST_LABEL[fund.minTrust]}”. You’re “${TRUST_LABEL[trust]}”.`,
+        evidence: [`${sponsor?.name} asks for this level`, ...fit.reasons.slice(0, 3), 'Verifying your results and income takes a few minutes'],
         mode: 'approval',
         effect: { type: 'none' },
         link: { label: 'Open verification', to: '/app/verify' },
@@ -234,9 +237,10 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
     items.push({
       id: `cash-${m.month}-${Math.round(m.balance / 1000)}`,
       kind: 'forecast',
-      title: `Cash shortfall predicted in ${m.month} ${cash.year}`,
-      detail: `You’d be about ${formatZAR(Math.round(-m.balance / 100) * 100)} short${m.month === 'Jan' ? ' at registration, before most bursaries pay out' : ''}. Sponsor awards on this platform are paid before registration, and you can ask about a fee deferral.`,
-      evidence: [`January payments: ${formatZAR(cash.months[0].outflow)}`, `Money available in January: ${formatZAR(cash.months[0].inflow)}`, `Lowest point: ${formatZAR(cash.lowest.balance)} in ${cash.lowest.month}`],
+      title: `${formatZAR(Math.round(-m.balance / 100) * 100)} short in ${m.month} ${cash.year}`,
+      detail: `${m.month === 'Jan' ? 'At registration, before most bursaries pay. ' : ''}Ask about a fee deferral.`,
+      evidence: [
+        'Sponsor awards on this platform are paid before registration',`January payments: ${formatZAR(cash.months[0].outflow)}`, `Money available in January: ${formatZAR(cash.months[0].inflow)}`, `Lowest point: ${formatZAR(cash.lowest.balance)} in ${cash.lowest.month}`],
       mode: 'auto',
       effect: { type: 'none' },
       link: { label: 'See cash-flow forecast', to: '/app/forecast#cash' },

@@ -87,7 +87,7 @@ export default function VerifyPage() {
     <div>
       <PageHeader
         title="Verification"
-        description="Verified students and verified sponsors are the only people who can connect here. Checks protect you from scams and give sponsors confidence to fund you."
+        description="Verified people only. Checks keep scams out."
       />
 
       <section className="card overflow-hidden" aria-labelledby="level-heading">

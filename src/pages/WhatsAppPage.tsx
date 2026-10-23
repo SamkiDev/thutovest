@@ -1,11 +1,10 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Link } from 'react-router-dom';
 import { Check, CircleOff, Send, Smartphone, X } from 'lucide-react';
 import { useStudent } from '../hooks/useStudent';
 import { useToast } from '../hooks/useToast';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { useWhatsApp, type ChatMessage } from '../whatsapp/WhatsAppProvider';
-import { dataPlan, maskPhone, normaliseSaMobile, LINK_CODE_MINUTES } from '../../supabase/functions/_shared/whatsapp/bot.ts';
+import { dataPlan, maskPhone, normaliseSaMobile } from '../../supabase/functions/_shared/whatsapp/bot.ts';
 import type { WhatsAppAlertPrefs } from '../types';
 import { PageHeader } from '../components/ui/Misc';
 import { Button } from '../components/ui/Button';
@@ -39,7 +38,7 @@ export default function WhatsAppPage() {
     <div>
       <PageHeader
         title="WhatsApp updates"
-        description="Check deadlines, offers and document requests on WhatsApp when you’re low on data. Registration, signing and uploads stay in the app, where they’re protected."
+        description="Updates on WhatsApp when data is low. Uploads stay in the app."
       />
 
       {/* Mobile order: link, chat, details. Desktop: chat pinned in the right column. */}
@@ -57,9 +56,9 @@ export default function WhatsAppPage() {
               <h2 id="data-heading" className="text-lg font-semibold">
                 When you’ll need data
               </h2>
-              <p className="mt-1 text-sm text-muted">The bot sends this when you reply 6. Estimates are rounded up.</p>
+              <p className="mt-1 text-sm text-muted">Reply 6 to get this on WhatsApp.</p>
               {plan.items.length === 0 ? (
-                <p className="mt-4 text-sm text-body">Nothing in the next 7 days needs data. You can keep checking on WhatsApp.</p>
+                <p className="mt-4 text-sm text-body">Nothing needs data in the next 7 days.</p>
               ) : (
                 <>
                   <ul className="mt-4 divide-y divide-line rounded-xl border border-line">
@@ -73,7 +72,6 @@ export default function WhatsAppPage() {
                   <p className="mt-3 text-sm text-body">
                     Total about <span className="num font-semibold text-ink">{plan.totalMb} MB</span>.{' '}
                     {plan.buyBy != null && (plan.buyBy === 0 ? 'Get data today.' : `Get data within ${plan.buyBy} ${plan.buyBy === 1 ? 'day' : 'days'}.`)}
-                    {snapshot?.activeTime && ` You usually act on ${snapshot.activeTime}, so reminders are timed for then.`}
                   </p>
                 </>
               )}
@@ -86,7 +84,7 @@ export default function WhatsAppPage() {
             </h2>
             <div className="mt-4 grid gap-6 sm:grid-cols-2">
               <ul className="space-y-2 text-sm">
-                {['Lists your deadlines and what’s new', 'Tells you about offers, document requests and payments', 'Says how much data each app step needs', 'Takes scam reports'].map((t) => (
+                {['Lists deadlines and what’s new', 'Alerts you to offers, requests and payments', 'Says how much data each step needs'].map((t) => (
                   <li key={t} className="flex gap-2">
                     <Check aria-hidden className="mt-0.5 size-4 shrink-0 text-veld-600" strokeWidth={3} />
                     {t}
@@ -94,7 +92,7 @@ export default function WhatsAppPage() {
                 ))}
               </ul>
               <ul className="space-y-2 text-sm">
-                {['Accepts documents, photos or voice notes', 'Asks for ID numbers, OTPs, PINs or bank details', 'Asks you to pay anything', 'Shows sponsor message contents'].map((t) => (
+                {['Accepts documents, photos or voice notes', 'Asks for ID numbers, OTPs or bank details', 'Asks you to pay anything'].map((t) => (
                   <li key={t} className="flex gap-2">
                     <X aria-hidden className="mt-0.5 size-4 shrink-0 text-clay-600" strokeWidth={3} />
                     <span>
@@ -105,13 +103,6 @@ export default function WhatsAppPage() {
                 ))}
               </ul>
             </div>
-            <p className="mt-4 text-xs text-subtle">
-              WhatsApp still uses a little data, but much less than browsing, and many networks sell cheap WhatsApp bundles. Uploads stay in the{' '}
-              <Link to="/app/documents" className="font-semibold text-veld-700 hover:underline underline-offset-4">
-                Documents vault
-              </Link>
-              .
-            </p>
           </section>
         </div>
       </div>
@@ -155,7 +146,7 @@ function LinkCard() {
             <h2 id="link-heading" className="text-lg font-semibold">
               Linked to {maskPhone(wa.phone)}
             </h2>
-            <p className="mt-1 text-sm text-muted">Reply STOP on WhatsApp at any time to turn updates off.</p>
+            <p className="mt-1 text-sm text-muted">Reply STOP to turn updates off.</p>
           </div>
           {wa.optedOut ? <Badge tone="outline">Updates off</Badge> : <Badge tone="veld">Updates on</Badge>}
         </div>
@@ -180,7 +171,7 @@ function LinkCard() {
 
         <div className="mt-5 flex flex-wrap gap-3">
           <Button variant="secondary" size="sm" onClick={() => dispatch({ type: 'whatsappOptOut', value: !wa.optedOut })}>
-            {wa.optedOut ? 'Turn updates back on' : 'Pause updates'}
+            {wa.optedOut ? 'Resume updates' : 'Pause updates'}
           </Button>
           <Button
             variant="ghost"
@@ -207,13 +198,11 @@ function LinkCard() {
         <h2 id="link-heading" className="text-lg font-semibold">
           Confirm it’s your number
         </h2>
-        <p className="mt-1 text-sm text-muted">
-          From {maskPhone(wa.phone)}, send this message to the ThutoVest WhatsApp number. It proves the number is yours.
-        </p>
+        <p className="mt-1 text-sm text-muted">Send this from {maskPhone(wa.phone)} to prove it’s yours.</p>
         <p className={cn('num mt-4 rounded-xl bg-paper px-4 py-3 font-display text-2xl font-bold tracking-wider', expired ? 'text-subtle line-through' : 'text-ink')} aria-live="polite">
           {message}
         </p>
-        <p className="mt-2 text-xs text-subtle">{expired ? 'This code has expired.' : `Expires in about ${minutesLeft} ${minutesLeft === 1 ? 'minute' : 'minutes'}. Codes last ${LINK_CODE_MINUTES} minutes.`}</p>
+        <p className="mt-2 text-xs text-subtle">{expired ? 'This code has expired.' : `Expires in about ${minutesLeft} ${minutesLeft === 1 ? 'minute' : 'minutes'}.`}</p>
         <div className="mt-4 flex flex-wrap gap-3">
           {expired ? (
             <Button size="sm" onClick={() => requestCode(wa.phone)}>
@@ -222,7 +211,7 @@ function LinkCard() {
           ) : (
             <>
               <Button size="sm" icon={<Send aria-hidden className="size-4" />} onClick={() => send(message)}>
-                Send it in the simulator
+                Send in simulator
               </Button>
               {BRAND.whatsappNumber && (
                 <a
@@ -237,10 +226,10 @@ function LinkCard() {
             </>
           )}
           <Button variant="ghost" size="sm" onClick={() => dispatch({ type: 'whatsappUnlink' })}>
-            Use a different number
+            Change number
           </Button>
         </div>
-        {!BRAND.whatsappNumber && <p className="mt-4 text-xs text-subtle">Prototype: the live number isn’t connected in this preview, so the simulator plays the bot.</p>}
+        {!BRAND.whatsappNumber && <p className="mt-4 text-xs text-subtle">Prototype: the simulator plays the bot.</p>}
       </section>
     );
   }
@@ -250,7 +239,7 @@ function LinkCard() {
       <h2 id="link-heading" className="flex items-center gap-2 text-lg font-semibold">
         <Smartphone aria-hidden className="size-5 text-veld-600" /> Get updates on WhatsApp
       </h2>
-      <p className="mt-1 text-sm text-muted">You’ll get a code here, then send it from your phone. Only you can link your number.</p>
+      <p className="mt-1 text-sm text-muted">Get a code, then send it from your phone.</p>
       <form onSubmit={submit} className="mt-4 space-y-4" noValidate>
         <TextField
           label="Your cellphone number"
@@ -265,14 +254,14 @@ function LinkCard() {
         />
         <label htmlFor={consentId} className="flex cursor-pointer gap-3 text-sm text-body">
           <input id={consentId} type="checkbox" checked={consent} onChange={(e) => setConsent(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-veld-600" />
-          I agree to receive ThutoVest updates on WhatsApp. I can reply STOP at any time. My number is used only for these updates and is never shown to sponsors.
+          I agree to WhatsApp updates. My number is used only for these updates, sponsors never see it, and I can reply STOP any time.
         </label>
         {error && (
           <p role="alert" className="text-sm font-medium text-clay-700">
             {error}
           </p>
         )}
-        <Button type="submit">Get my link code</Button>
+        <Button type="submit">Get link code</Button>
       </form>
     </section>
   );
@@ -319,7 +308,7 @@ function Simulator({ linked }: { linked: boolean }) {
         <ol ref={listRef} role="log" aria-live="polite" aria-label="Chat with the ThutoVest bot" className="h-[26rem] space-y-2 overflow-y-auto bg-sunken px-3 py-4">
           {messages.length === 0 && (
             <li className="mx-auto max-w-[16rem] rounded-xl bg-surface px-3 py-2 text-center text-xs text-muted">
-              {linked ? 'Say hi, or reply with a number from the menu.' : 'Link your number to start. You can also say hi to see what an unlinked number gets.'}
+              {linked ? 'Say hi, or reply with a number from the menu.' : 'Link your number, or say hi to try it.'}
             </li>
           )}
           {messages.map((m) => (
@@ -360,7 +349,7 @@ function Simulator({ linked }: { linked: boolean }) {
           </form>
         </div>
       </div>
-      <p className="mt-3 text-center text-xs text-subtle">The same code answers on the real WhatsApp number. Try typing an ID number to see the safety check.</p>
+      <p className="mt-3 text-center text-xs text-subtle">Tip: type an ID number to test the safety check.</p>
     </section>
   );
 }

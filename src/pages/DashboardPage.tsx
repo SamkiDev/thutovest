@@ -50,7 +50,7 @@ export default function DashboardPage() {
         <SectionTitle
           id="rec-heading"
           title="Recommended study options"
-          description="Ranked by your field, study mode, preferred institutions, APS estimate and budget."
+          description="Ranked by your field, institutions, APS and budget."
           action={
             <span className="hidden sm:block">
               <ButtonLink to="/app/explore" variant="secondary" size="sm">
@@ -60,8 +60,8 @@ export default function DashboardPage() {
           }
         />
         {recommended.length === 0 ? (
-          <EmptyState icon={<Compass aria-hidden className="size-5" />} title="No options for this field yet" action={<ButtonLink to="/app/explore">Browse all options</ButtonLink>}>
-            The demo catalogue doesn’t include this field yet. Browse every option instead.
+          <EmptyState icon={<Compass aria-hidden className="size-5" />} title="No options for this field yet" action={<ButtonLink to="/app/explore">Browse all</ButtonLink>}>
+            Not in the demo catalogue yet.
           </EmptyState>
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

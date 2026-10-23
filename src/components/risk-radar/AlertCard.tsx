@@ -120,7 +120,7 @@ export function AlertCard({
             aria-controls={detailsId}
             className="ml-auto inline-flex h-9 items-center gap-1 rounded-full px-2 text-sm font-semibold text-veld-700 hover:text-veld-800"
           >
-            {open ? 'Hide reasoning' : 'Why flagged?'}
+            {open ? 'Hide' : 'Why?'}
             <ChevronDown aria-hidden className={cn('size-4 transition-transform', open && 'rotate-180')} />
           </button>
         </div>

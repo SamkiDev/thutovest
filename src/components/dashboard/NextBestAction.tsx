@@ -24,7 +24,7 @@ export function NextBestAction({
         <h2 id="nba-heading" className="mt-3 text-2xl font-bold">
           Every step is done
         </h2>
-        <p className="mt-1 text-muted">Update your profile if your plans change and your pathway will adapt.</p>
+        <p className="mt-1 text-muted">Plans changed? Update your profile.</p>
         <ButtonLink to="/app/profile" variant="secondary" className="mt-4">
           Review profile
         </ButtonLink>

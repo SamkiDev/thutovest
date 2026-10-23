@@ -8,6 +8,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { PageHeader } from '../components/ui/Misc';
 import { Button } from '../components/ui/Button';
 import { DemoTag } from '../components/ui/Badge';
+import { Why } from '../components/ui/Why';
 import { MoneyInput } from '../components/forms/Fields';
 import { CostFundingChart } from '../components/funding/GapBar';
 import { OpportunityCard } from '../components/funding/OpportunityCard';
@@ -46,7 +47,7 @@ export default function FundingPage() {
     <div>
       <PageHeader
         title="Funding Gap Solver"
-        description="Compare what next year could cost with the funding you’ve found. Change any amount and every total updates immediately."
+        description="Next year’s costs against the funding you’ve found."
         kicker={<DemoTag>All amounts are your estimates</DemoTag>}
       />
 
@@ -204,9 +205,10 @@ export default function FundingPage() {
           <h2 id="opps-heading" className="text-2xl font-bold">
             Possible funding opportunities
           </h2>
-          <p className="mt-1 text-sm text-muted">
-            Ordered by how well the published focus lines up with your field, income band and institutions. A possible match is not an eligibility decision. Only the provider can confirm that. Track your applications here; awarded amounts count towards your funding.
-          </p>
+          <p className="mt-1 text-sm text-muted">A match isn’t an eligibility decision. Only the provider can confirm.</p>
+          <Why className="mt-1" label="How these are ordered">
+            Ordered by how well the published focus lines up with your field, income band and institutions. A possible match is not an eligibility decision. Only the provider can confirm that.
+          </Why>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           {opportunities.map(({ op, match }) => (

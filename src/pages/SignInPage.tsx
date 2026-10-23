@@ -163,9 +163,9 @@ export default function SignInPage() {
               ))}
             </dl>
             <Button variant="secondary" size="sm" className="mt-3 w-full" disabled={busy} onClick={() => enter(role)}>
-              Sign in as {role === 'student' ? 'Tatenda (student)' : 'Ridgeline Technologies (sponsor)'}
+              Try as {role === 'student' ? 'Tatenda' : 'Ridgeline'}
             </Button>
-            <p className="mt-2 text-xs text-muted">Tip: open a student tab and a sponsor tab side by side. Changes appear in the other tab instantly.</p>
+            <p className="mt-2 text-xs text-muted">Tip: open a student and a sponsor tab side by side. Changes appear instantly.</p>
           </section>
 
           <div className="mt-6 space-y-2 text-sm">

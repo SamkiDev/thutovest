@@ -203,9 +203,9 @@ export function forecastFund(fund: Fund, platform: PlatformState, ranked: Ranked
   let headline: string;
   if (remaining === 0) headline = 'Fully committed.';
   else if (exhaustDate && exhaustDate <= fund.closesOn)
-    headline = `At your recent pace (about ${formatZAR(Math.round(weeklyPace / 1000) * 1000)} a week) this fund is fully committed by about ${formatDate(exhaustDate)}, before it closes.`;
+    headline = `Fully committed by about ${formatDate(exhaustDate)}, before it closes, at about ${formatZAR(Math.round(weeklyPace / 1000) * 1000)} a week.`;
   else if (exhaustDate)
-    headline = `At your recent pace, about ${formatZAR(Math.round(Math.max(0, remaining - weeklyPace * (daysUntil(fund.closesOn) / 7)) / 1000) * 1000)} would still be unspent when the fund closes on ${formatDate(fund.closesOn)}.`;
-  else headline = `No awards in the last four weeks. ${eligibleWaiting} eligible students are waiting.`;
+    headline = `${formatZAR(Math.round(Math.max(0, remaining - weeklyPace * (daysUntil(fund.closesOn) / 7)) / 1000) * 1000)} likely unspent when it closes on ${formatDate(fund.closesOn)}.`;
+  else headline = `${eligibleWaiting} eligible students waiting. No awards in four weeks.`;
   return { committed: used, remaining, placesLeft, eligibleWaiting, weeklyPace, exhaustDate, headline };
 }

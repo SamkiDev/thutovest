@@ -7,6 +7,7 @@ import { useSponsor } from '../../hooks/useSponsor';
 import { useToast } from '../../hooks/useToast';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PageHeader, EmptyState } from '../../components/ui/Misc';
+import { Why } from '../../components/ui/Why';
 import { Badge, DemoTag } from '../../components/ui/Badge';
 import { Button, ButtonLink } from '../../components/ui/Button';
 import { Modal } from '../../components/ui/Modal';
@@ -70,7 +71,7 @@ export default function SponsorCandidatesPage() {
     <div>
       <PageHeader
         title="Candidates"
-        description="Verified students who opted in to discovery, ranked for each fund. You see first names, gaps and verification badges only."
+        description="Verified students ranked for each fund. First names only."
         kicker={<DemoTag>Fictional students</DemoTag>}
       />
 
@@ -121,10 +122,10 @@ export default function SponsorCandidatesPage() {
           <p className="font-semibold text-ink">
             {prefs.decisions >= 3 ? `Ranking adapts to your last ${prefs.decisions} decisions` : 'Ranking is based on fit until you’ve made a few decisions'}
           </p>
-          <p className="mt-0.5 text-body">
+          <Why className="mt-0.5">
             Score = how much of the gap an award closes, the student’s on-time record, verification level and criteria fit
             {prefs.likes.length ? `, adjusted for what you’ve chosen before: ${prefs.likes.map((l) => l.replace(/ \(.*\)$/, '')).join(', ')}.` : '.'}
-          </p>
+          </Why>
         </div>
       </section>
 

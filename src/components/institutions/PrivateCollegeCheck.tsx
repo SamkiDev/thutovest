@@ -3,6 +3,7 @@ import { CircleCheck, CircleHelp, CircleX, ExternalLink, Search, TriangleAlert }
 import { PRIVATE_HE_REGISTER, REGISTER_PDF, REGISTER_UPDATED, type RegisterEntry, type RegisterStatus } from '../../data/privateRegister';
 import { Badge } from '../ui/Badge';
 import { Ext } from '../study-options/InstitutionLinks';
+import { Why } from '../ui/Why';
 
 const STATUS: Record<RegisterStatus, { label: string; tone: 'veld' | 'amber' | 'clay'; detail: string }> = {
   registered: {
@@ -23,10 +24,10 @@ const STATUS: Record<RegisterStatus, { label: string; tone: 'veld' | 'amber' | '
 };
 
 const WHO_DOES_WHAT = [
-  { who: 'DHET', what: 'Registers private colleges and private higher education institutions. Offering certificates, diplomas or degrees without registration is illegal.' },
-  { who: 'CHE, Umalusi and QCTO', what: 'The quality councils. They accredit qualifications and the institutions that offer them: CHE for higher education, Umalusi for school and college level, QCTO for trades and occupations.' },
-  { who: 'SAQA', what: 'Keeps the National Qualifications Framework and records which qualifications are on it. SAQA does not register colleges, so “SAQA accredited college” on an advert is not a real status.' },
-  { who: 'NSFAS', what: 'Funds approved qualifications at public universities and TVET colleges only. Private college fees are not covered by NSFAS.' },
+  { who: 'DHET', what: 'Registers private colleges. Offering qualifications without registration is illegal.' },
+  { who: 'CHE, Umalusi and QCTO', what: 'Accredit qualifications: CHE for higher education, Umalusi for school level, QCTO for trades.' },
+  { who: 'SAQA', what: 'Records qualifications on the NQF. It doesn’t register colleges, so “SAQA accredited college” means nothing.' },
+  { who: 'NSFAS', what: 'Funds public universities and TVET colleges only, not private colleges.' },
 ];
 
 const normalise = (s: string) =>
@@ -59,8 +60,7 @@ export function PrivateCollegeCheck() {
           Is this private college registered?
         </h2>
         <p className="mt-1 text-sm text-muted">
-          Searches the official DHET register of private higher education institutions, last updated {REGISTER_UPDATED}: {PRIVATE_HE_REGISTER.length} institutions listed as registered,
-          provisionally registered or cancelled.
+          The official DHET register, updated {REGISTER_UPDATED}. {PRIVATE_HE_REGISTER.length} institutions.
         </p>
 
         <div className="relative mt-4">
@@ -88,11 +88,11 @@ export function PrivateCollegeCheck() {
                 <CircleHelp aria-hidden className="size-4 shrink-0" />
                 Not found in this copy of the register
               </p>
-              <p className="mt-1.5">
+              <p className="mt-1.5">Ask for their DHET registration number before you pay.</p>
+              <Why className="mt-1">
                 That alone doesn’t prove it’s fake: the registered company name can differ from the brand name, and providers that only offer QCTO
-                trade and occupational programmes register with the QCTO, not DHET. Before you pay anything, ask the college for its DHET registration
-                number and check it in the official register.
-              </p>
+                trade and occupational programmes register with the QCTO, not DHET.
+              </Why>
             </div>
           ) : (
             <ul className="space-y-3">
@@ -120,12 +120,11 @@ export function PrivateCollegeCheck() {
         </div>
 
         <p className="mt-4 text-sm text-muted">
-          Registration covers the institution, not every course. Check that your exact qualification is listed for the college in the register, and look it up
-          on SAQA.
+          Registration covers the college, not every course. Check yours on SAQA.
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <Ext link={{ label: 'Official DHET register (PDF)', url: REGISTER_PDF }} primary />
-          <Ext link={{ label: 'Search qualifications on SAQA', url: 'https://allqs.saqa.org.za/' }} />
+          <Ext link={{ label: 'DHET register (PDF)', url: REGISTER_PDF }} primary />
+          <Ext link={{ label: 'Search SAQA', url: 'https://allqs.saqa.org.za/' }} />
         </div>
       </section>
 
@@ -160,7 +159,7 @@ export function PrivateCollegeCheck() {
         <section className="rounded-2xl bg-clay-50 p-5 text-sm text-clay-700">
           <h2 className="font-sans text-base font-semibold">If you think you enrolled at a fake college</h2>
           <p className="mt-1.5">
-            DHET’s advice: stop paying, keep every receipt and message, and report the provider to DHET and SAQA. DHET call centre: 0800 87 22 22.
+            Stop paying, keep receipts, and report it to DHET and SAQA: 0800 87 22 22.
           </p>
         </section>
       </aside>

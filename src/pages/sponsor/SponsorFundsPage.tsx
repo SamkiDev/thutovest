@@ -32,7 +32,7 @@ export default function SponsorFundsPage() {
     <div>
       <PageHeader
         title="Funds"
-        description="Each fund sets who you want to support. The assistant matches verified students to it and forecasts how fast it will be used."
+        description="Who you want to support, matched and forecast for you."
         actions={
           <Button icon={<CirclePlus aria-hidden className="size-4" />} onClick={() => setEditing('new')} disabled={!verified}>
             New fund

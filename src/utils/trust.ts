@@ -13,8 +13,8 @@ export const STUDENT_CHECKS: { key: StudentCheckKey; title: string; detail: stri
   {
     key: 'identity',
     title: 'Identity',
-    detail: 'A photo of your ID and a live selfie confirm you are who you say you are.',
-    production: 'Document check, face match and liveness through an accredited verification provider, matched against Home Affairs records.',
+    detail: 'Your ID photo and a live selfie confirm it’s you.',
+    production: 'Document check, face match and liveness, matched with Home Affairs.',
   },
   {
     key: 'enrolment',
@@ -25,26 +25,26 @@ export const STUDENT_CHECKS: { key: StudentCheckKey; title: string; detail: stri
   {
     key: 'results',
     title: 'Academic results',
-    detail: 'Your latest results are checked against the issuing school or institution.',
+    detail: 'Your results are checked with your school or institution.',
     production: 'Results verification with the school, the Department of Basic Education or the institution.',
   },
   {
     key: 'income',
     title: 'Household income',
-    detail: 'With consent, household income is confirmed so funders can trust need-based applications.',
+    detail: 'With consent, your household income is confirmed for funders.',
     production: 'Consent-based payslip, SASSA or bank-statement verification.',
   },
   {
     key: 'guardian',
     title: 'Parent or guardian consent',
-    detail: 'Required for under-18s before any sponsor can make contact or an offer can be accepted.',
+    detail: 'Needed for under-18s before any sponsor contact or offer.',
     production: 'Guardian identity check and recorded consent.',
   },
 ];
 
 export const SPONSOR_CHECKS: { key: SponsorCheckKey; title: string; detail: string }[] = [
   { key: 'organisation', title: 'Organisation registration', detail: 'Registration number matched with the CIPC or NPO register, with an active status.' },
-  { key: 'representative', title: 'Authorised representative', detail: 'The person signing up passes an ID and liveness check and is linked to the organisation.' },
+  { key: 'representative', title: 'Authorised representative', detail: 'The person signing up passes an ID and liveness check.' },
   { key: 'bank', title: 'Payment account', detail: 'The paying account is confirmed to belong to the organisation before any offer is sent.' },
 ];
 

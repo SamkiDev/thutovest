@@ -88,37 +88,37 @@ export const NSFAS_ACCOMMODATION_RULES: NsfasRule[] = [
   {
     id: 'accredited',
     title: 'Only accredited places are paid for',
-    body: 'Private accommodation counts if your institution accredited it against its own criteria, or NSFAS accredited it with its grading tool. NSFAS says it will not pay an allowance for unaccredited accommodation unless NSFAS and your institution gave permission.',
+    body: 'Only places accredited by your institution or NSFAS. Otherwise NSFAS won’t pay.',
     source: 'Eligibility criteria 2026, glossary; NSFAS Student Accommodation page',
   },
   {
     id: 'residence-first',
     title: 'Residence comes first',
-    body: 'Universities and TVET colleges may only let NSFAS students consider private accommodation when their residences are full, or when they have no residences.',
+    body: 'Private places only when residences are full, or there are none.',
     source: 'Eligibility criteria 2026, 6.1.12 and 6.2.11',
   },
   {
     id: 'one-allowance',
     title: 'Accommodation or transport, not both',
-    body: 'You qualify for either an accommodation allowance or a transport allowance. If you can travel from home, plan for transport instead.',
+    body: 'You get one or the other. Living at home? Plan for transport.',
     source: 'Eligibility criteria 2026, 5.2.5 and 5.3.7.1',
   },
   {
     id: 'family',
     title: 'Living with family does not qualify',
-    body: 'Students living with immediate family or relatives don’t qualify for an accommodation allowance. NSFAS treats claiming it anyway as fraud.',
+    body: 'No accommodation allowance with family. Claiming it is treated as fraud.',
     source: 'Eligibility criteria 2026, 7.1.12',
   },
   {
     id: 'moving',
     title: 'Moving mid-year uses up the same cap',
-    body: 'If you move from residence to private accommodation during the year, you only get what is left of your capped amount.',
+    body: 'Move mid-year and you only get what’s left of the cap.',
     source: 'Eligibility criteria 2026, 6.1.16 and 6.1.17',
   },
   {
     id: 'caps',
     title: 'Amounts are capped and published yearly',
-    body: 'NSFAS publishes allowance amounts each year, and caps differ for metro and non-metro institutions. Check the current amount with NSFAS or your financial aid office before you sign a lease.',
+    body: 'Capped yearly, and metro and non-metro differ. Check before you sign.',
     source: 'Eligibility criteria 2026, 5.2.2 and 9.6',
   },
 ];

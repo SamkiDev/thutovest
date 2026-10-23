@@ -117,7 +117,7 @@ export default function ProfilePage() {
     <div className="pb-24">
       <PageHeader
         title="Profile & preferences"
-        description="Change anything here and the Student Success Engine recalculates your costs, journey steps, risk alerts and recommendations."
+        description="Change anything and your plan recalculates."
       />
 
       {changes && (
@@ -157,7 +157,7 @@ export default function ProfilePage() {
             Your data
           </h2>
           <p className="mt-1 text-sm text-muted">
-            Everything is stored in this browser only. {BRAND.name} never asks for ID numbers, passwords or bank details.
+            {BRAND.name} never asks for ID numbers, passwords or bank details.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
             <Button
@@ -169,10 +169,10 @@ export default function ProfilePage() {
                 navigate('/app');
               }}
             >
-              Load Tatenda’s demo profile
+              Load demo profile
             </Button>
             <Button variant="ghost" icon={<Trash aria-hidden className="size-4" />} onClick={() => setConfirmClear(true)} className="text-clay-600 hover:bg-clay-50">
-              Clear all my data
+              Clear my data
             </Button>
           </div>
         </section>

@@ -75,7 +75,7 @@ export function EnginePreview() {
                 onClick={complete}
                 className="inline-flex h-9 items-center gap-1.5 rounded-full bg-veld-300 px-4 text-sm font-semibold text-ink hover:bg-veld-200"
               >
-                <CircleCheck aria-hidden className="size-4" /> Try it: mark as done
+                <CircleCheck aria-hidden className="size-4" /> Mark as done
               </button>
             )}
             {steps > 0 && (

@@ -3,6 +3,7 @@ import { ExternalLink, Info } from 'lucide-react';
 import type { FundingOpportunity, Institution, OpportunityMatch, OpportunityStatus } from '../../types';
 import { Badge, DemoTag } from '../ui/Badge';
 import { MoneyInput } from '../forms/Fields';
+import { Why } from '../ui/Why';
 import { OPPORTUNITY_STATUS } from '../../data/labels';
 import { cn } from '../../utils/cn';
 
@@ -40,15 +41,15 @@ export function OpportunityCard({
       <p className="text-sm text-muted">{op.provider}</p>
       <p className="mt-3 text-sm text-body">{op.summary}</p>
 
-      <div className="mt-3 rounded-xl bg-paper p-3 text-sm">
+      <Why className="mt-2" label="Why this match?">
         <p className="font-semibold text-ink">Basic eligibility</p>
-        <p className="mt-0.5 text-body">{op.eligibilitySummary}</p>
+        <p className="mt-0.5">{op.eligibilitySummary}</p>
         <ul className="mt-2 space-y-0.5 text-xs text-muted">
           {match.reasons.map((r) => (
             <li key={r}>• {r}</li>
           ))}
         </ul>
-      </div>
+      </Why>
 
       {op.id === 'institution-aid' && institutions.length > 0 && (
         <ul className="mt-3 space-y-1.5 text-sm">
@@ -97,7 +98,7 @@ export function OpportunityCard({
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3 text-xs text-muted">
         <span className="inline-flex items-center gap-1.5">
-          <Info aria-hidden className="size-3.5" /> Confirm eligibility and availability with the provider.
+          <Info aria-hidden className="size-3.5" /> Confirm with the provider.
         </span>
         {op.officialUrl ? (
           <a href={op.officialUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-semibold text-veld-700 hover:underline">
@@ -106,7 +107,7 @@ export function OpportunityCard({
             <span className="sr-only">(opens in a new tab)</span>
           </a>
         ) : (
-          <span className="text-xs">{op.isDemoRecord ? 'No link: not a real programme' : op.id === 'institution-aid' ? 'Links to your institutions are above' : 'Check with the provider'}</span>
+          <span className="text-xs">{op.isDemoRecord ? 'Not a real programme' : op.id === 'institution-aid' ? 'Links above' : 'Ask the provider'}</span>
         )}
       </div>
     </article>

@@ -68,7 +68,7 @@ export default function DocumentsPage() {
     <div>
       <PageHeader
         title="Documents"
-        description="Your private vault. Upload a document once, and the app checks it straight away. Share it with a sponsor in one tap, inside the app, never by email."
+        description="Upload once. Checked straight away. Share in one tap."
       />
 
       {/* Sponsor requests */}
@@ -172,7 +172,7 @@ export default function DocumentsPage() {
                   <div className="mt-4 flex flex-1 flex-col justify-end">
                     <div className="mb-3 rounded-lg border border-dashed border-line-strong px-3 py-5 text-center text-xs text-subtle">Not added yet</div>
                     <Button size="sm" variant="secondary" icon={info.writeInApp ? <PenLine aria-hidden className="size-4" /> : <Upload aria-hidden className="size-4" />} onClick={() => (info.writeInApp ? setWriting(true) : setUploadKind(kind))}>
-                      {info.writeInApp ? 'Write in the app' : 'Add document'}
+                      {info.writeInApp ? 'Write it here' : 'Add document'}
                     </Button>
                   </div>
                 )}

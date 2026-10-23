@@ -21,7 +21,7 @@ export default function SponsorMessagesPage() {
     <div>
       <PageHeader
         title="Messages"
-        description="Every conversation stays here. Contact details are removed automatically and requests for payment are blocked."
+        description="Contact details removed. Payment requests blocked."
       />
       {threads.length === 0 ? (
         <EmptyState icon={<Inbox aria-hidden className="size-5" />} title="No conversations yet">

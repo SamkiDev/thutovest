@@ -33,10 +33,8 @@ export function JourneyHero({ state, engine }: { state: StudentState; engine: En
             {greeting()}, {state.profile.firstName}
           </h1>
           <p className="mt-3 max-w-xl text-[0.9375rem] text-white/80">
-            You’re in the <strong className="font-semibold text-white">{stage.title.toLowerCase()}</strong> stage.{' '}
-            {urgent > 0
-              ? `${urgent} ${urgent === 1 ? 'item needs' : 'items need'} attention this week. Clear ${urgent === 1 ? 'it' : 'them'} first to stay on track.`
-              : 'Nothing urgent is flagged right now. Keep working through your next steps.'}
+            <strong className="font-semibold text-white">{stage.title}</strong>.{' '}
+            {urgent > 0 ? `${urgent} urgent ${urgent === 1 ? 'item' : 'items'} this week.` : 'Nothing urgent right now.'}
           </p>
         </div>
 

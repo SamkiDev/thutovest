@@ -6,6 +6,7 @@ import { useAgent } from '../hooks/useAgent';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePlatform } from '../platform/PlatformProvider';
 import { PageHeader } from '../components/ui/Misc';
+import { Why } from '../components/ui/Why';
 import { AgentPanel } from '../components/agent/AgentCard';
 import { activityRhythm, forecastCashFlow, forecastPace, fundingScenarios } from '../intelligence/forecast';
 import { formatZAR, formatZARCompact, pluralise } from '../utils/format';
@@ -37,7 +38,7 @@ export default function ForecastPage() {
     <div>
       <PageHeader
         title="Forecast"
-        description="Predictions from your own patterns: how fast you work, when you’re active, and when money moves. Each one shows the data behind it."
+        description="Predictions from your own patterns, with the data behind each."
       />
 
       <div className="grid grid-cols-1 gap-5 lg:grid-cols-2 lg:gap-6">
@@ -52,12 +53,12 @@ export default function ForecastPage() {
                 {pace.projections.length === 0
                   ? 'No open deadlines to forecast.'
                   : pace.lateCount === 0
-                    ? `At your pace you’ll meet all ${pace.projections.length} deadlines.`
-                    : `At your pace, ${pace.lateCount} of ${pace.projections.length} deadlines are likely to be missed.`}
+                    ? `All ${pace.projections.length} deadlines on track at your pace.`
+                    : `${pace.lateCount} of ${pace.projections.length} deadlines at risk at your pace.`}
               </p>
               {pace.lateCount > 0 && (
                 <p className="mt-2 text-sm text-body">
-                  To meet every deadline, aim for about <strong>{pace.requiredPerWeek} tasks a week</strong> until {formatDate(pace.projections[0].task.dueDate!)}.
+                  Aim for <strong>{pace.requiredPerWeek} tasks a week</strong> until {formatDate(pace.projections[0].task.dueDate!)}.
                 </p>
               )}
             </div>
@@ -69,13 +70,13 @@ export default function ForecastPage() {
           </div>
 
           {pace.projections.length > 0 && <PaceTimeline projections={pace.projections} />}
-          <p className="mt-4 text-xs text-muted">
+          <Why className="mt-3">
             Based on{' '}
             {pace.basis === 'history'
               ? `${pace.completions} tasks you finished in the last ${pace.windowDays} days`
               : `an assumed ${pace.perWeek} tasks a week until you have more history`}
             . Tasks are worked through in deadline order; steps already in progress count as half done.
-          </p>
+          </Why>
         </section>
 
         {/* Rhythm */}
@@ -93,7 +94,7 @@ export default function ForecastPage() {
               Next reminder: {timeFmt.format(rhythm.nextNudge)}
             </p>
           )}
-          <p className="mt-3 text-xs text-muted">From {rhythm.sample} timestamps of tasks and actions in your plan.</p>
+          <Why className="mt-2">From {rhythm.sample} timestamps of tasks and actions in your plan. Reminders are timed for when you usually act.</Why>
         </section>
 
         {/* Funding scenarios */}
@@ -115,9 +116,9 @@ export default function ForecastPage() {
               ))}
             </ul>
           ) : (
-            <p className="mt-4 text-sm text-muted">Nothing is pending yet. Submit a funding application or share your profile with a sponsor to see a second scenario.</p>
+            <p className="mt-4 text-sm text-muted">Nothing pending yet. Apply or share your profile to compare.</p>
           )}
-          <p className="mt-3 text-xs text-muted">Pending external applications use a planning estimate of the costs they usually cover. Only the provider decides the real amount.</p>
+          <Why className="mt-2">Pending external applications use a planning estimate of the costs they usually cover. Only the provider decides the real amount.</Why>
         </section>
 
         {/* Cash flow */}
@@ -129,15 +130,15 @@ export default function ForecastPage() {
               </h2>
               <p className="mt-2 font-display text-2xl leading-tight font-bold text-ink">
                 {cash.firstShortMonth
-                  ? `You’re predicted to run short in ${cash.firstShortMonth.month}, by about ${formatZAR(Math.round(-cash.firstShortMonth.balance / 100) * 100)}.`
-                  : 'Your money lasts the whole year on current estimates.'}
+                  ? `${formatZAR(Math.round(-cash.firstShortMonth.balance / 100) * 100)} short in ${cash.firstShortMonth.month}.`
+                  : 'Your money lasts the whole year.'}
               </p>
-              <p className="mt-1 text-sm text-body">Running balance month by month, if your current plan and funding stay the same.</p>
+              <p className="mt-1 text-sm text-body">If your plan and funding stay the same.</p>
             </div>
           </div>
           <CashChart months={cash.months} />
           <details className="mt-4 text-sm">
-            <summary className="cursor-pointer font-semibold text-veld-700">Show the numbers and assumptions</summary>
+            <summary className="cursor-pointer font-semibold text-veld-700">Show numbers</summary>
             <div className="relative mt-3 overflow-x-auto">
               <table className="w-full min-w-[32rem] text-left text-sm">
                 <caption className="sr-only">Monthly cash-flow forecast</caption>

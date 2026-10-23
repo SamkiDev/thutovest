@@ -8,6 +8,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { PageHeader, SectionTitle } from '../components/ui/Misc';
 import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
+import { Why } from '../components/ui/Why';
 import { ChoiceCards, MoneyInput, SelectField } from '../components/forms/Fields';
 import { Ext } from '../components/study-options/InstitutionLinks';
 import { INSTITUTIONS, institutionById } from '../data/institutions';
@@ -27,7 +28,7 @@ import { summariseFunding } from '../utils/funding';
 import { formatZAR } from '../utils/format';
 import { cn } from '../utils/cn';
 
-const LIVING_LABEL: Record<LivingArrangement, string> = { home: 'living at home', residence: 'a university or college residence', private: 'private accommodation' };
+const LIVING_LABEL: Record<LivingArrangement, string> = { home: 'living at home', residence: 'residence', private: 'private place' };
 const KIND_TO_LIVING: Record<PlaceKind, LivingArrangement> = { residence: 'residence', private: 'private', family: 'home' };
 
 export default function ResidencesPage() {
@@ -39,7 +40,7 @@ export default function ResidencesPage() {
     <div>
       <PageHeader
         title="Residences"
-        description="Find your institution’s residence application, check a private place before you pay anything, and see what NSFAS will and won’t pay for."
+        description="Apply for residence, check private places, know the NSFAS rules."
       />
 
       <section aria-labelledby="your-res" className="card p-5 sm:p-6">
@@ -48,8 +49,7 @@ export default function ResidencesPage() {
           title="Your residence applications"
           description={
             <>
-              Your plan uses {LIVING_LABEL[state.profile.livingArrangement]} at {formatZAR(state.costs.accommodation)} a year. Residence places are limited, so apply when you apply
-              to study.
+              {formatZAR(state.costs.accommodation)} a year in your plan ({LIVING_LABEL[state.profile.livingArrangement]}). Apply when you apply to study.
             </>
           }
         />
@@ -90,7 +90,7 @@ export default function ResidencesPage() {
         <SectionTitle
           id="nsfas-rules"
           title="What NSFAS pays for in 2026"
-          description="From the NSFAS eligibility criteria for the 2026 academic year. Each rule shows where it is written."
+          description="From NSFAS’s 2026 eligibility criteria."
         />
         <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {NSFAS_ACCOMMODATION_RULES.map((r) => (
@@ -110,8 +110,7 @@ export default function ResidencesPage() {
       <PortalFinder />
 
       <p className="mt-8 text-xs text-subtle">
-        Official links and NSFAS rules checked on {ACCOMMODATION_CHECKED_ON}. NSFAS publishes allowance amounts yearly; this page doesn’t show cap amounts because no official 2026 figure
-        could be confirmed.
+        Links and rules checked {ACCOMMODATION_CHECKED_ON}. No official 2026 cap amounts yet.
       </p>
     </div>
   );
@@ -151,7 +150,7 @@ function PlaceChecker() {
       <SectionTitle
         id="checker"
         title="Check a place before you pay"
-        description="Answer a few questions about a room or residence you’re considering. Nothing you enter here leaves this device."
+        description="Nothing you enter leaves this device."
       />
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_24rem]">
         <div className="card space-y-6 p-5 sm:p-6">
@@ -170,7 +169,7 @@ function PlaceChecker() {
           {kind === 'private' && (
             <SelectField
               label="Is it accredited?"
-              hint="Look for it on your institution’s accredited list or your NSFAS accommodation portal. A provider saying so isn’t enough."
+              hint="Check your institution’s list or NSFAS portal. A provider’s word isn’t enough."
               value={accreditation}
               onChange={(e) => setAccreditation(e.target.value as Accreditation)}
               options={[
@@ -244,8 +243,10 @@ function PlaceChecker() {
                   />
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-ink">{f.title}</p>
-                    <p className="mt-0.5 text-sm text-body">{f.why}</p>
-                    {f.source && <p className="mt-1 text-xs text-subtle">{f.source}</p>}
+                    <Why>
+                      {f.why}
+                      {f.source && <span className="mt-1 block text-xs text-subtle">{f.source}</span>}
+                    </Why>
                   </div>
                 </li>
               ))}
@@ -261,9 +262,9 @@ function PlaceChecker() {
               </div>
             </dl>
             <Button className="mt-5 w-full" variant={result.verdict === 'stop' ? 'secondary' : 'primary'} disabled={!canUse} onClick={useInPlan}>
-              Use this in my plan
+              Use in plan
             </Button>
-            <p className="mt-2 text-xs text-muted">Updates your accommodation cost, funding gap and forecast. You can change it again on the Funding page.</p>
+            <p className="mt-2 text-xs text-muted">Updates your gap and forecast.</p>
           </div>
         </div>
       </div>
@@ -291,7 +292,7 @@ function PortalFinder() {
       <SectionTitle
         id="portal-finder"
         title="Find your NSFAS accommodation portal"
-        description="NSFAS uses a different accommodation portal per institution. This is the official list from nsfas.org.za for public universities and TVET colleges."
+        description="Each institution has its own NSFAS portal."
       />
       <div className="card grid grid-cols-1 gap-4 p-5 sm:grid-cols-2 sm:p-6">
         <SelectField
@@ -312,8 +313,7 @@ function PortalFinder() {
         {selected && (
           <div className="flex flex-col gap-3 rounded-xl bg-paper p-4 sm:col-span-2 sm:flex-row sm:items-center sm:justify-between">
             <p className="min-w-0 text-sm text-body">
-              NSFAS lists <span className="font-semibold text-ink">{NSFAS_PORTALS[selected.portal].host}</span> for {selected.name}. Use it to find NSFAS-accredited places and apply for
-              private accommodation.
+              <span className="font-semibold text-ink">{NSFAS_PORTALS[selected.portal].host}</span>: find accredited places and apply.
             </p>
             <a
               href={NSFAS_PORTALS[selected.portal].url}

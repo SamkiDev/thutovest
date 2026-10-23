@@ -62,7 +62,7 @@ export default function SponsorJoinPage() {
       <main className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
         <h1 className="text-3xl font-bold sm:text-4xl">Fund students directly</h1>
         <p className="mt-2 max-w-xl text-muted">
-          Register your organisation, pass three quick checks, then publish a fund. The assistant matches you with verified students and pays awards straight to their institution.
+          Register, pass three checks, then publish a fund. Awards go straight to institutions.
         </p>
         <form onSubmit={submit} noValidate className="card mt-8 space-y-6 p-5 sm:p-8">
           <TextField label="Registered organisation name" maxLength={LIMITS.name} value={name} onChange={(e) => setName(e.target.value)} error={errors.name} autoComplete="organization" />
@@ -88,7 +88,7 @@ export default function SponsorJoinPage() {
           <div className="flex flex-col-reverse gap-3 border-t border-line pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted">Prototype: details stay in this browser. Checks are simulated.</p>
             <Button type="submit" size="lg">
-              Register and start checks
+              Start checks
             </Button>
           </div>
         </form>

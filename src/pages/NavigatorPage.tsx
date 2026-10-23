@@ -112,8 +112,7 @@ export default function NavigatorPage() {
           <li className="flex gap-3">
             <div className="max-w-[92%] rounded-2xl border border-line bg-paper px-4 py-3 text-[0.9375rem] text-body">
               <p>
-                Hi {p.firstName}. I can explain your next steps, funding gap, documents and deadlines using the pathway you’ve built. Ask a question or pick one
-                below.
+                Hi {p.firstName}. Ask about your next steps, funding, documents or deadlines.
               </p>
             </div>
           </li>
@@ -173,7 +172,7 @@ export default function NavigatorPage() {
         <section className="rounded-2xl border border-line bg-surface p-4 text-sm">
           <h2 className="text-sm font-semibold">Good to know</h2>
           <p className="mt-2 text-muted">
-            Answers come from a curated script and your pathway data. They are general guidance, not financial, legal or admissions advice. Always confirm with the official source.
+            Scripted answers using your plan. Not financial, legal or admissions advice. Confirm with the official source.
           </p>
           <ul className="mt-3 space-y-1.5">
             {[OFFICIAL.nsfas, OFFICIAL.dhet, OFFICIAL.cao].map((s) => (

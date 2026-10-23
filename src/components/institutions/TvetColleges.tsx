@@ -24,8 +24,7 @@ export function TvetColleges({ defaultProvince }: { defaultProvince?: Province }
   return (
     <div>
       <p className="rounded-xl bg-paper p-3 text-sm text-muted">
-        All 50 public TVET colleges are registered and accredited by the Department of Higher Education and Training, and NSFAS funds approved
-        qualifications at every one of them. Apply on the college’s own website or at a campus.
+        All 50 are registered and accredited by DHET, and NSFAS funds them.
       </p>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-[1fr_14rem]">
@@ -76,11 +75,11 @@ export function TvetColleges({ defaultProvince }: { defaultProvince?: Province }
       )}
 
       <p className="mt-6 text-xs text-subtle">
-        College list:{' '}
+        Sources:{' '}
         <a href={TVET_SOURCE.url} target="_blank" rel="noreferrer" className="underline underline-offset-2 hover:text-ink">
           {TVET_SOURCE.label}
         </a>{' '}
-        and the NSFAS accommodation portal map. Websites checked on {ACCOMMODATION_CHECKED_ON}.
+        and NSFAS. Checked {ACCOMMODATION_CHECKED_ON}.
       </p>
     </div>
   );

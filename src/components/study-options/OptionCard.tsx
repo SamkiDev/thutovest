@@ -1,6 +1,7 @@
 import { Bookmark, BookmarkCheck, CircleAlert, Check, GitCompareArrows, MapPin, Clock } from 'lucide-react';
 import type { StudyMatch } from '../../types';
 import { Badge, DemoTag } from '../ui/Badge';
+import { Why } from '../ui/Why';
 import { FIT_LABEL } from '../../utils/matching';
 import { formatZAR } from '../../utils/format';
 import { MODE_LABEL } from '../../data/labels';
@@ -79,23 +80,24 @@ export function OptionCard({
         </div>
       </dl>
 
-      <div className="mt-4 flex-1">
-        <p className="text-xs font-semibold text-ink">Why it matches you</p>
-        <ul className="mt-1.5 space-y-1">
-          {shownReasons.map((r) => (
-            <li key={r} className="flex gap-1.5 text-sm text-body">
-              <Check aria-hidden className="mt-0.5 size-3.5 shrink-0 text-veld-600" strokeWidth={3} />
-              {r}
-            </li>
+      <div className="mt-3 flex-1">
+        {!compact &&
+          cautions.slice(0, 1).map((c) => (
+            <p key={c} className="flex gap-1.5 text-sm text-amber-800">
+              <CircleAlert aria-hidden className="mt-0.5 size-3.5 shrink-0" />
+              {c}
+            </p>
           ))}
-          {!compact &&
-            cautions.slice(0, 1).map((c) => (
-              <li key={c} className="flex gap-1.5 text-sm text-amber-800">
-                <CircleAlert aria-hidden className="mt-0.5 size-3.5 shrink-0" />
-                {c}
+        <Why label="Why it matches?">
+          <ul className="space-y-1">
+            {shownReasons.map((r) => (
+              <li key={r} className="flex gap-1.5">
+                <Check aria-hidden className="mt-0.5 size-3.5 shrink-0 text-veld-600" strokeWidth={3} />
+                {r}
               </li>
             ))}
-        </ul>
+          </ul>
+        </Why>
       </div>
 
       <div className="mt-4 flex items-center gap-2 border-t border-line pt-3">

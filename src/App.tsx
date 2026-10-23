@@ -27,6 +27,7 @@ const InstitutionsPage = lazy(() => import('./pages/InstitutionsPage'));
 const ResidencesPage = lazy(() => import('./pages/ResidencesPage'));
 const WhatsAppPage = lazy(() => import('./pages/WhatsAppPage'));
 const SignInPage = lazy(() => import('./pages/SignInPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
 const SponsorOverviewPage = lazy(() => import('./pages/sponsor/SponsorOverviewPage'));
 const SponsorCandidatesPage = lazy(() => import('./pages/sponsor/SponsorCandidatesPage'));
 const SponsorFundsPage = lazy(() => import('./pages/sponsor/SponsorFundsPage'));
@@ -64,6 +65,7 @@ export default function App() {
               <Route path="/" element={<LandingPage />} />
               <Route path="/start" element={<OnboardingPage />} />
               <Route path="/signin" element={<SignInPage />} />
+              <Route path="/about" element={<AboutPage />} />
               <Route path="/sponsor/join" element={<SponsorJoinPage />} />
               <Route path="/sponsor" element={<SponsorShell />}>
                 <Route index element={<SponsorOverviewPage />} />

@@ -45,7 +45,7 @@ export default function SponsorPipelinePage() {
     <div>
       <PageHeader
         title="Offers & payments"
-        description="Students sign in the app, then share the documents you asked for. Once you approve them, payment goes straight into the student’s fee account at their institution. Nothing goes by email, and students never handle the money."
+        description="Approve documents, then pay the institution directly."
       />
       <div role="tablist" aria-label="Filter" className="mb-4 flex gap-1.5 overflow-x-auto pb-1">
         {FILTERS.map((f) => (

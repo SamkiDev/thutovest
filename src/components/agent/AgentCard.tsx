@@ -130,9 +130,7 @@ export function AgentPanel({
             <RouteMark className="size-5 text-veld-600" />
             Your assistant
           </h2>
-          <p className="mt-0.5 text-sm text-muted">
-            Works in the background on your data. It acts on small things and asks before sharing anything or committing you.
-          </p>
+          <p className="mt-0.5 text-sm text-muted">Handles small things. Asks before sharing anything.</p>
         </div>
         <Link to="/app/forecast" className="text-sm font-semibold text-veld-700 hover:underline underline-offset-4">
           See forecasts
@@ -164,7 +162,7 @@ export function AgentPanel({
           )}
         </>
       )}
-      {pending.length === 0 && done.length === 0 && <p className="mt-4 text-sm text-muted">Nothing needs attention. I’ll keep watching your deadlines, funding and matches.</p>}
+      {pending.length === 0 && done.length === 0 && <p className="mt-4 text-sm text-muted">Nothing needs you right now.</p>}
     </section>
   );
 }

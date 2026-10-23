@@ -120,7 +120,7 @@ export function gapIdeas(state: StudentState, gap: number): GapIdea[] {
     ideas.push({
       id: 'apply',
       title: 'Apply for your possible funding matches',
-      detail: `${pending === 1 ? '1 possible match has' : `${pending} possible matches have`} not been started yet. Bursaries don’t need to be repaid.`,
+      detail: `${pending} not started yet. Bursaries aren’t repaid.`,
       to: '/app/funding#opportunities',
     });
   }
@@ -128,7 +128,7 @@ export function gapIdeas(state: StudentState, gap: number): GapIdea[] {
     ideas.push({
       id: 'home',
       title: 'Compare living at home',
-      detail: `Accommodation is ${formatZAR(costs.accommodation)} of your estimate. If home is within commuting distance, it could lower costs.`,
+      detail: `${formatZAR(costs.accommodation)} goes on accommodation. Commuting could save this.`,
       to: '/app/profile',
     });
   }
@@ -138,14 +138,14 @@ export function gapIdeas(state: StudentState, gap: number): GapIdea[] {
     ideas.push({
       id: 'cheaper',
       title: 'Look at lower-cost routes into your field',
-      detail: `${cheaper.length} options in your field have lower indicative tuition, from ${formatZAR(lowest.indicativeTuition)} a year.`,
+      detail: `${cheaper.length} cheaper options in your field, from ${formatZAR(lowest.indicativeTuition)} a year.`,
       to: '/app/explore?sort=cost',
     });
   }
   ideas.push({
     id: 'aid-office',
     title: 'Speak to the financial aid office',
-    detail: 'Ask about payment plans, registration-fee waivers and emergency funds before registration.',
+    detail: 'Ask about payment plans, fee waivers and emergency funds.',
     to: '/app/navigator?ask=funding',
   });
   return ideas.slice(0, 3);
