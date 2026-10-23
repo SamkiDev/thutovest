@@ -118,6 +118,8 @@ Deno.serve(async (req) => {
       if (!action || typeof action !== 'object' || typeof action.type !== 'string' || action.type === 'hydrate') {
         return json({ error: 'bad-action' }, 400, headers);
       }
+      // Verification results come from the verification service, never from a sponsor's own browser.
+      if (action.type === 'setSponsorCheck') return json({ error: 'not-permitted' }, 403, headers);
 
       for (let attempt = 0; attempt < 4; attempt++) {
         const { state, version } = await readState();

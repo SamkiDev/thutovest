@@ -21,3 +21,6 @@ supabase/.branches
 !.vscode/extensions.json
 .idea
 *.log
+
+.vercel
+.env*
