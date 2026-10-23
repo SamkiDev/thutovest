@@ -4,7 +4,9 @@ import { BRAND } from '../config/brand';
 
 /**
  * DEMONSTRATION MARKETPLACE. Every sponsor, fund and student below is
- * fictional. Registration numbers follow real formats but are invented.
+ * fictional, except FNB, which appears by name as an illustration for the FNB
+ * App of the Year Hackathon. Its fund is not a real FNB offer and the UI says
+ * so. Other registration numbers follow real formats but are invented.
  */
 
 const hoursAgo = (h: number) => new Date(Date.now() - h * 3600_000).toISOString();
@@ -12,6 +14,7 @@ const verified = { status: 'verified' as const, updatedAt: hoursAgo(24 * 20) };
 
 export const DEMO_SPONSOR_ID = 'sp-ridgeline';
 export const SCAM_SPONSOR_ID = 'sp-quickbursary';
+export const FNB_SPONSOR_ID = 'sp-fnb';
 
 export const DEMO_ACCOUNTS = {
   student: { email: `thando@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-thando' },
@@ -31,6 +34,19 @@ function sponsors(): SponsorOrg[] {
       status: 'active',
       isDemo: true,
       createdAt: hoursAgo(24 * 120),
+    },
+    {
+      id: FNB_SPONSOR_ID,
+      name: 'FNB',
+      type: 'company',
+      registrationNumber: '1929/001225/06',
+      contactName: 'FNB bursary team',
+      about:
+        'First National Bank, shown as an illustrative sponsor for the FNB App of the Year Hackathon 2026. This listing shows how a bank could fund students through ThutoVest. It is not an actual FNB bursary.',
+      verification: { organisation: verified, representative: verified, bank: verified },
+      status: 'active',
+      isDemo: true,
+      createdAt: hoursAgo(24 * 60),
     },
     {
       id: 'sp-community',
@@ -97,6 +113,23 @@ function funds(start: string): Fund[] {
       closesOn: addDays(start, 52),
       status: 'open',
       createdAt: hoursAgo(24 * 9),
+    },
+    {
+      id: 'fund-fnb-fintech',
+      sponsorId: FNB_SPONSOR_ID,
+      name: 'Future in Fintech Bursary (demo)',
+      description:
+        'Illustrative demo listing, not an actual FNB offer. Tuition and books for computing and commerce students at public universities, paid straight to the institution.',
+      budget: 1_200_000,
+      maxPerStudent: 80000,
+      places: 15,
+      fields: ['computing', 'commerce'],
+      provinces: 'all',
+      incomeBands: ['under-350k', '350k-600k'],
+      minTrust: 2,
+      closesOn: addDays(start, 40),
+      status: 'open',
+      createdAt: hoursAgo(24 * 14),
     },
     {
       id: 'fund-community-first',

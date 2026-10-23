@@ -358,7 +358,9 @@ var BRAND = {
 // src/data/platformSeed.ts
 /**
 * DEMONSTRATION MARKETPLACE. Every sponsor, fund and student below is
-* fictional. Registration numbers follow real formats but are invented.
+* fictional, except FNB, which appears by name as an illustration for the FNB
+* App of the Year Hackathon. Its fund is not a real FNB offer and the UI says
+* so. Other registration numbers follow real formats but are invented.
 */
 var hoursAgo = (h) => (/* @__PURE__ */ new Date(Date.now() - h * 36e5)).toISOString();
 var verified = {
@@ -367,6 +369,7 @@ var verified = {
 };
 var DEMO_SPONSOR_ID = "sp-ridgeline";
 var SCAM_SPONSOR_ID = "sp-quickbursary";
+var FNB_SPONSOR_ID = "sp-fnb";
 `${BRAND.demoDomain}`;
 function sponsors() {
 	return [
@@ -385,6 +388,22 @@ function sponsors() {
 			status: "active",
 			isDemo: true,
 			createdAt: hoursAgo(2880)
+		},
+		{
+			id: FNB_SPONSOR_ID,
+			name: "FNB",
+			type: "company",
+			registrationNumber: "1929/001225/06",
+			contactName: "FNB bursary team",
+			about: "First National Bank, shown as an illustrative sponsor for the FNB App of the Year Hackathon 2026. This listing shows how a bank could fund students through ThutoVest. It is not an actual FNB bursary.",
+			verification: {
+				organisation: verified,
+				representative: verified,
+				bank: verified
+			},
+			status: "active",
+			isDemo: true,
+			createdAt: hoursAgo(1440)
 		},
 		{
 			id: "sp-community",
@@ -464,6 +483,22 @@ function funds(start) {
 			closesOn: addDays(start, 52),
 			status: "open",
 			createdAt: hoursAgo(216)
+		},
+		{
+			id: "fund-fnb-fintech",
+			sponsorId: FNB_SPONSOR_ID,
+			name: "Future in Fintech Bursary (demo)",
+			description: "Illustrative demo listing, not an actual FNB offer. Tuition and books for computing and commerce students at public universities, paid straight to the institution.",
+			budget: 12e5,
+			maxPerStudent: 8e4,
+			places: 15,
+			fields: ["computing", "commerce"],
+			provinces: "all",
+			incomeBands: ["under-350k", "350k-600k"],
+			minTrust: 2,
+			closesOn: addDays(start, 40),
+			status: "open",
+			createdAt: hoursAgo(336)
 		},
 		{
 			id: "fund-community-first",
