@@ -71,7 +71,7 @@ ThutoVest helps South African matriculants get from "I want to study" to "I can 
   - **Chat:** a simulator with a numbered menu covering what's new, deadlines, offers, documents, funding gap, when you'll need data and scam reports.
   - **Alerts:** live alerts for offers, document requests, approvals, payments, messages and deadlines 3 days away, which students can choose to switch on or off.
   - **Data plan:** a "when you'll need data" plan with MB estimates and a "get data by" day.
-  - **Real webhook:** written and tested in demo mode, using Thando's data for allowlisted test numbers. **Not deployed yet.**
+  - **Real webhook:** written and tested in demo mode, using Tatenda's data for allowlisted test numbers. **Not deployed yet.**
 - **Residences and colleges (built 23 Oct, hackathon feature):** real data only, sources and check dates in each data file.
   - `/app/institutions` now has three tabs: Universities (plus each official residence page), all **50 public TVET colleges** (each website opened and confirmed, plus its NSFAS accommodation portal), and **Check a private college**.
   - The private college check searches a snapshot of the official **DHET Register of Private Higher Education Institutions** (last update 14 Oct 2026, 172 entries: registered, provisional, cancelled) in `src/data/privateRegister.ts`. It explains that SAQA does not accredit colleges: DHET registers them, CHE, Umalusi and QCTO accredit qualifications. Registration numbers are only shown where the PDF match was unambiguous.
@@ -92,7 +92,7 @@ ThutoVest helps South African matriculants get from "I want to study" to "I can 
 
 | Role | Email | Password |
 |---|---|---|
-| Student (Thando, Grade 12, 17, guardian Nomsa) | `thando@thutovest.demo` | `Demo#2026` |
+| Student (Tatenda, Grade 12, 17, guardian Nomsa) | `tatenda@thutovest.demo` | `Demo#2026` |
 | Sponsor (Ridgeline Technologies) | `funding@ridgeline.demo` | `Demo#2026` |
 
 ## 6. Design rules (a design audit already enforced these)

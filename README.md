@@ -34,7 +34,7 @@ The app uses hash routing, so `dist/` works on any static host.
 
 | Role | Email | Password |
 | --- | --- | --- |
-| Student (Thando, Grade 12, 17 years old) | `thando@thutovest.demo` | `Demo#2026` |
+| Student (Tatenda, Grade 12, 17 years old) | `tatenda@thutovest.demo` | `Demo#2026` |
 | Sponsor (Ridgeline Technologies) | `funding@ridgeline.demo` | `Demo#2026` |
 
 The sign-in page also has one-click demo buttons.
@@ -45,13 +45,13 @@ The sign-in page also has one-click demo buttons.
 
 Everything happens inside the app. No email, no WhatsApp and no outside forms.
 
-1. **Student tab:** sign in as Thando. The assistant shows a Ridgeline bursary match. Approve **Share my profile**.
+1. **Student tab:** sign in as Tatenda. The assistant shows a Ridgeline bursary match. Approve **Share my profile**.
 2. **Sponsor tab:** sign in as Ridgeline.
    - Go to **Offers & payments**, then **Review documents** on Ayesha (seeded). Payment is locked until every required document is approved.
-   - Go to **Candidates**, then Thando, then **Make offer**. The admission letter is always required; tick any extra documents you want.
+   - Go to **Candidates**, then Tatenda, then **Make offer**. The admission letter is always required; tick any extra documents you want.
 3. **Student tab:** the offer arrives live. Open **Sponsors**, then **Review, sign and accept**.
    - Read the funding agreement, type your full name and tick the box to agree.
-   - Thando is 17, so her guardian Nomsa also co-signs on the same device.
+   - Tatenda is 17, so her guardian Nomsa also co-signs on the same device.
 4. **Student tab:** open **Documents**. Each requested document shows **Upload and share**.
    - Tick "simulate an edited document" and add a file. The forgery is caught, and the file can't be saved or shared.
    - Upload again: use a sample file, or take a photo. The automatic check reads the document, matches it to the profile and flags notes (for example "provisional offer").
@@ -60,10 +60,10 @@ Everything happens inside the app. No email, no WhatsApp and no outside forms.
    - Ask for a new copy of the admission letter, with a note. This shows up on the student's Risk Radar and assistant.
    - **Confirm with the institution**, then approve the documents.
    - **Approve funding**, then **Pay institution**.
-6. **Student tab:** the award timeline goes Offer, Signed, Documents 3/3, Approved, Paid. Confirming the admission letter also raised Thando's verification level.
+6. **Student tab:** the award timeline goes Offer, Signed, Documents 3/3, Approved, Paid. Confirming the admission letter also raised Tatenda's verification level.
 7. **Sponsor tab:** on the paid award, use **Request another document** to ask for **semester results**. This is how the sponsor tracks impact.
 8. **Safety:**
-   - Send "WhatsApp me on 082 123 4567" as Thando. The number is removed.
+   - Send "WhatsApp me on 082 123 4567" as Tatenda. The number is removed.
    - Send "pay a R500 admin fee" as the sponsor. The message is blocked and the sponsor is suspended.
 
 Use **Reset demo** (student sidebar) to start again.
@@ -113,7 +113,7 @@ Use **Reset demo** (student sidebar) to start again.
 - **Demo script:**
   1. Open WhatsApp updates, enter any 08x number, tick consent, and press **Get my link code**, then **Send it in the simulator**.
   2. Reply 3 and 6.
-  3. In another tab, as the sponsor, send Thando an offer. The alert arrives in the chat live.
+  3. In another tab, as the sponsor, send Tatenda an offer. The alert arrives in the chat live.
 
 ## How the app "thinks" (Intelligence criterion)
 

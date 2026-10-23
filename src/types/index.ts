@@ -232,7 +232,7 @@ export interface ActivityItem {
 
 export interface StudentState {
   version: 1;
-  /** Platform-wide student id, e.g. stu-thando. */
+  /** Platform-wide student id, e.g. stu-tatenda. */
   id: string;
   onboarded: boolean;
   isDemoStudent: boolean;

@@ -308,7 +308,7 @@ export function AppShell() {
           </>
         }
       >
-        <p className="text-sm text-body">You can start again with your own answers or reload Thando’s demo profile from the homepage.</p>
+        <p className="text-sm text-body">You can start again with your own answers or reload Tatenda’s demo profile from the homepage.</p>
       </Modal>
     </div>
   );
@@ -327,7 +327,7 @@ function NoProfile() {
         <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
           <ButtonLink to="/start">Build my student pathway</ButtonLink>
           <Button variant="secondary" onClick={() => dispatch({ type: 'loadDemo' })}>
-            Explore as Thando (demo)
+            Explore as Tatenda (demo)
           </Button>
         </div>
       </div>

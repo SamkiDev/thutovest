@@ -72,9 +72,9 @@ export function createStateFromProfile(profile: StudentProfile, isDemoStudent = 
   };
 }
 
-/** Thando — the coherent fictional student used throughout the demo. */
+/** Tatenda — the coherent fictional student used throughout the demo. */
 export const DEMO_PROFILE: StudentProfile = {
-  firstName: 'Thando',
+  firstName: 'Tatenda',
   province: 'Gauteng',
   educationStage: 'grade12',
   field: 'computing',
@@ -90,7 +90,7 @@ export const DEMO_PROFILE: StudentProfile = {
   isAdult: false,
 };
 
-/** A timestamp n days ago at a given local hour — Thando mostly works on weekday evenings. */
+/** A timestamp n days ago at a given local hour — Tatenda mostly works on weekday evenings. */
 function daysAgoAt(days: number, hour: number, minute = 10): string {
   const d = new Date();
   d.setDate(d.getDate() - days);
@@ -136,9 +136,9 @@ export function createDemoState(): StudentState {
     discoverable: true,
     documents: [
       {
-        id: 'doc-thando-id',
+        id: 'doc-tatenda-id',
         kind: 'id-copy',
-        fileName: 'certified_ID_copy_Thando.pdf',
+        fileName: 'certified_ID_copy_Tatenda.pdf',
         mimeType: 'application/pdf',
         size: 214_000,
         uploadedAt: daysAgoAt(2, 18, 44),
@@ -149,7 +149,7 @@ export function createDemoState(): StudentState {
           detectedKind: 'id-copy',
           checkedAt: daysAgoAt(2, 18, 44),
           extracted: [
-            { label: 'Name', value: 'Thando (surname hidden)' },
+            { label: 'Name', value: 'Tatenda (surname hidden)' },
             { label: 'ID number', value: 'Hidden. Never shown to sponsors' },
           ],
           findings: [

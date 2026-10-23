@@ -78,7 +78,7 @@ export default function SponsorsPage() {
       <PageHeader
         title="Sponsors"
         description="Verified organisations fund students directly through the app. Money is always paid to your institution, never to you or anyone else."
-        kicker={<DemoTag>Demo records. The FNB listing is illustrative</DemoTag>}
+        kicker={<DemoTag>Demo records. FNB listings are illustrative</DemoTag>}
       />
 
       {blockers.length > 0 && (

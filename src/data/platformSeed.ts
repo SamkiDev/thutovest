@@ -4,8 +4,8 @@ import { BRAND } from '../config/brand';
 
 /**
  * DEMONSTRATION MARKETPLACE. Every sponsor, fund and student below is
- * fictional, except FNB, which appears by name as an illustration for the FNB
- * App of the Year Hackathon. Its fund is not a real FNB offer and the UI says
+ * fictional, except FNB and the FNB App of the Year Hackathon, which appear by
+ * name as illustrations. Their funds are not real FNB offers and the UI says
  * so. Other registration numbers follow real formats but are invented.
  */
 
@@ -15,9 +15,10 @@ const verified = { status: 'verified' as const, updatedAt: hoursAgo(24 * 20) };
 export const DEMO_SPONSOR_ID = 'sp-ridgeline';
 export const SCAM_SPONSOR_ID = 'sp-quickbursary';
 export const FNB_SPONSOR_ID = 'sp-fnb';
+export const FNB_HACKATHON_ID = 'sp-fnb-hackathon';
 
 export const DEMO_ACCOUNTS = {
-  student: { email: `thando@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-thando' },
+  student: { email: `tatenda@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-tatenda' },
   sponsor: { email: `funding@ridgeline.demo`, password: 'Demo#2026', userId: DEMO_SPONSOR_ID },
 };
 
@@ -47,6 +48,19 @@ function sponsors(): SponsorOrg[] {
       status: 'active',
       isDemo: true,
       createdAt: hoursAgo(24 * 60),
+    },
+    {
+      id: FNB_HACKATHON_ID,
+      name: 'FNB App of the Year Hackathon',
+      type: 'company',
+      registrationNumber: '1929/001225/06',
+      contactName: 'Hackathon organisers',
+      about:
+        'The FNB App of the Year Hackathon 2026, where ThutoVest was built, shown as an illustrative sponsor. This listing shows how a hackathon prize could become student funding. It is not an actual FNB award or bursary.',
+      verification: { organisation: verified, representative: verified, bank: verified },
+      status: 'active',
+      isDemo: true,
+      createdAt: hoursAgo(24 * 3),
     },
     {
       id: 'sp-community',
@@ -130,6 +144,23 @@ function funds(start: string): Fund[] {
       closesOn: addDays(start, 40),
       status: 'open',
       createdAt: hoursAgo(24 * 14),
+    },
+    {
+      id: 'fund-fnb-hackathon',
+      sponsorId: FNB_HACKATHON_ID,
+      name: 'Young Builders Award (demo)',
+      description:
+        'Illustrative demo listing, not an actual FNB award. Top-up funding for computing and engineering students who build apps that solve South African problems, paid straight to the institution.',
+      budget: 300_000,
+      maxPerStudent: 25000,
+      places: 12,
+      fields: ['computing', 'engineering'],
+      provinces: 'all',
+      incomeBands: 'all',
+      minTrust: 2,
+      closesOn: addDays(start, 35),
+      status: 'open',
+      createdAt: hoursAgo(24 * 3),
     },
     {
       id: 'fund-community-first',
@@ -227,18 +258,18 @@ function applications(): FundApplication[] {
       amount: 36800,
       agreement: { signedName: 'Ayesha (surname on file)', signedAt: hoursAgo(30), terms: [] },
     }, 5),
-    a('app-thando-quick', 'fund-quick', 'stu-thando', 'declined-by-sponsor', { declineReason: 'Sponsor suspended for requesting a fee' }, 72),
+    a('app-tatenda-quick', 'fund-quick', 'stu-tatenda', 'declined-by-sponsor', { declineReason: 'Sponsor suspended for requesting a fee' }, 72),
   ];
 }
 
 function messages(): Message[] {
   return [
-    { id: 'm-q1', applicationId: 'app-thando-quick', from: 'system', text: 'QuickBursary SA started a conversation about the Instant Study Grant.', at: hoursAgo(73) },
+    { id: 'm-q1', applicationId: 'app-tatenda-quick', from: 'system', text: 'QuickBursary SA started a conversation about the Instant Study Grant.', at: hoursAgo(73) },
     {
       id: 'm-q2',
-      applicationId: 'app-thando-quick',
+      applicationId: 'app-tatenda-quick',
       from: 'sponsor',
-      text: 'Congratulations Thando! You qualify for R50,000. To release it, pay a R350 admin fee by eWallet to 082 555 0199 today.',
+      text: 'Congratulations Tatenda! You qualify for R50,000. To release it, pay a R350 admin fee by eWallet to 082 555 0199 today.',
       at: hoursAgo(72),
       blocked: true,
       flags: [
@@ -248,7 +279,7 @@ function messages(): Message[] {
     },
     {
       id: 'm-q3',
-      applicationId: 'app-thando-quick',
+      applicationId: 'app-tatenda-quick',
       from: 'system',
       text: 'We blocked a message that asked you to pay a fee. Real sponsors never ask for money. QuickBursary SA has been suspended while we review it. You did nothing wrong.',
       at: hoursAgo(72),
@@ -340,7 +371,7 @@ function decisions(): Record<string, SponsorDecision[]> {
 
 function events(): PlatformEvent[] {
   return [
-    { id: 'e1', at: hoursAgo(72), audience: 'student', studentId: 'stu-thando', text: 'Blocked a fee request from QuickBursary SA and suspended the sender', kind: 'safety' },
+    { id: 'e1', at: hoursAgo(72), audience: 'student', studentId: 'stu-tatenda', text: 'Blocked a fee request from QuickBursary SA and suspended the sender', kind: 'safety' },
     { id: 'e2', at: hoursAgo(20), audience: 'sponsor', sponsorId: DEMO_SPONSOR_ID, text: 'Offer of R58,000 sent to Lerato', kind: 'offer' },
     { id: 'e3', at: hoursAgo(6), audience: 'sponsor', sponsorId: DEMO_SPONSOR_ID, text: 'Ayesha shared her admission letter and results', kind: 'document' },
   ];

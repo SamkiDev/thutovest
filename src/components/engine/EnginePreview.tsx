@@ -12,7 +12,7 @@ import { formatZAR, percent } from '../../utils/format';
 import { relativeDays } from '../../utils/dates';
 
 /**
- * A live, self-contained Student Success Engine running on Thando's demo
+ * A live, self-contained Student Success Engine running on Tatenda's demo
  * data. Visitors can complete the next action and watch everything update —
  * the landing page shows the product rather than describing it.
  */
@@ -43,7 +43,7 @@ export function EnginePreview() {
           <div className="flex items-center gap-3">
             <span className="grid size-9 place-items-center rounded-full bg-veld-100 font-display font-bold text-veld-800">T</span>
             <div>
-              <p className="text-sm font-semibold text-ink">Thando’s pathway</p>
+              <p className="text-sm font-semibold text-ink">Tatenda’s pathway</p>
               <p className="text-xs text-muted">Grade 12, Computing & IT, demo student</p>
             </div>
           </div>

@@ -144,9 +144,9 @@ function EngineSection() {
           <div>
             <h3 className="text-2xl font-semibold text-white">See the connection</h3>
             <p className="mt-2 text-white/70">
-              Thando plans to live in residence. Switch to living at home and the funding gap changes. It’s the same recalculation that updates the Risk Radar and next steps inside the app.
+              Tatenda plans to live in residence. Switch to living at home and the funding gap changes. It’s the same recalculation that updates the Risk Radar and next steps inside the app.
             </p>
-            <div role="radiogroup" aria-label="Thando’s living arrangement" className="mt-5 inline-flex rounded-full bg-white/10 p-1">
+            <div role="radiogroup" aria-label="Tatenda’s living arrangement" className="mt-5 inline-flex rounded-full bg-white/10 p-1">
               {(
                 [
                   ['residence', 'University residence'],
@@ -182,7 +182,7 @@ function EngineSection() {
           </div>
           <div className="rounded-3xl bg-surface p-5 text-body sm:p-8">
             <div className="flex items-baseline justify-between gap-3">
-              <p className="text-sm font-semibold text-muted">Thando’s estimated funding gap</p>
+              <p className="text-sm font-semibold text-muted">Tatenda’s estimated funding gap</p>
               <span className="inline-flex items-center gap-1 text-xs text-muted">
                 <FlaskConical aria-hidden className="size-3.5" /> Demo figures
               </span>
@@ -304,7 +304,7 @@ function TwoSides() {
         'Check deadlines and offers on WhatsApp when you’re low on data',
       ],
       cta: { label: 'Build my plan', to: '/start' },
-      alt: { label: 'Try as Thando', to: '/signin' },
+      alt: { label: 'Try as Tatenda', to: '/signin' },
     },
     {
       title: 'For sponsors',
@@ -360,7 +360,7 @@ function ClosingCta() {
             <h2 id="cta-heading" className="text-[1.75rem] leading-tight font-bold text-white sm:text-[2.25rem]">
               Know your next step before the next deadline
             </h2>
-            <p className="mt-2 text-white/80">Answer a few questions in about two minutes, or explore with Thando’s demo profile.</p>
+            <p className="mt-2 text-white/80">Answer a few questions in about two minutes, or explore with Tatenda’s demo profile.</p>
           </div>
           <ButtonLink to="/start" size="lg" variant="light" className="shrink-0">
             Build my plan

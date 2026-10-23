@@ -1,6 +1,6 @@
 /**
  * Demo data for the live bot while the full database is being built.
- * Mirrors the in-app demo student, Thando. Dates are relative to "now",
+ * Mirrors the in-app demo student, Tatenda. Dates are relative to "now",
  * so the demo never goes stale. Clearly fictional: no real person.
  */
 import type { BotSnapshot } from './bot.ts';
@@ -9,8 +9,8 @@ const iso = (now: Date, addDays: number) => new Date(now.getTime() + addDays * 8
 
 export function demoSnapshot(now = new Date()): BotSnapshot {
   return {
-    studentId: 'stu-thando',
-    firstName: 'Thando',
+    studentId: 'stu-tatenda',
+    firstName: 'Tatenda',
     generatedAt: now.toISOString(),
     activeTime: 'weekday evenings',
     deadlines: [

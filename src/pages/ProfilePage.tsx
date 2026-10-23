@@ -165,11 +165,11 @@ export default function ProfilePage() {
               icon={<RotateCcw aria-hidden className="size-4" />}
               onClick={() => {
                 dispatch({ type: 'loadDemo' });
-                notify('Thando’s demo profile has been loaded.', 'info');
+                notify('Tatenda’s demo profile has been loaded.', 'info');
                 navigate('/app');
               }}
             >
-              Load Thando’s demo profile
+              Load Tatenda’s demo profile
             </Button>
             <Button variant="ghost" icon={<Trash aria-hidden className="size-4" />} onClick={() => setConfirmClear(true)} className="text-clay-600 hover:bg-clay-50">
               Clear all my data

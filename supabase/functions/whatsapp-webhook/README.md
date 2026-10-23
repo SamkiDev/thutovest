@@ -3,7 +3,7 @@
 The bot runs as a Supabase Edge Function and answers from the same logic as
 the in-app simulator (`supabase/functions/_shared/whatsapp/bot.ts`).
 For the hackathon it runs in **demo mode**: the team's phones act as the demo
-student, Thando, through Meta's free test number. It costs nothing, because
+student, Tatenda, through Meta's free test number. It costs nothing, because
 messages users send are free and replies stay within the monthly free tier.
 
 ## 1. Meta (about 15 minutes)

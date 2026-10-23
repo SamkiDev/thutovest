@@ -163,7 +163,7 @@ export default function SignInPage() {
               ))}
             </dl>
             <Button variant="secondary" size="sm" className="mt-3 w-full" disabled={busy} onClick={() => enter(role)}>
-              Sign in as {role === 'student' ? 'Thando (student)' : 'Ridgeline Technologies (sponsor)'}
+              Sign in as {role === 'student' ? 'Tatenda (student)' : 'Ridgeline Technologies (sponsor)'}
             </Button>
             <p className="mt-2 text-xs text-muted">Tip: open a student tab and a sponsor tab side by side. Changes appear in the other tab instantly.</p>
           </section>

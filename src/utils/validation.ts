@@ -32,7 +32,7 @@ export function validateSection(d: ProfileDraft, section: ProfileSection): Profi
     const name = d.firstName.trim();
     if (!name) e.firstName = 'Enter the name you’d like us to use.';
     else if (name.length > 40) e.firstName = 'Keep your name under 40 characters.';
-    else if (!/^[\p{L}][\p{L}' -]*$/u.test(name)) e.firstName = 'Use letters only, for example “Thando”.';
+    else if (!/^[\p{L}][\p{L}' -]*$/u.test(name)) e.firstName = 'Use letters only, for example “Tatenda”.';
     if (!d.educationStage) e.educationStage = 'Choose where you are in your studies.';
   }
   if (section === 'goals') {

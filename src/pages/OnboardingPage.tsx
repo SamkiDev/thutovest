@@ -161,7 +161,7 @@ export default function OnboardingPage() {
           <div className="flex items-center gap-1">
             <span className="hidden sm:block">
               <Button variant="ghost" size="sm" onClick={startDemo}>
-                Skip: explore as Thando
+                Skip: explore as Tatenda
               </Button>
             </span>
             <Link to="/" className="grid size-10 place-items-center rounded-full text-muted hover:bg-sunken hover:text-ink" aria-label="Leave setup">
@@ -242,7 +242,7 @@ export default function OnboardingPage() {
               ) : (
                 <span className="sm:hidden">
                   <Button variant="ghost" onClick={startDemo} className="w-full">
-                    Skip: explore as Thando
+                    Skip: explore as Tatenda
                   </Button>
                 </span>
               )}
