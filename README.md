@@ -16,8 +16,9 @@ Built by **Team Thuto** for the FNB App of the Year Hackathon 2026, challenge **
 | --- | --- | --- |
 | Student (Tatenda, Grade 12, 17) | `tatenda@thutovest.demo` | `Demo#2026` |
 | Sponsor (Ridgeline Technologies) | `funding@ridgeline.demo` | `Demo#2026` |
+| One student login per judge | `judge1@thutovest.demo` to `judge5@thutovest.demo` | `Demo#2026` |
 
-The sign-in page has one-click buttons for both. The demo passwords are public on purpose and locked, so nobody can change them.
+The sign-in page has one-click buttons for all of them. Each judge login starts from the same story as Tatenda (a Grade 12 learner with a guardian's consent on file) under its own name, with a plan of its own, so judges don't change each other's work. The demo passwords are public on purpose and locked, so nobody can change them.
 
 - **Watch it live:** open the student and the sponsor in two tabs, or on two phones. Offers, documents and payments appear on the other side in about 2 seconds.
 - **WhatsApp:** in the app, open **WhatsApp updates** and tap **Open WhatsApp** under *Talk to ThutoVest*. Or send `join salmon-castle` to **+1 415 523 8886** yourself, then `hi`. Any phone can join. The bot always answers with the demo student Tatenda's updates, whoever is messaging; see [WhatsApp today and next](#whatsapp-today-and-next).
@@ -31,15 +32,18 @@ The sign-in page has one-click buttons for both. The demo passwords are public o
 4. **Student:** open **Documents** and **Upload and share** the admission letter. Tick "simulate an edited document" first to see a forgery caught.
 5. **Sponsor:** approve the documents, then **Approve funding** and **Pay institution**. Payment stays locked until every required document is approved, and it only ever goes to the institution.
 6. **Safety:** as the sponsor, send "pay a R500 admin fee". The message is blocked and the sponsor suspended.
+7. **Student progress:** open **Marks and progress**, tap **Use a sample report**, then **Save and analyse**. Maths and Physical Sciences slip, the APS drops from 31 to 30, and the advice names the saved courses now out of reach.
+8. **Sponsor:** on the overview, **Student progress** shows Zanele below Ridgeline's 60% pass mark. Send her an **early warning** and arrange the tutor she asked for.
 
-The demo data is shared by everyone using the demo accounts. **Reset demo** in the menu restores it for everyone.
+**Reset demo** in the menu puts your own account back to the start: your plan, applications, offers and messages. Other demo accounts are not affected.
 
 ## What it does
 
 **For students (free)**
 
 - A personal plan from choosing a course to first year, with one next best action at every step
-- Course matches by field, APS, budget, province and preferred institutions. Change the APS and every match is re-scored.
+- Course matches by field, APS, budget, province and preferred institutions. Change the APS and every match is re-scored. Every field has at least six options, including diplomas and higher certificates for lower APS scores.
+- Marks and progress: each time a student adds marks (typed, or read from a report), the app works out the average, the change since last time, the APS and the subjects slipping, compares them with the bursary's pass mark, and says what to do next. A funded student can ask their sponsor for a tutor in one tap.
 - Risk Radar: early warnings for deadlines, missing documents and money gaps, each with its reason
 - Funding Gap Solver: NSFAS, ISFAP, Funza Lushaka, university aid and loans in one view
 - All 26 public universities, all 50 public TVET colleges and the DHET private college register, with official links
@@ -52,6 +56,8 @@ The demo data is shared by everyone using the demo accounts. **Reset demo** in t
 - Candidates ranked by fit and by what this sponsor tends to fund
 - Funds with their own terms: what the bursary pays for (tuition, accommodation, books, transport, living costs or the full cost), a minimum pass mark, work-back years, and whether it must be the student's only bursary
 - Offers, document review, funding approval and payment to the institution, with a forecast of when each fund runs out
+- Student progress for the students they fund: term averages as they come in, flagged when a student slips below the pass mark. The sponsor can send an early warning, worded by the platform so it is fair: it states the requirement, says no decision has been made, and offers help. Tutor requests are answered from the same place.
+- Students share term averages only, never the report or subject marks, and only with the sponsor funding them
 
 **Fair funding rules, enforced on the server**
 
@@ -147,11 +153,11 @@ A Meta WhatsApp Cloud API version (`supabase/functions/whatsapp-webhook`) is als
 npm run typecheck    # TypeScript, strict
 npm run build        # production build
 npm run audit        # known vulnerabilities in dependencies
-npm test             # 72 offline checks, no network or keys needed
+npm test             # 91 offline checks, no network or keys needed
 npm run test:live    # 38 attack probes against the live backend (changes nothing)
 ```
 
-- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 40 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
+- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 59 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, each account's reset touching only its own records, who may see marks and send warnings or tutor requests, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
 - `npm run test:live` reads the public values from `.env.local` and tries what an attacker would: reading every table signed out, forged tokens, oversized requests, students and sponsors acting on each other's records, and replacing the whole state. Every probe must be refused and the data must be unchanged afterwards.
 
 ## Security
@@ -176,12 +182,14 @@ Full write-up: **[SECURITY.md](SECURITY.md)**. In short:
 - The NSFAS 2026 accommodation rules used by "Check a place before you pay"
 - Document type, readability and tamper checks; scam moderation; forecasts and sponsor learning
 - Bursary terms, the two-bursary limit and the remaining-gap cap, checked on the server for every offer and acceptance
+- The progress analysis (averages, APS from NSC levels, slips, pass marks), tutor requests and early warnings, with who may see and send what checked on the server
 
 **Simulated, and labelled in the app**
 
 - Identity, guardian and bank verification, payments to institutions, and institution confirmations
 - Every sponsor, student and award in the marketplace
 - Fees, APS guides and some deadlines in the Study Explorer
+- Reading marks from a report: the demo proposes marks for the student to check before saving
 - The Navigator chat, which uses scripted answers
 
 **Not built yet**
