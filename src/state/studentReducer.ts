@@ -25,7 +25,7 @@ import { formatZAR } from '../utils/format';
 import { addDays } from '../utils/dates';
 
 export type StudentAction =
-  | { type: 'loadDemo' }
+  | { type: 'loadDemo'; userId?: string }
   | { type: 'completeOnboarding'; profile: StudentProfile }
   | { type: 'reset' }
   | { type: 'setTaskStatus'; taskId: string; status: TaskStatus }
@@ -76,7 +76,7 @@ function withShortlistRule(state: StudentState): StudentState {
 }
 
 export function studentReducer(state: StudentState | null, action: StudentAction): StudentState | null {
-  if (action.type === 'loadDemo') return createDemoState();
+  if (action.type === 'loadDemo') return createDemoState(action.userId);
   if (action.type === 'completeOnboarding') return createStateFromProfile(action.profile);
   if (action.type === 'reset') return null;
   if (action.type === 'hydrate') return action.state;

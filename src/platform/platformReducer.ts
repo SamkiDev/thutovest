@@ -23,7 +23,8 @@ import { addDays, todayISO } from '../utils/dates';
 
 export type PlatformAction =
   | { type: 'hydrate'; state: PlatformState }
-  | { type: 'reset' }
+  /** Without a scope it resets everything (this device only). The server always scopes it to the caller. */
+  | { type: 'reset'; scope?: { studentId?: string; sponsorId?: string } }
   | { type: 'expressInterest'; fundId: string; studentId: string; studentName: string; by: 'student' | 'agent' }
   | { type: 'shortlist'; fundId: string; studentId: string; studentName: string }
   | { type: 'declineCandidate'; fundId: string; studentId: string; reason: string }
@@ -72,6 +73,55 @@ function upsertApplication(
   return { state: { ...state, applications: [app, ...state.applications] }, app };
 }
 
+/** Puts one student's records back to the seed and leaves everyone else's alone. */
+function resetStudent(state: PlatformState, studentId: string): PlatformState {
+  const seed = createPlatformSeed();
+  const gone = new Set(state.applications.filter((a) => a.studentId === studentId).map((a) => a.id));
+  const fresh = seed.applications.filter((a) => a.studentId === studentId);
+  const freshIds = new Set(fresh.map((a) => a.id));
+  const decisions: PlatformState['decisions'] = {};
+  for (const [sponsorId, list] of Object.entries(state.decisions)) {
+    decisions[sponsorId] = [...list.filter((d) => d.studentId !== studentId), ...(seed.decisions[sponsorId] ?? []).filter((d) => d.studentId === studentId)];
+  }
+  return {
+    ...state,
+    pool: [...seed.pool.filter((p) => p.id === studentId), ...state.pool.filter((p) => p.id !== studentId)],
+    applications: [...fresh, ...state.applications.filter((a) => !gone.has(a.id))],
+    messages: [...state.messages.filter((m) => !gone.has(m.applicationId)), ...seed.messages.filter((m) => freshIds.has(m.applicationId))],
+    documents: [...state.documents.filter((d) => !gone.has(d.applicationId)), ...seed.documents.filter((d) => freshIds.has(d.applicationId))],
+    decisions,
+    events: [...state.events.filter((e) => e.studentId !== studentId), ...seed.events.filter((e) => e.studentId === studentId)],
+  };
+}
+
+/** Puts one sponsor's organisation, funds and the applications to them back to the seed. Other sponsors are untouched. */
+function resetSponsor(state: PlatformState, sponsorId: string): PlatformState {
+  const seed = createPlatformSeed();
+  const ownFund = (s: PlatformState) => new Set(s.funds.filter((f) => f.sponsorId === sponsorId).map((f) => f.id));
+  const oldFunds = ownFund(state);
+  const seedFunds = ownFund(seed);
+  const gone = new Set(state.applications.filter((a) => oldFunds.has(a.fundId)).map((a) => a.id));
+  const fresh = seed.applications.filter((a) => seedFunds.has(a.fundId));
+  const freshIds = new Set(fresh.map((a) => a.id));
+  const seedOrg = seed.sponsors.find((o) => o.id === sponsorId);
+  const seedPool = new Map(seed.pool.map((p) => [p.id, p]));
+  const decisions = { ...state.decisions };
+  if (seed.decisions[sponsorId]) decisions[sponsorId] = seed.decisions[sponsorId];
+  else delete decisions[sponsorId];
+  return {
+    ...state,
+    sponsors: seedOrg ? state.sponsors.map((o) => (o.id === sponsorId ? seedOrg : o)) : state.sponsors,
+    funds: [...seed.funds.filter((f) => seedFunds.has(f.id)), ...state.funds.filter((f) => !oldFunds.has(f.id))],
+    // The fictional students go back to how they started; real and judge accounts keep their own profiles.
+    pool: state.pool.map((p) => seedPool.get(p.id) ?? p),
+    applications: [...fresh, ...state.applications.filter((a) => !gone.has(a.id))],
+    messages: [...state.messages.filter((m) => !gone.has(m.applicationId)), ...seed.messages.filter((m) => freshIds.has(m.applicationId))],
+    documents: [...state.documents.filter((d) => !gone.has(d.applicationId)), ...seed.documents.filter((d) => freshIds.has(d.applicationId))],
+    decisions,
+    events: [...state.events.filter((e) => e.sponsorId !== sponsorId), ...seed.events.filter((e) => e.sponsorId === sponsorId)],
+  };
+}
+
 function decide(state: PlatformState, sponsorId: string, d: Omit<SponsorDecision, 'at'>): PlatformState {
   const list = (state.decisions[sponsorId] ?? []).filter((x) => !(x.studentId === d.studentId && x.fundId === d.fundId));
   return { ...state, decisions: { ...state.decisions, [sponsorId]: [...list, { ...d, at: now() }] } };
@@ -86,6 +136,8 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
     case 'hydrate':
       return action.state;
     case 'reset':
+      if (action.scope?.studentId) return resetStudent(state, action.scope.studentId);
+      if (action.scope?.sponsorId) return resetSponsor(state, action.scope.sponsorId);
       return createPlatformSeed();
 
     case 'expressInterest': {

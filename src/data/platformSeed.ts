@@ -19,6 +19,26 @@ export const DEMO_ACCOUNTS = {
   sponsor: { email: `funding@ridgeline.demo`, password: 'Demo#2026', userId: DEMO_SPONSOR_ID },
 };
 
+/** One login per judge, each starting from the same story as Tatenda but with a plan of their own. */
+export const JUDGE_ACCOUNTS = [
+  { email: `judge1@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge1', firstName: 'Amahle', guardian: 'Zodwa', relationship: 'Mother' },
+  { email: `judge2@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge2', firstName: 'Bongani', guardian: 'Themba', relationship: 'Father' },
+  { email: `judge3@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge3', firstName: 'Karabo', guardian: 'Dineo', relationship: 'Mother' },
+  { email: `judge4@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge4', firstName: 'Palesa', guardian: 'Lindiwe', relationship: 'Mother' },
+  { email: `judge5@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge5', firstName: 'Thabo', guardian: 'Sibusiso', relationship: 'Father' },
+];
+
+/** Every demo student login: Tatenda first, then the judges. */
+export const DEMO_STUDENTS = [
+  { ...DEMO_ACCOUNTS.student, firstName: 'Tatenda', guardian: 'Nomsa', relationship: 'Mother' },
+  ...JUDGE_ACCOUNTS,
+];
+
+export const demoStudent = (userId: string | undefined) => DEMO_STUDENTS.find((d) => d.userId === userId);
+
+/** Seed ids for a demo student's records, e.g. app-tatenda-quick. */
+const short = (userId: string) => userId.replace(/^stu-/, '');
+
 function sponsors(): SponsorOrg[] {
   return [
     {
@@ -207,6 +227,47 @@ function pool(): CandidateProfile[] {
   });
 }
 
+/** The blocked fee request every demo student starts with, so the safety story is there from the first sign-in. */
+function scamApplication(studentId: string): FundApplication {
+  return {
+    id: `app-${short(studentId)}-quick`,
+    fundId: 'fund-quick',
+    studentId,
+    status: 'declined-by-sponsor',
+    initiatedBy: 'sponsor',
+    createdAt: hoursAgo(96),
+    updatedAt: hoursAgo(72),
+    declineReason: 'Sponsor suspended for requesting a fee',
+  };
+}
+
+function scamMessages(studentId: string, firstName: string): Message[] {
+  const applicationId = `app-${short(studentId)}-quick`;
+  const id = (n: number) => (studentId === DEMO_ACCOUNTS.student.userId ? `m-q${n}` : `m-q${n}-${short(studentId)}`);
+  return [
+    { id: id(1), applicationId, from: 'system', text: 'QuickBursary SA started a conversation about the Instant Study Grant.', at: hoursAgo(73) },
+    {
+      id: id(2),
+      applicationId,
+      from: 'sponsor',
+      text: `Congratulations ${firstName}! You qualify for R50,000. To release it, pay a R350 admin fee by eWallet to 082 555 0199 today.`,
+      at: hoursAgo(72),
+      blocked: true,
+      flags: [
+        { kind: 'payment-request', label: 'Request for payment' },
+        { kind: 'contact-details', label: 'Phone number' },
+      ],
+    },
+    {
+      id: id(3),
+      applicationId,
+      from: 'system',
+      text: 'We blocked a fee request. Real sponsors never ask for money. You did nothing wrong.',
+      at: hoursAgo(72),
+    },
+  ];
+}
+
 function applications(): FundApplication[] {
   const a = (id: string, fundId: string, studentId: string, status: FundApplication['status'], extra: Partial<FundApplication> = {}, h = 48): FundApplication => ({
     id,
@@ -228,32 +289,13 @@ function applications(): FundApplication[] {
       amount: 36800,
       agreement: { signedName: 'Ayesha (surname on file)', signedAt: hoursAgo(30), terms: [] },
     }, 5),
-    a('app-tatenda-quick', 'fund-quick', 'stu-tatenda', 'declined-by-sponsor', { declineReason: 'Sponsor suspended for requesting a fee' }, 72),
+    ...DEMO_STUDENTS.map((d) => scamApplication(d.userId)),
   ];
 }
 
 function messages(): Message[] {
   return [
-    { id: 'm-q1', applicationId: 'app-tatenda-quick', from: 'system', text: 'QuickBursary SA started a conversation about the Instant Study Grant.', at: hoursAgo(73) },
-    {
-      id: 'm-q2',
-      applicationId: 'app-tatenda-quick',
-      from: 'sponsor',
-      text: 'Congratulations Tatenda! You qualify for R50,000. To release it, pay a R350 admin fee by eWallet to 082 555 0199 today.',
-      at: hoursAgo(72),
-      blocked: true,
-      flags: [
-        { kind: 'payment-request', label: 'Request for payment' },
-        { kind: 'contact-details', label: 'Phone number' },
-      ],
-    },
-    {
-      id: 'm-q3',
-      applicationId: 'app-tatenda-quick',
-      from: 'system',
-      text: 'We blocked a fee request. Real sponsors never ask for money. You did nothing wrong.',
-      at: hoursAgo(72),
-    },
+    ...DEMO_STUDENTS.flatMap((d) => scamMessages(d.userId, d.firstName)),
     { id: 'm-a1', applicationId: 'app-ayesha', from: 'system', text: 'Ayesha accepted and signed the funding agreement in the app. Next: documents.', at: hoursAgo(30) },
     { id: 'm-a2', applicationId: 'app-ayesha', from: 'student', text: 'I’ve shared my admission letter and June results. My mom is getting the SASSA letter this week.', at: hoursAgo(6) },
     { id: 'm-l1', applicationId: 'app-lerato', from: 'sponsor', text: 'Hi Lerato, we’d like to offer you R58,000 towards your BSc at TUT. The full amount is paid to your fee account.', at: hoursAgo(20) },
@@ -341,7 +383,14 @@ function decisions(): Record<string, SponsorDecision[]> {
 
 function events(): PlatformEvent[] {
   return [
-    { id: 'e1', at: hoursAgo(72), audience: 'student', studentId: 'stu-tatenda', text: 'Blocked a fee request from QuickBursary SA and suspended the sender', kind: 'safety' },
+    ...DEMO_STUDENTS.map((d, i): PlatformEvent => ({
+      id: i === 0 ? 'e1' : `e1-${short(d.userId)}`,
+      at: hoursAgo(72),
+      audience: 'student',
+      studentId: d.userId,
+      text: 'Blocked a fee request from QuickBursary SA and suspended the sender',
+      kind: 'safety',
+    })),
     { id: 'e2', at: hoursAgo(20), audience: 'sponsor', sponsorId: DEMO_SPONSOR_ID, text: 'Offer of R58,000 sent to Lerato', kind: 'offer' },
     { id: 'e3', at: hoursAgo(6), audience: 'sponsor', sponsorId: DEMO_SPONSOR_ID, text: 'Ayesha shared her admission letter and results', kind: 'document' },
   ];

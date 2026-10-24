@@ -8,7 +8,7 @@ import { TextField } from '../components/forms/Fields';
 import { useStudentContext } from '../hooks/useStudent';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePlatform } from '../platform/PlatformProvider';
-import { DEMO_ACCOUNTS } from '../data/platformSeed';
+import { DEMO_ACCOUNTS, JUDGE_ACCOUNTS, demoStudent } from '../data/platformSeed';
 import { backendEnabled, signInWithBackend } from '../platform/backend';
 import { cn } from '../utils/cn';
 
@@ -29,21 +29,22 @@ export default function SignInPage() {
   const demo = DEMO_ACCOUNTS[role];
 
   const finish = (s: Session) => {
-    if (s.role === 'student' && (!state || state.id !== s.userId)) dispatch({ type: 'loadDemo' });
+    if (s.role === 'student' && (!state || state.id !== s.userId)) dispatch({ type: 'loadDemo', userId: s.userId });
     signIn(s);
     navigate(s.role === 'student' ? '/app' : '/sponsor');
   };
 
   /** Browser-only demo sign-in, used when there is no backend or it can't be reached. */
-  const enterOnDevice = (r: Role) => finish({ role: r, userId: DEMO_ACCOUNTS[r].userId, email: DEMO_ACCOUNTS[r].email, demo: true });
+  const deviceSession = (r: Role): Session => ({ role: r, userId: DEMO_ACCOUNTS[r].userId, email: DEMO_ACCOUNTS[r].email, demo: true });
+  const judgeSession = (j: (typeof JUDGE_ACCOUNTS)[number]): Session => ({ role: 'student', userId: j.userId, email: j.email, demo: true });
 
-  const enterWithBackend = async (address: string, pass: string, fallback: Role | null) => {
+  const enterWithBackend = async (address: string, pass: string, fallback: Session | null) => {
     setBusy(true);
     setError(null);
     const result = await signInWithBackend(address, pass);
     setBusy(false);
     if (result.ok) return finish(result.session);
-    if (result.reason === 'unavailable' && fallback) return enterOnDevice(fallback);
+    if (result.reason === 'unavailable' && fallback) return finish(fallback);
     setError(
       result.reason === 'unavailable'
         ? 'We can’t reach the server right now. Try again, or use a demo account below.'
@@ -51,7 +52,8 @@ export default function SignInPage() {
     );
   };
 
-  const enter = (r: Role) => (backendEnabled ? void enterWithBackend(DEMO_ACCOUNTS[r].email, DEMO_ACCOUNTS[r].password, r) : enterOnDevice(r));
+  const enter = (r: Role) => (backendEnabled ? void enterWithBackend(DEMO_ACCOUNTS[r].email, DEMO_ACCOUNTS[r].password, deviceSession(r)) : finish(deviceSession(r)));
+  const enterJudge = (j: (typeof JUDGE_ACCOUNTS)[number]) => (backendEnabled ? void enterWithBackend(j.email, j.password, judgeSession(j)) : finish(judgeSession(j)));
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -60,7 +62,9 @@ export default function SignInPage() {
       return;
     }
     const match = Object.entries(DEMO_ACCOUNTS).find(([, a]) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password);
-    if (backendEnabled) return void enterWithBackend(email.trim(), password, match ? (match[0] as Role) : null);
+    const judge = JUDGE_ACCOUNTS.find((a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password);
+    if (judge) return enterJudge(judge);
+    if (backendEnabled) return void enterWithBackend(email.trim(), password, match ? deviceSession(match[0] as Role) : null);
     if (!match) {
       setError('That email and password don’t match an account. In this prototype, use one of the demo accounts below.');
       return;
@@ -170,13 +174,35 @@ export default function SignInPage() {
             <Button variant="secondary" size="sm" className="mt-3 w-full" disabled={busy} onClick={() => enter(role)}>
               Try as {role === 'student' ? 'Tatenda' : 'Ridgeline'}
             </Button>
+            {role === 'student' && (
+              <div className="mt-4 border-t border-ink-200 pt-3">
+                <p className="text-xs text-muted">
+                  More than one judge? Each can take their own student login (<span className="font-mono text-ink">judge1</span> to{' '}
+                  <span className="font-mono text-ink">judge{JUDGE_ACCOUNTS.length}@{JUDGE_ACCOUNTS[0].email.split('@')[1]}</span>, same password). Same story, a plan of their own.
+                </p>
+                <div className="mt-2 grid grid-cols-5 gap-1.5">
+                  {JUDGE_ACCOUNTS.map((j, i) => (
+                    <Button
+                      key={j.userId}
+                      variant="secondary"
+                      size="sm"
+                      disabled={busy}
+                      aria-label={`Sign in as judge ${i + 1} (${j.firstName})`}
+                      onClick={() => enterJudge(j)}
+                    >
+                      Judge {i + 1}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
             <p className="mt-2 text-xs text-muted">Tip: open a student and a sponsor tab side by side. Changes appear instantly.</p>
           </section>
 
           <div className="mt-6 space-y-2 text-sm">
             {role === 'student' ? (
               <>
-                {state && state.id !== DEMO_ACCOUNTS.student.userId && (
+                {state && !demoStudent(state.id) && (
                   <button
                     type="button"
                     onClick={() => {

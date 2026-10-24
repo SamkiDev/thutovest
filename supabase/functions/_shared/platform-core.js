@@ -187,8 +187,17 @@ function authorize(state, action, session) {
 	const student = session?.role === "student" ? session.userId : null;
 	const sponsor = session?.role === "sponsor" ? session.userId : null;
 	switch (action.type) {
-		case "hydrate":
-		case "reset": return action;
+		case "hydrate": return action;
+		case "reset":
+			if (student) return {
+				type: "reset",
+				scope: { studentId: student }
+			};
+			if (sponsor) return {
+				type: "reset",
+				scope: { sponsorId: sponsor }
+			};
+			return { type: "reset" };
 		case "expressInterest": {
 			if (!student || action.studentId !== student) return null;
 			const me = state.pool.find((p) => p.id === student);
@@ -484,7 +493,70 @@ var verified = {
 var DEMO_SPONSOR_ID = "sp-ridgeline";
 var SCAM_SPONSOR_ID = "sp-quickbursary";
 var RESHOKETSWE_ID = "sp-reshoketswe";
-`${BRAND.demoDomain}`;
+var DEMO_ACCOUNTS = {
+	student: {
+		email: `tatenda@${BRAND.demoDomain}`,
+		password: "Demo#2026",
+		userId: "stu-tatenda"
+	},
+	sponsor: {
+		email: `funding@ridgeline.demo`,
+		password: "Demo#2026",
+		userId: DEMO_SPONSOR_ID
+	}
+};
+/** One login per judge, each starting from the same story as Tatenda but with a plan of their own. */
+var JUDGE_ACCOUNTS = [
+	{
+		email: `judge1@${BRAND.demoDomain}`,
+		password: "Demo#2026",
+		userId: "stu-judge1",
+		firstName: "Amahle",
+		guardian: "Zodwa",
+		relationship: "Mother"
+	},
+	{
+		email: `judge2@${BRAND.demoDomain}`,
+		password: "Demo#2026",
+		userId: "stu-judge2",
+		firstName: "Bongani",
+		guardian: "Themba",
+		relationship: "Father"
+	},
+	{
+		email: `judge3@${BRAND.demoDomain}`,
+		password: "Demo#2026",
+		userId: "stu-judge3",
+		firstName: "Karabo",
+		guardian: "Dineo",
+		relationship: "Mother"
+	},
+	{
+		email: `judge4@${BRAND.demoDomain}`,
+		password: "Demo#2026",
+		userId: "stu-judge4",
+		firstName: "Palesa",
+		guardian: "Lindiwe",
+		relationship: "Mother"
+	},
+	{
+		email: `judge5@${BRAND.demoDomain}`,
+		password: "Demo#2026",
+		userId: "stu-judge5",
+		firstName: "Thabo",
+		guardian: "Sibusiso",
+		relationship: "Father"
+	}
+];
+/** Every demo student login: Tatenda first, then the judges. */
+var DEMO_STUDENTS = [{
+	...DEMO_ACCOUNTS.student,
+	firstName: "Tatenda",
+	guardian: "Nomsa",
+	relationship: "Mother"
+}, ...JUDGE_ACCOUNTS];
+/** Seed ids for a demo student's records, e.g. app-tatenda-quick. */
+var short = (userId) => userId.replace(/^stu-/, "");
 function sponsors() {
 	return [
 		{
@@ -870,6 +942,54 @@ function pool() {
 		};
 	});
 }
+/** The blocked fee request every demo student starts with, so the safety story is there from the first sign-in. */
+function scamApplication(studentId) {
+	return {
+		id: `app-${short(studentId)}-quick`,
+		fundId: "fund-quick",
+		studentId,
+		status: "declined-by-sponsor",
+		initiatedBy: "sponsor",
+		createdAt: hoursAgo(96),
+		updatedAt: hoursAgo(72),
+		declineReason: "Sponsor suspended for requesting a fee"
+	};
+}
+function scamMessages(studentId, firstName) {
+	const applicationId = `app-${short(studentId)}-quick`;
+	const id = (n) => studentId === DEMO_ACCOUNTS.student.userId ? `m-q${n}` : `m-q${n}-${short(studentId)}`;
+	return [
+		{
+			id: id(1),
+			applicationId,
+			from: "system",
+			text: "QuickBursary SA started a conversation about the Instant Study Grant.",
+			at: hoursAgo(73)
+		},
+		{
+			id: id(2),
+			applicationId,
+			from: "sponsor",
+			text: `Congratulations ${firstName}! You qualify for R50,000. To release it, pay a R350 admin fee by eWallet to 082 555 0199 today.`,
+			at: hoursAgo(72),
+			blocked: true,
+			flags: [{
+				kind: "payment-request",
+				label: "Request for payment"
+			}, {
+				kind: "contact-details",
+				label: "Phone number"
+			}]
+		},
+		{
+			id: id(3),
+			applicationId,
+			from: "system",
+			text: "We blocked a fee request. Real sponsors never ask for money. You did nothing wrong.",
+			at: hoursAgo(72)
+		}
+	];
+}
 function applications() {
 	const a = (id, fundId, studentId, status, extra = {}, h = 48) => ({
 		id,
@@ -901,40 +1021,12 @@ function applications() {
 				terms: []
 			}
 		}, 5),
-		a("app-tatenda-quick", "fund-quick", "stu-tatenda", "declined-by-sponsor", { declineReason: "Sponsor suspended for requesting a fee" }, 72)
+		...DEMO_STUDENTS.map((d) => scamApplication(d.userId))
 	];
 }
 function messages() {
 	return [
-		{
-			id: "m-q1",
-			applicationId: "app-tatenda-quick",
-			from: "system",
-			text: "QuickBursary SA started a conversation about the Instant Study Grant.",
-			at: hoursAgo(73)
-		},
-		{
-			id: "m-q2",
-			applicationId: "app-tatenda-quick",
-			from: "sponsor",
-			text: "Congratulations Tatenda! You qualify for R50,000. To release it, pay a R350 admin fee by eWallet to 082 555 0199 today.",
-			at: hoursAgo(72),
-			blocked: true,
-			flags: [{
-				kind: "payment-request",
-				label: "Request for payment"
-			}, {
-				kind: "contact-details",
-				label: "Phone number"
-			}]
-		},
-		{
-			id: "m-q3",
-			applicationId: "app-tatenda-quick",
-			from: "system",
-			text: "We blocked a fee request. Real sponsors never ask for money. You did nothing wrong.",
-			at: hoursAgo(72)
-		},
+		...DEMO_STUDENTS.flatMap((d) => scamMessages(d.userId, d.firstName)),
 		{
 			id: "m-a1",
 			applicationId: "app-ayesha",
@@ -1107,14 +1199,14 @@ function decisions() {
 }
 function events() {
 	return [
-		{
-			id: "e1",
+		...DEMO_STUDENTS.map((d, i) => ({
+			id: i === 0 ? "e1" : `e1-${short(d.userId)}`,
 			at: hoursAgo(72),
 			audience: "student",
-			studentId: "stu-tatenda",
+			studentId: d.userId,
 			text: "Blocked a fee request from QuickBursary SA and suspended the sender",
 			kind: "safety"
-		},
+		})),
 		{
 			id: "e2",
 			at: hoursAgo(20),
@@ -1261,6 +1353,50 @@ function upsertApplication(state, fundId, studentId, patch, initiatedBy) {
 		app
 	};
 }
+/** Puts one student's records back to the seed and leaves everyone else's alone. */
+function resetStudent(state, studentId) {
+	const seed = createPlatformSeed();
+	const gone = new Set(state.applications.filter((a) => a.studentId === studentId).map((a) => a.id));
+	const fresh = seed.applications.filter((a) => a.studentId === studentId);
+	const freshIds = new Set(fresh.map((a) => a.id));
+	const decisions = {};
+	for (const [sponsorId, list] of Object.entries(state.decisions)) decisions[sponsorId] = [...list.filter((d) => d.studentId !== studentId), ...(seed.decisions[sponsorId] ?? []).filter((d) => d.studentId === studentId)];
+	return {
+		...state,
+		pool: [...seed.pool.filter((p) => p.id === studentId), ...state.pool.filter((p) => p.id !== studentId)],
+		applications: [...fresh, ...state.applications.filter((a) => !gone.has(a.id))],
+		messages: [...state.messages.filter((m) => !gone.has(m.applicationId)), ...seed.messages.filter((m) => freshIds.has(m.applicationId))],
+		documents: [...state.documents.filter((d) => !gone.has(d.applicationId)), ...seed.documents.filter((d) => freshIds.has(d.applicationId))],
+		decisions,
+		events: [...state.events.filter((e) => e.studentId !== studentId), ...seed.events.filter((e) => e.studentId === studentId)]
+	};
+}
+/** Puts one sponsor's organisation, funds and the applications to them back to the seed. Other sponsors are untouched. */
+function resetSponsor(state, sponsorId) {
+	const seed = createPlatformSeed();
+	const ownFund = (s) => new Set(s.funds.filter((f) => f.sponsorId === sponsorId).map((f) => f.id));
+	const oldFunds = ownFund(state);
+	const seedFunds = ownFund(seed);
+	const gone = new Set(state.applications.filter((a) => oldFunds.has(a.fundId)).map((a) => a.id));
+	const fresh = seed.applications.filter((a) => seedFunds.has(a.fundId));
+	const freshIds = new Set(fresh.map((a) => a.id));
+	const seedOrg = seed.sponsors.find((o) => o.id === sponsorId);
+	const seedPool = new Map(seed.pool.map((p) => [p.id, p]));
+	const decisions = { ...state.decisions };
+	if (seed.decisions[sponsorId]) decisions[sponsorId] = seed.decisions[sponsorId];
+	else delete decisions[sponsorId];
+	return {
+		...state,
+		sponsors: seedOrg ? state.sponsors.map((o) => o.id === sponsorId ? seedOrg : o) : state.sponsors,
+		funds: [...seed.funds.filter((f) => seedFunds.has(f.id)), ...state.funds.filter((f) => !oldFunds.has(f.id))],
+		pool: state.pool.map((p) => seedPool.get(p.id) ?? p),
+		applications: [...fresh, ...state.applications.filter((a) => !gone.has(a.id))],
+		messages: [...state.messages.filter((m) => !gone.has(m.applicationId)), ...seed.messages.filter((m) => freshIds.has(m.applicationId))],
+		documents: [...state.documents.filter((d) => !gone.has(d.applicationId)), ...seed.documents.filter((d) => freshIds.has(d.applicationId))],
+		decisions,
+		events: [...state.events.filter((e) => e.sponsorId !== sponsorId), ...seed.events.filter((e) => e.sponsorId === sponsorId)]
+	};
+}
 function decide(state, sponsorId, d) {
 	const list = (state.decisions[sponsorId] ?? []).filter((x) => !(x.studentId === d.studentId && x.fundId === d.fundId));
 	return {
@@ -1287,7 +1423,10 @@ function addMessage(state, m) {
 function platformReducer(state, action) {
 	switch (action.type) {
 		case "hydrate": return action.state;
-		case "reset": return createPlatformSeed();
+		case "reset":
+			if (action.scope?.studentId) return resetStudent(state, action.scope.studentId);
+			if (action.scope?.sponsorId) return resetSponsor(state, action.scope.sponsorId);
+			return createPlatformSeed();
 		case "expressInterest": {
 			const { fund, sponsor } = sponsorOfFund(state, action.fundId);
 			if (!fund || !sponsor) return state;

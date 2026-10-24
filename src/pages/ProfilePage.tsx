@@ -164,8 +164,9 @@ export default function ProfilePage() {
               variant="secondary"
               icon={<RotateCcw aria-hidden className="size-4" />}
               onClick={() => {
-                dispatch({ type: 'loadDemo' });
-                notify('Tatenda’s demo profile has been loaded.', 'info');
+                // A judge login keeps its own account and name; anyone else gets Tatenda.
+                dispatch({ type: 'loadDemo', userId: state.isDemoStudent ? state.id : undefined });
+                notify('The demo profile has been loaded.', 'info');
                 navigate('/app');
               }}
             >

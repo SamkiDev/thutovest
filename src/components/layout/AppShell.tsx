@@ -284,7 +284,7 @@ export function AppShell() {
         title="Reset the demo?"
         description={
           backend
-            ? 'This puts the shared demo marketplace and this demo account back to the start, for everyone using the demo accounts.'
+            ? 'This puts your plan and your own applications, offers and messages back to the start. Other demo accounts are not affected.'
             : 'This clears your profile, tasks, funding plan and the demo marketplace from this device.'
         }
         footer={
@@ -299,7 +299,7 @@ export function AppShell() {
                 // Signed in to the backend: reset the shared demo and this account's saved plan first, while the login is still valid.
                 if (backend) {
                   setResetting(true);
-                  await Promise.allSettled([actOnPlatform({ type: 'reset' }), state.isDemoStudent ? saveStudentState(createDemoState()) : Promise.resolve()]);
+                  await Promise.allSettled([actOnPlatform({ type: 'reset' }), state.isDemoStudent ? saveStudentState(createDemoState(state.id)) : Promise.resolve()]);
                   setResetting(false);
                 }
                 signOut();

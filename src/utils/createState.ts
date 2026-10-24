@@ -5,7 +5,7 @@ import { estimateCosts } from './funding';
 import { addDays, todayISO } from './dates';
 import { matchAll } from './matching';
 import { emptyVerification } from './trust';
-import { DEMO_ACCOUNTS } from '../data/platformSeed';
+import { DEMO_STUDENTS, demoStudent } from '../data/platformSeed';
 import { guardianConsentDocument, guardianConsentStatement } from '../platform/guardianRules';
 
 export const BUDGET_SOURCE_ID = 'src-own';
@@ -99,8 +99,12 @@ function daysAgoAt(days: number, hour: number, minute = 10): string {
   return d.toISOString();
 }
 
-export function createDemoState(): StudentState {
-  const base = createStateFromProfile(DEMO_PROFILE, true, DEMO_ACCOUNTS.student.userId);
+/** The demo story for Tatenda, or for a judge login (same story, the judge's own name and plan). */
+export function createDemoState(userId?: string): StudentState {
+  const who = demoStudent(userId) ?? DEMO_STUDENTS[0];
+  const name = who.firstName;
+  const consent = guardianConsentStatement(name, who.guardian, who.relationship);
+  const base = createStateFromProfile({ ...DEMO_PROFILE, firstName: name }, true, who.userId);
   const start = base.demoStart;
   const history: TaskEvent[] = [
     { taskId: 't-shortlist', status: 'in-progress', at: daysAgoAt(19, 19, 40) },
@@ -131,18 +135,18 @@ export function createDemoState(): StudentState {
       enrolment: { status: 'not-started', note: 'Available once you receive an offer' },
       results: { status: 'not-started' },
       income: { status: 'not-started' },
-      guardianName: 'Nomsa',
-      guardianRelationship: 'Mother',
-      guardianConsentText: guardianConsentStatement('Tatenda', 'Nomsa', 'Mother'),
+      guardianName: who.guardian,
+      guardianRelationship: who.relationship,
+      guardianConsentText: consent,
       guardianConsentAt: daysAgoAt(9, 20),
     },
     discoverable: true,
     documents: [
-      guardianConsentDocument('Tatenda', 'Nomsa', 'Mother', guardianConsentStatement('Tatenda', 'Nomsa', 'Mother'), daysAgoAt(9, 20)),
+      guardianConsentDocument(name, who.guardian, who.relationship, consent, daysAgoAt(9, 20)),
       {
-        id: 'doc-tatenda-id',
+        id: `doc-${who.userId.replace(/^stu-/, '')}-id`,
         kind: 'id-copy',
-        fileName: 'certified_ID_copy_Tatenda.pdf',
+        fileName: `certified_ID_copy_${name}.pdf`,
         mimeType: 'application/pdf',
         size: 214_000,
         uploadedAt: daysAgoAt(2, 18, 44),
@@ -153,7 +157,7 @@ export function createDemoState(): StudentState {
           detectedKind: 'id-copy',
           checkedAt: daysAgoAt(2, 18, 44),
           extracted: [
-            { label: 'Name', value: 'Tatenda (surname hidden)' },
+            { label: 'Name', value: `${name} (surname hidden)` },
             { label: 'ID number', value: 'Hidden. Never shown to sponsors' },
           ],
           findings: [

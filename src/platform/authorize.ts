@@ -68,10 +68,14 @@ export function authorize(state: PlatformState, action: PlatformAction, session:
   const sponsor = session?.role === 'sponsor' ? session.userId : null;
 
   switch (action.type) {
-    // Internal sync and the demo reset: no user-supplied fields to trust.
+    // Internal sync: no user-supplied fields to trust.
     case 'hydrate':
-    case 'reset':
       return action;
+    // The demo reset only ever touches the caller's own records, so judges can't wipe each other's work.
+    case 'reset':
+      if (student) return { type: 'reset', scope: { studentId: student } };
+      if (sponsor) return { type: 'reset', scope: { sponsorId: sponsor } };
+      return { type: 'reset' };
 
     // ---- Student actions: only on the student's own applications ----
     case 'expressInterest': {

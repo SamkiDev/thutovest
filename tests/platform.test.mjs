@@ -11,8 +11,9 @@ const USERS = {
   'tok-tatenda': { id: 'u-1', email: 'tatenda@thutovest.demo' },
   'tok-ridge': { id: 'u-2', email: 'funding@ridgeline.demo' },
   'tok-noprofile': { id: 'u-3', email: 'x@y.z' },
+  'tok-judge1': { id: 'u-4', email: 'judge1@thutovest.demo' },
 };
-const PROFILES = { 'u-1': { role: 'student', app_user_id: 'stu-tatenda' }, 'u-2': { role: 'sponsor', app_user_id: 'sp-ridgeline' } };
+const PROFILES = { 'u-1': { role: 'student', app_user_id: 'stu-tatenda' }, 'u-2': { role: 'sponsor', app_user_id: 'sp-ridgeline' }, 'u-4': { role: 'student', app_user_id: 'stu-judge1' } };
 let db = null; // { state, version }
 let failNextCommit = 0;
 let commits = 0;
@@ -126,7 +127,28 @@ const c0 = commits;
 r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
 check('a write that loses a race is retried and succeeds', r.status === 200 && commits === c0 + 1);
 
-// 8b. Bursary terms, the remaining gap and the two-bursary rule (state is back to the seed after the reset above)
+// 8a. Each demo account resets only its own records
+const resetAll = async () => {
+  await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
+  await call({ op: 'act', action: { type: 'reset' } }, 'tok-judge1');
+  return call({ op: 'act', action: { type: 'reset' } }, 'tok-ridge');
+};
+check('Tatenda’s reset leaves the sponsor as it was (still suspended from the test above)', db.state.sponsors.find((s) => s.id === 'sp-ridgeline').status === 'suspended');
+r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-ridge');
+check('a sponsor’s reset puts its own organisation back to the start', r.status === 200 && db.state.sponsors.find((s) => s.id === 'sp-ridgeline').status !== 'suspended');
+check('every judge login starts with its own blocked scam example', db.state.applications.some((a) => a.id === 'app-judge1-quick' && a.studentId === 'stu-judge1') && db.state.messages.some((m) => m.applicationId === 'app-judge1-quick' && m.blocked));
+await call({ op: 'act', action: { type: 'publishCandidate', profile: { id: 'stu-judge1', firstName: 'Amahle', gap: 80000, totalCost: 150000, discoverable: true, trust: 1, isAdult: true, checks: {} } } }, 'tok-judge1');
+r = await call({ op: 'act', action: { type: 'expressInterest', fundId: 'fund-ridge-dev', studentId: 'stu-judge1', studentName: 'Amahle', by: 'student' } }, 'tok-judge1');
+const judgeApp = () => db.state.applications.find((a) => a.fundId === 'fund-ridge-dev' && a.studentId === 'stu-judge1');
+const judgeHad = r.status === 200 && Boolean(judgeApp());
+await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
+check('one student’s reset leaves another student’s applications alone', judgeHad && Boolean(judgeApp()));
+await call({ op: 'act', action: { type: 'reset' } }, 'tok-judge1');
+check('a student’s own reset clears their applications and profile but keeps the seed example', !judgeApp() && !db.state.pool.some((p) => p.id === 'stu-judge1') && db.state.applications.some((a) => a.id === 'app-judge1-quick'));
+r = await call({ op: 'act', action: { type: 'reset', scope: { studentId: 'stu-judge1' } } }, 'tok-tatenda');
+check('a reset aimed at someone else is rescoped to the caller', r.status === 200);
+
+// 8b. Bursary terms, the remaining gap and the two-bursary rule (state is back to the seed after the resets above)
 const publishAs = (extra) => call({ op: 'act', action: { type: 'publishCandidate', profile: { id: 'stu-tatenda', firstName: 'Tatenda', gap: 80000, totalCost: 150000, discoverable: true, trust: 1, checks: {}, ...extra } } }, 'tok-tatenda');
 const publishGap = (gap) => publishAs({ gap, isAdult: true });
 const offerFrom = (fid, amount) => call({ op: 'act', action: { type: 'sendOffer', fundId: fid, studentId: 'stu-tatenda', studentName: 'Tatenda', amount, note: '', requiredDocs: [] } }, 'tok-ridge');
@@ -154,7 +176,7 @@ await newFund('fund-test-third');
 r = await offerFrom('fund-test-third', 1000);
 check('a third bursary cannot be offered (403)', r.status === 403);
 
-r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
+r = await resetAll();
 await publishGap(80000);
 await newFund('fund-test-only', { covers: 'all', exclusive: true });
 await offerFrom('fund-ridge-dev', 20000);
@@ -169,7 +191,7 @@ r = await offerFrom('fund-test-terms', 10000);
 check('control: the same offer from a fund that allows a second bursary goes through', r.status === 200);
 
 // 8c. Children: hidden until a guardian consents, and offers to them always need the guardian's documents
-r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
+r = await resetAll();
 await publishAs({ isAdult: false, checks: { identity: 'verified', guardian: 'not-started' } });
 r = await call({ op: 'load' }, 'tok-ridge');
 check('a child without guardian consent is hidden from sponsors', r.status === 200 && !r.body.state.pool.some((p) => p.id === 'stu-tatenda'));
@@ -186,7 +208,7 @@ const minorApp = db.state.applications.find((a) => a.fundId === 'fund-ridge-dev'
 const minorKinds = db.state.documents.filter((d) => d.applicationId === minorApp?.id).map((d) => d.kind);
 check('an offer to a child always requires the guardian consent form, ID and proof of guardianship', r.status === 200 && ['guardian-consent', 'guardian-id', 'guardianship-proof'].every((k) => minorKinds.includes(k)), minorKinds.join(','));
 
-r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
+r = await resetAll();
 await publishGap(80000);
 await offerFrom('fund-ridge-dev', 20000);
 const adultApp = db.state.applications.find((a) => a.fundId === 'fund-ridge-dev' && a.studentId === 'stu-tatenda' && a.status === 'offered');
