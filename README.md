@@ -4,7 +4,9 @@
 
 ThutoVest walks a South African matriculant from choosing a course to starting first year. It builds a personal plan, warns them before a deadline, document or funding gap becomes a problem, and connects them with **verified sponsors who pay the institution directly**. Students low on data can follow along on WhatsApp.
 
-Built by **Team Thuto** for the FNB App of the Year Hackathon 2026, challenge **Access to Higher Education**. "Thuto" means learning in Setswana and Sesotho; "vest" means investing in a student.
+Built by **Team Thuto** (Samalani Maluwa, Reshoketswe Makhura and Tebogo Sasa) for the FNB App of the Year Hackathon 2026, challenge **Access to Higher Education**. "Thuto" means learning in Setswana and Sesotho; "vest" means investing in a student.
+
+**Presentation:** [docs/ThutoVest_Presentation.pdf](docs/ThutoVest_Presentation.pdf), 20 slides on why, who, what and how.
 
 > **This is a prototype.** Every sponsor, student and award in it is fictional and labelled as demo data. Identity checks, bank checks and payments are simulated. Institution links, TVET colleges and the private college register are real and sourced. See [What is real and what is simulated](#what-is-real-and-what-is-simulated).
 
@@ -202,3 +204,9 @@ Full write-up: **[SECURITY.md](SECURITY.md)**. In short:
 - Automated tests in CI, an audit log, and point-in-time backups
 
 See the planned list in [SECURITY.md](SECURITY.md).
+
+## Team Thuto
+
+- Samalani Maluwa
+- Reshoketswe Makhura
+- Tebogo Sasa
