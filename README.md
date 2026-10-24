@@ -136,7 +136,7 @@ Full write-up: **[SECURITY.md](SECURITY.md)**. In short:
 
 - The live app, logins, server-side rules, row-level security and live sync between devices
 - The WhatsApp bot on real phones (Twilio sandbox), answering from a fixed demo profile
-- University application, financial aid and residence links for 13 universities (checked 19 October 2026), all 50 public TVET colleges with their NSFAS accommodation portals (checked 23 October 2026), and the DHET Register of Private Higher Education Institutions (14 October 2026 update)
+- University application, financial aid and residence links for all 26 public universities (checked 24 October 2026), all 50 public TVET colleges with their NSFAS accommodation portals (checked 23 October 2026), and the DHET Register of Private Higher Education Institutions (14 October 2026 update)
 - The NSFAS 2026 accommodation rules used by "Check a place before you pay"
 - Document type, readability and tamper checks; scam moderation; forecasts and sponsor learning
 

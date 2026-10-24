@@ -53,26 +53,26 @@ export const RESIDENCE_PAGES: Record<string, { link: OfficialLink; portal: Nsfas
   ufs: { link: { label: 'UFS Housing and Residence Affairs', url: 'https://www.ufs.ac.za/residences' }, portal: 'profprod' },
   nmu: { link: { label: 'Mandela Uni residence admission', url: 'https://studenthousing.mandela.ac.za/Apply-for-Admission' }, portal: 'profprod' },
   ul: { link: { label: 'UL 2027 residence applications', url: 'https://www.ul.ac.za/university-of-limpopo-2027-residence-application-now-open/' }, portal: 'tymprod' },
+  ru: { link: { label: 'Rhodes halls and residences', url: 'https://www.ru.ac.za/residences/' }, portal: 'profprod' },
+  uwc: { link: { label: 'UWC residence applications', url: 'https://www.uwc.ac.za/admission-and-financial-aid/apply/residential-applications' }, portal: 'profprod' },
+  ufh: { link: { label: 'UFH 2026 registration and residence guide', url: 'https://www.ufh.ac.za/registration-information-2026' }, portal: 'profprod' },
+  wsu: { link: { label: 'WSU student accommodation', url: 'https://www.wsu.ac.za/en/study-with-us/undergraduate-programmes/new-students/student-accommodation' }, portal: 'profprod' },
+  nwu: { link: { label: 'NWU residences', url: 'https://studies.nwu.ac.za/studies/residences' }, portal: 'ndtprod' },
+  univen: { link: { label: 'UNIVEN housing and accommodation', url: 'https://www.univen.ac.za/student-affairs/housing-and-accommodation/' }, portal: 'tymprod' },
+  unizulu: { link: { label: 'UNIZULU student housing', url: 'https://www.unizulu.ac.za/student-affairs/student-housing/' }, portal: 'xgprod' },
+  mut: { link: { label: 'MUT student housing', url: 'https://www.mut.ac.za/student-housing/' }, portal: 'xgprod' },
+  vut: { link: { label: 'VUT accommodation', url: 'https://vut.ac.za/accommodation/' }, portal: 'ndtprod' },
+  cut: { link: { label: 'CUT campus accommodation', url: 'https://www.cut.ac.za/student-life---campus-accommodation' }, portal: 'profprod' },
+  smu: { link: { label: 'SMU residences', url: 'https://www.smu.ac.za/students/student-affairs/residence-and-catering/' }, portal: 'ndtprod' },
+  spu: { link: { label: 'SPU residences', url: 'https://www.spu.ac.za/index.php/residences/' }, portal: 'profprod' },
+  ump: { link: { label: 'UMP student housing', url: 'https://www.ump.ac.za/Student-Life/Student-Housing.aspx' }, portal: 'xgprod' },
 };
 
-/** Public universities on the NSFAS portal map that the rest of the app doesn't list yet. */
+/** University campuses on the NSFAS portal map that have their own portal entry (the universities themselves are in RESIDENCE_PAGES). */
 export const OTHER_UNIVERSITY_PORTALS: { name: string; province: Province; portal: NsfasPortalId }[] = [
-  { name: 'Rhodes University', province: 'Eastern Cape', portal: 'profprod' },
-  { name: 'Walter Sisulu University', province: 'Eastern Cape', portal: 'profprod' },
-  { name: 'University of Fort Hare', province: 'Eastern Cape', portal: 'profprod' },
-  { name: 'Central University of Technology', province: 'Free State', portal: 'profprod' },
-  { name: 'Vaal University of Technology', province: 'Gauteng', portal: 'ndtprod' },
   { name: 'North-West University (Vaal)', province: 'Gauteng', portal: 'ndtprod' },
-  { name: 'Sefako Makgatho Health Sciences University', province: 'Gauteng', portal: 'ndtprod' },
-  { name: 'University of Zululand', province: 'KwaZulu-Natal', portal: 'xgprod' },
-  { name: 'Mangosuthu University of Technology', province: 'KwaZulu-Natal', portal: 'xgprod' },
-  { name: 'University of Venda', province: 'Limpopo', portal: 'tymprod' },
   { name: 'Tshwane University of Technology (Polokwane)', province: 'Limpopo', portal: 'xgprod' },
-  { name: 'University of Mpumalanga', province: 'Mpumalanga', portal: 'xgprod' },
   { name: 'Tshwane University of Technology (Mpumalanga)', province: 'Mpumalanga', portal: 'xgprod' },
-  { name: 'Sol Plaatje University', province: 'Northern Cape', portal: 'profprod' },
-  { name: 'North-West University', province: 'North West', portal: 'ndtprod' },
-  { name: 'University of the Western Cape', province: 'Western Cape', portal: 'profprod' },
   { name: 'Nelson Mandela University (George)', province: 'Western Cape', portal: 'profprod' },
 ];
 
