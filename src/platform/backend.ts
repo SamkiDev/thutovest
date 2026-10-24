@@ -28,8 +28,24 @@ export interface PlatformReply {
   error?: string;
 }
 
+/** Thrown when this tab's login has ended and could not be refreshed. */
+export class SessionExpiredError extends Error {
+  constructor() {
+    super('session-expired');
+  }
+}
+
+const isUnauthorized = (error: unknown) => (error as { context?: Response }).context?.status === 401;
+
 async function call(body: object): Promise<PlatformReply> {
-  const { data, error } = await supabase().functions.invoke<PlatformReply>('platform', { body });
+  let { data, error } = await supabase().functions.invoke<PlatformReply>('platform', { body });
+  if (error && isUnauthorized(error)) {
+    // The access token may have lapsed while the tab slept: refresh once and retry.
+    const { data: refreshed } = await supabase().auth.refreshSession();
+    if (!refreshed.session) throw new SessionExpiredError();
+    ({ data, error } = await supabase().functions.invoke<PlatformReply>('platform', { body }));
+    if (error && isUnauthorized(error)) throw new SessionExpiredError();
+  }
   if (error) {
     // 403 replies still carry the current state so the app can correct itself.
     const ctx = (error as { context?: Response }).context;
@@ -61,8 +77,40 @@ export async function signInWithBackend(email: string, password: string): Promis
   }
 }
 
+/**
+ * Signs out this tab only. The default ("global") would end every session of the
+ * account, logging out everyone else using the shared demo login.
+ */
 export async function signOutOfBackend() {
-  if (backendEnabled) await supabase().auth.signOut().catch(() => undefined);
+  if (backendEnabled) await supabase().auth.signOut({ scope: 'local' }).catch(() => undefined);
+}
+
+/**
+ * Calls onLost if this tab's login ends without the user signing out: the refresh
+ * token was revoked or expired, or the stored session could not be recovered.
+ */
+export function watchBackendSession(onLost: () => void): () => void {
+  const client = supabase();
+  let active = true;
+  client.auth.getSession().then(({ data }) => {
+    if (active && !data.session) onLost();
+  });
+  const { data } = client.auth.onAuthStateChange((event, session) => {
+    if (active && (event === 'SIGNED_OUT' || !session)) onLost();
+  });
+  // Browsers pause timers in background tabs; check (and refresh) the login when the tab comes back.
+  const onVisible = () => {
+    if (document.visibilityState !== 'visible') return;
+    client.auth.getSession().then(({ data: d }) => {
+      if (active && !d.session) onLost();
+    });
+  };
+  document.addEventListener('visibilitychange', onVisible);
+  return () => {
+    active = false;
+    data.subscription.unsubscribe();
+    document.removeEventListener('visibilitychange', onVisible);
+  };
 }
 
 /** Calls onTick whenever the shared marketplace changes. The notification carries only a version number. */

@@ -60,11 +60,12 @@ async function rest<T>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 /** The caller's app identity, or null when signed out or the token is not valid. */
-async function sessionFrom(req: Request): Promise<Session | null> {
+/** null = signed out; 'invalid' = a login token was sent but Supabase Auth rejected it (expired or revoked). */
+async function sessionFrom(req: Request): Promise<Session | null | 'invalid'> {
   const token = req.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '';
   if (!token || token === ANON_KEY || token.startsWith('sb_publishable_')) return null;
   const res = await fetch(`${SB_URL}/auth/v1/user`, { headers: { apikey: ANON_KEY || SERVICE_KEY, Authorization: `Bearer ${token}` } });
-  if (!res.ok) return null;
+  if (!res.ok) return 'invalid';
   const user = (await res.json()) as { id?: string; email?: string };
   if (!user.id) return null;
   const [profile] = await rest<{ role: 'student' | 'sponsor'; app_user_id: string }[]>(
@@ -104,6 +105,8 @@ Deno.serve(async (req) => {
 
   try {
     const session = await sessionFrom(req);
+    // Tell the app its login has ended rather than quietly answering as a signed-out visitor.
+    if (session === 'invalid') return json({ error: 'session-expired' }, 401, headers);
 
     if (body.op === 'load') {
       const { state, version } = await readState();

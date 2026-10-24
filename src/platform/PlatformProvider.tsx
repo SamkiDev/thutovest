@@ -4,7 +4,7 @@ import { platformReducer, type PlatformAction } from './platformReducer';
 import { authorize, isPlatformState } from './authorize';
 import { createPlatformSeed } from '../data/platformSeed';
 import { dataStore, KEYS, sessionStore } from './dataStore';
-import { actOnPlatform, backendEnabled, loadPlatform as loadRemote, signOutOfBackend, subscribeToTicks, type PlatformReply } from './backend';
+import { actOnPlatform, backendEnabled, loadPlatform as loadRemote, SessionExpiredError, signOutOfBackend, subscribeToTicks, watchBackendSession, type PlatformReply } from './backend';
 
 interface PlatformContextValue {
   platform: PlatformState;
@@ -16,6 +16,9 @@ interface PlatformContextValue {
   incoming: { seq: number; events: PlatformEvent[] };
   /** True when this tab is signed in to the shared backend rather than running in the browser only. */
   backend: boolean;
+  /** Set when the login ended on its own (expired or revoked); the UI asks the user to sign in again. */
+  sessionLost: boolean;
+  clearSessionLost: () => void;
 }
 
 const PlatformContext = createContext<PlatformContextValue | null>(null);
@@ -47,6 +50,16 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const current = useRef(platform);
   current.current = platform;
   const [incoming, setIncoming] = useState<{ seq: number; events: PlatformEvent[] }>({ seq: 0, events: [] });
+  const [sessionLost, setSessionLost] = useState(false);
+
+  /** The login ended without the user signing out: drop this tab's session and say so. */
+  const loseSession = useCallback(() => {
+    if (!sessionRef.current?.backend) return;
+    sessionStore.save(KEYS.session, null);
+    sessionRef.current = null;
+    setSession(null);
+    setSessionLost(true);
+  }, []);
 
   // Backend bookkeeping: the last version applied, this tab's own events, and requests in flight.
   const version = useRef(0);
@@ -82,8 +95,11 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       reloadAfter.current = true;
       return;
     }
-    loadRemote().then((r) => applyReply(r, false), () => undefined);
-  }, [applyReply]);
+    loadRemote().then(
+      (r) => applyReply(r, false),
+      (e) => (e instanceof SessionExpiredError ? loseSession() : undefined),
+    );
+  }, [applyReply, loseSession]);
 
   const dispatchPlatform = useCallback<Dispatch<PlatformAction>>(
     (action) => {
@@ -94,7 +110,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
       inFlight.current++;
       actOnPlatform(action)
         .then((r) => applyReply(r, true))
-        .catch(() => {
+        .catch((e) => {
+          if (e instanceof SessionExpiredError) return loseSession();
           // Network trouble: fall back to whatever the server has.
           reloadAfter.current = true;
         })
@@ -106,7 +123,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
           }
         });
     },
-    [applyReply, reload],
+    [applyReply, reload, loseSession],
   );
 
   // Browser-only mode: persist, and sync other tabs through localStorage.
@@ -142,11 +159,16 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     return stop;
   }, [remote, session?.userId, hydrate, reload]);
 
+  // Backend mode: notice if the login ends while this tab is open.
+  useEffect(() => (remote ? watchBackendSession(loseSession) : undefined), [remote, loseSession]);
+
   const signIn = useCallback((s: Session) => {
     sessionStore.save(KEYS.session, s);
     sessionRef.current = s;
     setSession(s);
+    setSessionLost(false);
   }, []);
+  const clearSessionLost = useCallback(() => setSessionLost(false), []);
   const signOut = useCallback(() => {
     if (sessionRef.current?.backend) void signOutOfBackend();
     sessionStore.save(KEYS.session, null);
@@ -155,8 +177,8 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ platform, dispatchPlatform, session, signIn, signOut, incoming, backend: remote }),
-    [platform, dispatchPlatform, session, signIn, signOut, incoming, remote],
+    () => ({ platform, dispatchPlatform, session, signIn, signOut, incoming, backend: remote, sessionLost, clearSessionLost }),
+    [platform, dispatchPlatform, session, signIn, signOut, incoming, remote, sessionLost, clearSessionLost],
   );
   return <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>;
 }

@@ -100,6 +100,11 @@ export default function SignInPage() {
             <Logo />
           </Link>
           <h1 className="text-3xl font-bold">Sign in</h1>
+          {(location.state as { expired?: boolean } | null)?.expired && (
+            <p role="status" className="mt-3 rounded-xl bg-amber-50 p-3 text-sm text-amber-800">
+              You were signed out. Please sign in again.
+            </p>
+          )}
 
           <div role="tablist" aria-label="Account type" className="mt-6 grid grid-cols-2 gap-1 rounded-full border border-line-strong bg-surface p-1">
             {(

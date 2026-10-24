@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { HashRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { StudentProvider } from './state/StudentProvider';
-import { PlatformProvider } from './platform/PlatformProvider';
+import { PlatformProvider, usePlatform } from './platform/PlatformProvider';
 import { SponsorShell } from './components/layout/SponsorShell';
 import { ToastProvider } from './hooks/useToast';
 import { AppShell } from './components/layout/AppShell';
@@ -36,6 +36,18 @@ const SponsorMessagesPage = lazy(() => import('./pages/sponsor/SponsorMessagesPa
 const SponsorOrganisationPage = lazy(() => import('./pages/sponsor/SponsorOrganisationPage'));
 const SponsorJoinPage = lazy(() => import('./pages/sponsor/SponsorJoinPage'));
 
+/** When a login ends on its own (expired or revoked), say so and go to sign-in instead of failing quietly. */
+function SessionNotice() {
+  const { sessionLost, clearSessionLost } = usePlatform();
+  const navigate = useNavigate();
+  useEffect(() => {
+    if (!sessionLost) return;
+    clearSessionLost();
+    navigate('/signin', { replace: true, state: { expired: true } });
+  }, [sessionLost, clearSessionLost, navigate]);
+  return null;
+}
+
 function ScrollToTop() {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -60,6 +72,7 @@ export default function App() {
         {/* HashRouter: works on any static host without server rewrites. */}
         <HashRouter>
           <ScrollToTop />
+          <SessionNotice />
           <Suspense fallback={<PageLoader />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />

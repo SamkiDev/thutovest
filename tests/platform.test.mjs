@@ -109,6 +109,12 @@ r = await call({ op: 'act', action: { type: 'publishCandidate', profile: { id: '
 const pub = db.state.pool.find((p) => p.id === 'stu-tatenda');
 check('published profile is whitelisted (no surname or ID, values clamped)', r.status === 200 && pub && !('surname' in pub) && !('idNumber' in pub) && pub.trust === 0 && pub.gap === 0 && pub.onTimeRate === 1 && !('hacked' in pub.checks) && pub.isLive === true);
 
+// 7a. An expired or revoked login is reported, not treated as a signed-out visitor
+r = await call({ op: 'load' }, 'tok-expired');
+check('load with an expired login token returns 401 session-expired', r.status === 401 && r.body?.error === 'session-expired');
+r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-expired');
+check('action with an expired login token returns 401 session-expired', r.status === 401 && r.body?.error === 'session-expired');
+
 // 7b. Sponsors cannot verify themselves
 r = await call({ op: 'act', action: { type: 'setSponsorCheck', sponsorId: 'sp-community', key: 'bank', item: { status: 'verified' } } }, 'tok-ridge');
 const r2 = await call({ op: 'act', action: { type: 'setSponsorCheck', sponsorId: 'sp-ridgeline', key: 'bank', item: { status: 'verified' } } }, 'tok-ridge');
