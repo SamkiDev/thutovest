@@ -14,6 +14,7 @@ import { formatDate, relativeDays } from '../utils/dates';
 import { contactBlockers, studentTrust, TRUST_LABEL } from '../utils/trust';
 import { activityRhythm, forecastCashFlow, forecastPace, profileCompleteness } from './forecast';
 import { fundFit, liveCandidate } from './marketplace';
+import { analyseMarks, isEnrolledStage } from '../platform/progressRules';
 
 const timeFmt = new Intl.DateTimeFormat('en-ZA', { weekday: 'short', hour: '2-digit', minute: '2-digit' });
 
@@ -100,6 +101,36 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
         mode: 'approval',
         effect: { type: 'none' },
         link: { label: 'Upload now', to: `/app/documents?upload=${share.kind}&share=${share.id}` },
+      });
+    }
+  }
+
+  // 2c. Results slipping on a bursary: help early with a tutor, so funding is never lost out of nowhere.
+  if (isEnrolledStage(state.profile.educationStage) && state.marks?.length) {
+    for (const app of activeApps) {
+      const fund = platform.funds.find((f) => f.id === app.fundId);
+      const sponsor = platform.sponsors.find((s) => s.id === fund?.sponsorId);
+      const a = analyseMarks(state.marks, fund?.terms?.minPassMark);
+      const warned = (app.warnings ?? []).length > 0;
+      const waiting = (app.tutorRequests ?? []).some((r) => r.status === 'requested');
+      const subject = a.subjectsDown[0]?.subject ?? a.weak[0]?.subject ?? [...state.marks.at(-1)!.subjects].sort((x, y) => x.mark - y.mark)[0]?.subject;
+      if (waiting || !subject || (a.status === 'on-track' && !warned)) continue;
+      const slip = a.subjectsDown.find((d) => d.subject === subject);
+      items.push({
+        id: `tutor-${app.id}-${a.latest?.term ?? ''}-${subject}`,
+        kind: 'warning',
+        title: `Ask ${sponsor?.name ?? 'your sponsor'} for a tutor in ${subject}`,
+        detail: `${slip ? `${subject} fell from ${slip.from}% to ${slip.to}%. ` : ''}Asking now keeps your bursary safe. I’ll send the request when you approve.`,
+        evidence: [
+          ...a.reasons.slice(0, 3),
+          ...(warned ? [`${sponsor?.name ?? 'Your sponsor'} sent you an early warning`] : []),
+          ...(a.passMark ? [`Your bursary asks for an average of ${a.passMark}%`] : []),
+          'Sponsors would rather help early than review your funding later',
+        ],
+        mode: 'approval',
+        approveLabel: 'Send request',
+        effect: { type: 'requestTutor', applicationId: app.id, subject },
+        link: { label: 'See my progress', to: '/app/progress' },
       });
     }
   }

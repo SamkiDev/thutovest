@@ -613,6 +613,7 @@ export type AgentEffect =
   | { type: 'startTask'; taskId: string }
   | { type: 'enableDiscovery' }
   | { type: 'shareDocument'; shareId: string; documentId: string }
+  | { type: 'requestTutor'; applicationId: string; subject: string }
   | { type: 'none' };
 
 export interface AgentItem {

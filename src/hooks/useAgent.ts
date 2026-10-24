@@ -36,6 +36,9 @@ export function useAgent() {
           dispatch({ type: 'log', text: `Shared ${doc.fileName} with a sponsor in the app`, kind: 'funding' });
           notify(`${doc.fileName} shared in the app. The sponsor can review it now.`);
         }
+      } else if (e.type === 'requestTutor') {
+        dispatchPlatform({ type: 'requestTutor', applicationId: e.applicationId, subject: e.subject, note: '', studentName: state.profile.firstName });
+        notify(`Tutor request for ${e.subject} sent to your sponsor.`);
       } else if (e.type === 'startTask') {
         dispatch({ type: 'setTaskStatus', taskId: e.taskId, status: 'in-progress' });
       }

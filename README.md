@@ -6,7 +6,7 @@ ThutoVest walks a South African matriculant from choosing a course to starting f
 
 Built by **Team Thuto** (Samalani Maluwa, Reshoketswe Makhura and Tebogo Sasa) for the FNB App of the Year Hackathon 2026, challenge **Access to Higher Education**. "Thuto" means learning in Setswana and Sesotho; "vest" means investing in a student.
 
-**Presentation:** [docs/ThutoVest_Presentation.pdf](docs/ThutoVest_Presentation.pdf), 20 slides on why, who, what and how.
+**Presentation:** [docs/ThutoVest_Presentation.pdf](docs/ThutoVest_Presentation.pdf), 21 slides on why, who, what and how, including how a student is supported from admission to graduation.
 
 > **This is a prototype.** Every sponsor, student and award in it is fictional and labelled as demo data. Identity checks, bank checks and payments are simulated. Institution links, TVET colleges and the private college register are real and sourced. See [What is real and what is simulated](#what-is-real-and-what-is-simulated).
 
@@ -23,11 +23,13 @@ Built by **Team Thuto** (Samalani Maluwa, Reshoketswe Makhura and Tebogo Sasa) f
 
 The sign-in page has one-click buttons for all of them. Each judge login starts from the same story as Tatenda (a Grade 12 learner with a guardian's consent on file) under its own name, with a plan of its own, so judges don't change each other's work. The demo passwords are public on purpose and locked, so nobody can change them.
 
-- **Watch it live:** open the student and the sponsor in two tabs, or on two phones. Offers, documents and payments appear on the other side in about 2 seconds.
+- **Use two screens to watch it live.** Most of the demo is a student and a sponsor talking to each other, so open two browser tabs or windows side by side on the same computer: sign in as a student in one and as Ridgeline in the other. Each tab keeps its own login. Two phones work too. Offers, documents, tutor requests and warnings appear on the other side in about 2 seconds.
 - **WhatsApp:** in the app, open **WhatsApp updates** and tap **Open WhatsApp** under *Talk to ThutoVest*. Or send `join salmon-castle` to **+1 415 523 8886** yourself, then `hi`. Any phone can join. The bot always answers with the demo student Tatenda's updates, whoever is messaging; see [WhatsApp today and next](#whatsapp-today-and-next).
 - **Start fresh:** tap **Get started** to build your own plan. It is saved on your device only.
 
 ## Try it in three minutes
+
+Open two tabs side by side first: one for the student, one for the sponsor.
 
 1. **Student:** sign in as Tatenda. The assistant has found a Ridgeline bursary match. Approve **Share my profile**.
 2. **Sponsor:** sign in as Ridgeline in another tab. Open **Candidates**, choose Tatenda and **Make offer**. The admission letter is always required.
@@ -36,7 +38,7 @@ The sign-in page has one-click buttons for all of them. Each judge login starts 
 5. **Sponsor:** approve the documents, then **Approve funding** and **Pay institution**. Payment stays locked until every required document is approved, and it only ever goes to the institution.
 6. **Safety:** as the sponsor, send "pay a R500 admin fee". The message is blocked and the sponsor suspended.
 7. **Student progress:** open **Marks and progress**, tap **Use a sample report**, then **Save and analyse**. Maths and Physical Sciences slip, the APS drops from 31 to 30, and the advice names the saved courses now out of reach.
-8. **University student:** sign in as Nandi, a first-year whose Ridgeline bursary is paid. In **Marks and progress**, tap **Use a sample report** and **Save and analyse**: Mathematics 1A falls from 62% to 55%. Send Ridgeline a **tutor request** for it.
+8. **University student:** sign in as Nandi, a first-year whose Ridgeline bursary is paid. In **Marks and progress**, tap **Use a sample report** and **Save and analyse**: Mathematics 1A falls from 62% to 55%. On the dashboard, the assistant offers to send Ridgeline a **tutor request** for it; approve it.
 9. **Sponsor:** on the overview, **Student progress** shows Nandi's new module marks and her request, and Zanele, a first-year at Nelson Mandela University, below Ridgeline's 60% pass mark, with her module marks (Data Structures and Algorithms at 44%). Send her an **early warning** and arrange the tutor she asked for.
 
 **Reset demo** in the menu puts your own account back to the start: your plan, applications, offers and messages. Other demo accounts are not affected.
@@ -47,7 +49,7 @@ The sign-in page has one-click buttons for all of them. Each judge login starts 
 
 - A personal plan from choosing a course to first year, with one next best action at every step
 - Course matches by field, APS, budget, province and preferred institutions. Change the APS and every match is re-scored. Every field has at least six options, including diplomas and higher certificates for lower APS scores.
-- Marks and progress: each time a student adds marks (typed, or read from a report), the app works out the average, the change since last time, the APS and the subjects slipping, compares them with the bursary's pass mark, and says what to do next. A student at university or college with a bursary can ask their sponsor for a tutor in one tap.
+- Marks and progress: each time a student adds marks (typed, or read from a report), the app works out the average, the change since last time, the APS and the subjects slipping, compares them with the bursary's pass mark, and says what to do next. A student at university or college with a bursary can ask their sponsor for a tutor in one tap, and when marks slip the assistant on the dashboard offers to send that request for them. The aim: a student never loses a bursary out of nowhere at year end.
 - Risk Radar: early warnings for deadlines, missing documents and money gaps, each with its reason
 - Funding Gap Solver: NSFAS, ISFAP, Funza Lushaka, university aid and loans in one view
 - All 26 public universities, all 50 public TVET colleges and the DHET private college register, with official links
