@@ -126,6 +126,47 @@ const c0 = commits;
 r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
 check('a write that loses a race is retried and succeeds', r.status === 200 && commits === c0 + 1);
 
+// 8b. Bursary terms, the remaining gap and the two-bursary rule (state is back to the seed after the reset above)
+const publishGap = (gap) => call({ op: 'act', action: { type: 'publishCandidate', profile: { id: 'stu-tatenda', firstName: 'Tatenda', gap, totalCost: 150000, discoverable: true, trust: 1, checks: {} } } }, 'tok-tatenda');
+const offerFrom = (fid, amount) => call({ op: 'act', action: { type: 'sendOffer', fundId: fid, studentId: 'stu-tatenda', studentName: 'Tatenda', amount, note: '', requiredDocs: [] } }, 'tok-ridge');
+const acceptFrom = (fid) => {
+  const app = db.state.applications.find((a) => a.fundId === fid && a.studentId === 'stu-tatenda' && a.status === 'offered');
+  return call({ op: 'act', action: { type: 'respondOffer', applicationId: app?.id ?? 'none', accept: true, studentName: 'Tatenda', agreement: { signedName: 'Tatenda M', signedAt: new Date().toISOString(), terms: [] } } }, 'tok-tatenda');
+};
+const newFund = (id, terms) => call({ op: 'act', action: { type: 'saveFund', fund: { id, sponsorId: 'sp-ridgeline', name: `Test fund ${id}`, description: 'x', budget: 500000, maxPerStudent: 100000, places: 5, fields: 'all', provinces: 'all', incomeBands: 'all', minTrust: 1, closesOn: '2099-01-01', status: 'open', createdAt: new Date().toISOString(), terms } } }, 'tok-ridge');
+
+await publishGap(80000);
+r = await offerFrom('fund-ridge-dev', 90000);
+check('offer larger than the student’s gap is refused (403)', r.status === 403);
+r = await offerFrom('fund-ridge-dev', 50000);
+const firstOk = r.status === 200;
+r = await acceptFrom('fund-ridge-dev');
+check('first bursary can be offered and accepted', firstOk && r.status === 200);
+r = await offerFrom('fund-ridge-eng', 40000);
+check('second offer above the gap left after the first bursary is refused (403)', r.status === 403);
+r = await offerFrom('fund-ridge-eng', 30000);
+const secondOk = r.status === 200;
+r = await acceptFrom('fund-ridge-eng');
+check('second bursary up to the remaining gap can be accepted', secondOk && r.status === 200);
+await publishGap(200000);
+await newFund('fund-test-third');
+r = await offerFrom('fund-test-third', 1000);
+check('a third bursary cannot be offered (403)', r.status === 403);
+
+r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
+await publishGap(80000);
+await newFund('fund-test-only', { covers: 'all', exclusive: true });
+await offerFrom('fund-ridge-dev', 20000);
+await acceptFrom('fund-ridge-dev');
+r = await offerFrom('fund-test-only', 10000);
+check('an "only bursary" cannot be added to a student who already holds one (403)', r.status === 403);
+
+await newFund('fund-test-terms', { covers: ['tuition', 'hack'], minPassMark: 300, workBackYears: 2, exclusive: 'yes' });
+const savedTerms = db.state.funds.find((f) => f.id === 'fund-test-terms')?.terms;
+check('fund terms are whitelisted on the server', JSON.stringify(savedTerms) === JSON.stringify({ covers: ['tuition'], workBackYears: 2 }), JSON.stringify(savedTerms));
+r = await offerFrom('fund-test-terms', 10000);
+check('control: the same offer from a fund that allows a second bursary goes through', r.status === 200);
+
 // 9. Junk input
 let res = await handler(new Request(`${SB}/functions/v1/platform`, { method: 'POST', body: 'not json' }));
 check('malformed body is rejected (400)', res.status === 400);

@@ -16,6 +16,8 @@ import { Button, ButtonLink } from '../components/ui/Button';
 import { Badge, DemoTag } from '../components/ui/Badge';
 import { MessageThread } from '../components/marketplace/MessageThread';
 import { fundFit, liveCandidate } from '../intelligence/marketplace';
+import { conditionLines, coversText, remainingGap, stackingBlocker, termsOf } from '../platform/bursaryRules';
+import { Why } from '../components/ui/Why';
 import { SAFETY_RULES } from '../intelligence/moderation';
 import { contactBlockers, sponsorVerified, TRUST_LABEL } from '../utils/trust';
 import { formatZAR } from '../utils/format';
@@ -102,6 +104,12 @@ export default function SponsorsPage() {
             {offers.map((app) => {
               const { fund, sponsor } = lookup(app);
               const cover = engine.funding.gap > 0 ? Math.min(1, (app.amount ?? 0) / engine.funding.gap) : 1;
+              // Same rules the server checks on accept: at most two bursaries, never more than the costs left.
+              const left = fund ? remainingGap(me, platform, fund.id) : 0;
+              const blocked = fund
+                ? (stackingBlocker(platform, state.id, fund) ??
+                  ((app.amount ?? 0) > left ? `This offer is more than the ${formatZAR(left)} you still need after your other bursary` : null))
+                : 'This fund is no longer available';
               return (
                 <article key={app.id} className="relative overflow-hidden rounded-[var(--radius-card)] bg-ink p-5 text-white sm:p-6">
                   <p className="flex items-center gap-1.5 text-sm text-veld-200">
@@ -115,6 +123,11 @@ export default function SponsorsPage() {
                   <p className="mt-2 text-sm text-white/80">
                     Covers {Math.round(cover * 100)}% of your {formatZAR(engine.funding.gap)} gap. Paid to {institution}.
                   </p>
+                  {fund && (
+                    <p className="mt-2 text-sm text-white/80">
+                      Pays for: {coversText(termsOf(fund)).toLowerCase()}. {conditionLines(termsOf(fund), sponsor?.name ?? 'the sponsor').join(' ')}
+                    </p>
+                  )}
                   <p className="mt-2 text-xs text-white/65">
                     Documents to share in the app before payment:{' '}
                     {platform.documents
@@ -123,8 +136,13 @@ export default function SponsorsPage() {
                       .join(', ')}
                     .
                   </p>
+                  {blocked && (
+                    <p role="status" className="mt-3 flex items-start gap-2 rounded-xl bg-white/10 p-3 text-sm text-amber-200">
+                      <Lock aria-hidden className="mt-0.5 size-4 shrink-0" /> You can’t accept this: {blocked.charAt(0).toLowerCase() + blocked.slice(1)}.
+                    </p>
+                  )}
                   <div className="mt-5 flex flex-wrap gap-2">
-                    <Button variant="light" onClick={() => setConfirm(app)}>
+                    <Button variant="light" onClick={() => setConfirm(app)} disabled={Boolean(blocked)}>
                       Review, sign and accept
                     </Button>
                     <Button
@@ -243,7 +261,18 @@ export default function SponsorsPage() {
                     <dt className="text-muted">Closes</dt>
                     <dd className="text-sm font-semibold text-ink">{formatDate(fund.closesOn)}</dd>
                   </div>
+                  <div className="col-span-2">
+                    <dt className="text-muted">Pays for</dt>
+                    <dd className="text-sm font-semibold text-ink">{coversText(termsOf(fund))}</dd>
+                  </div>
                 </dl>
+                <Why label="Terms" className="mt-2">
+                  <ul className="space-y-1">
+                    {conditionLines(termsOf(fund), sponsor.name).map((line) => (
+                      <li key={line}>{line}</li>
+                    ))}
+                  </ul>
+                </Why>
                 <ul className="mt-3 flex-1 space-y-1 text-sm">
                   {fit.reasons.slice(0, 3).map((r) => (
                     <li key={r} className="flex gap-1.5 text-body">
@@ -363,6 +392,7 @@ export default function SponsorsPage() {
           app={confirm}
           sponsorName={lookup(confirm).sponsor?.name ?? 'Sponsor'}
           fundName={lookup(confirm).fund?.name ?? ''}
+          terms={lookup(confirm).fund ? termsOf(lookup(confirm).fund!) : undefined}
           institution={institution}
           requiredDocs={platform.documents.filter((d) => d.applicationId === confirm.id && d.required).map((d) => d.kind)}
           firstName={state.profile.firstName}

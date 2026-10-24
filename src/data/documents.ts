@@ -1,4 +1,5 @@
-import type { DocumentKind } from '../types';
+import type { DocumentKind, FundTerms } from '../types';
+import { conditionLines, coversText } from '../platform/bursaryRules';
 
 export const DOCUMENT_INFO: Record<DocumentKind, { label: string; short: string; hint: string; issuerCheck: boolean; writeInApp?: boolean }> = {
   'admission-letter': {
@@ -70,9 +71,11 @@ export async function sniffFileType(file: File): Promise<'pdf' | 'jpeg' | 'png' 
   return null;
 }
 
-export function fundingTerms(sponsorName: string, amount: string, institution: string, docs: string[]): string[] {
+export function fundingTerms(sponsorName: string, amount: string, institution: string, docs: string[], bursary: FundTerms = { covers: 'all' }): string[] {
   return [
     `${sponsorName} awards ${amount} for the next academic year.`,
+    `It pays for: ${coversText(bursary).toLowerCase()}.`,
+    ...conditionLines(bursary, sponsorName),
     `The award is paid only to ${institution}. It is never paid to you, your family or anyone else.`,
     `Payment is released after ${sponsorName} approves these documents, shared through the app: ${docs.join(', ')}.`,
     'You will share your semester results through the app so the sponsor can see your progress.',

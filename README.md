@@ -111,11 +111,11 @@ A Meta WhatsApp Cloud API version (`supabase/functions/whatsapp-webhook`) is als
 npm run typecheck    # TypeScript, strict
 npm run build        # production build
 npm run audit        # known vulnerabilities in dependencies
-npm test             # 58 offline checks, no network or keys needed
+npm test             # 66 offline checks, no network or keys needed
 npm run test:live    # 38 attack probes against the live backend (changes nothing)
 ```
 
-- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 26 server checks (signed-out actions, expired logins, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
+- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 34 server checks (signed-out actions, expired logins, bursary limits, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
 - `npm run test:live` reads the public values from `.env.local` and tries what an attacker would: reading every table signed out, forged tokens, oversized requests, students and sponsors acting on each other's records, and replacing the whole state. Every probe must be refused and the data must be unchanged afterwards.
 
 ## Security

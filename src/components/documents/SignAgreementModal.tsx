@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { PenLine, ShieldCheck } from 'lucide-react';
-import type { DocumentKind, FundApplication, FundingAgreement } from '../../types';
+import type { DocumentKind, FundApplication, FundingAgreement, FundTerms } from '../../types';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { DOCUMENT_INFO, fundingTerms } from '../../data/documents';
@@ -11,6 +11,7 @@ export function SignAgreementModal({
   app,
   sponsorName,
   fundName,
+  terms: bursaryTerms,
   institution,
   requiredDocs,
   firstName,
@@ -22,6 +23,8 @@ export function SignAgreementModal({
   app: FundApplication | null;
   sponsorName: string;
   fundName: string;
+  /** The fund's bursary terms, written into the agreement. */
+  terms?: FundTerms;
   institution: string;
   requiredDocs: DocumentKind[];
   firstName: string;
@@ -35,7 +38,7 @@ export function SignAgreementModal({
   const [guardianOk, setGuardianOk] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!app) return null;
-  const terms = fundingTerms(sponsorName, formatZAR(app.amount ?? 0), institution, requiredDocs.map((k) => DOCUMENT_INFO[k].label.toLowerCase()));
+  const terms = fundingTerms(sponsorName, formatZAR(app.amount ?? 0), institution, requiredDocs.map((k) => DOCUMENT_INFO[k].label.toLowerCase()), bursaryTerms);
 
   const sign = () => {
     if (!name.trim().toLowerCase().startsWith(firstName.toLowerCase()) || name.trim().split(/\s+/).length < 2) {

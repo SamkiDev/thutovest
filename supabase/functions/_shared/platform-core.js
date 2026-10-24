@@ -1,3 +1,52 @@
+/** Statuses where an award is committed to the student. */
+var ACTIVE = [
+	"accepted",
+	"approved",
+	"paid"
+];
+var COVER_ITEMS = [
+	"tuition",
+	"accommodation",
+	"books",
+	"transport",
+	"other"
+];
+/** Older funds have no terms: they cover the full cost, with no conditions. */
+var termsOf = (fund) => fund.terms ?? { covers: "all" };
+/** The student's committed sponsor awards, leaving out the given fund's own award. */
+function activeAwards(platform, studentId, exceptFundId) {
+	return platform.applications.filter((a) => a.studentId === studentId && ACTIVE.includes(a.status) && a.fundId !== exceptFundId);
+}
+/** The gap still unfunded after the student's other sponsor awards. CandidateProfile.gap is the gap before them. */
+function remainingGap(candidate, platform, exceptFundId) {
+	const awarded = activeAwards(platform, candidate.id, exceptFundId).reduce((sum, a) => sum + Math.max(0, a.amount ?? 0), 0);
+	return Math.max(0, candidate.gap - awarded);
+}
+/** Why this fund can't be added to the student's bursaries, or null if it can. */
+function stackingBlocker(platform, studentId, fund) {
+	const others = activeAwards(platform, studentId, fund.id);
+	if (others.length >= 2) return `2 bursaries already accepted (the most allowed)`;
+	if (others.some((a) => {
+		const f = platform.funds.find((x) => x.id === a.fundId);
+		return f ? Boolean(termsOf(f).exclusive) : false;
+	})) return "An accepted bursary must be the only one";
+	if (termsOf(fund).exclusive && others.length > 0) return "Must be the only bursary, but one is already accepted";
+	return null;
+}
+/** Whitelists terms sent by a browser. */
+function sanitizeTerms(raw) {
+	if (!raw || typeof raw !== "object") return void 0;
+	const t = raw;
+	const list = Array.isArray(t.covers) ? COVER_ITEMS.filter((c) => t.covers.includes(c)) : [];
+	const covers = t.covers === "all" || list.length === 0 || list.length === COVER_ITEMS.length ? "all" : list;
+	const whole = (v, max) => typeof v === "number" && Number.isInteger(v) && v > 0 && v <= max ? v : void 0;
+	return {
+		covers,
+		...whole(t.minPassMark, 100) ? { minPassMark: whole(t.minPassMark, 100) } : {},
+		...whole(t.workBackYears, 10) ? { workBackYears: whole(t.workBackYears, 10) } : {},
+		...t.exclusive === true ? { exclusive: true } : {}
+	};
+}
 // src/data/documents.ts
 var DOCUMENT_INFO = {
 	"admission-letter": {
@@ -103,7 +152,13 @@ function authorize(state, action, session) {
 		} : null;
 		case "respondOffer": {
 			const { app } = appOf(state, action.applicationId);
-			if (!student || app?.studentId !== student) return null;
+			if (!student || !app || app.studentId !== student) return null;
+			if (action.accept) {
+				const fund = state.funds.find((f) => f.id === app.fundId);
+				if (!fund || stackingBlocker(state, student, fund)) return null;
+				const candidate = state.pool.find((p) => p.id === student);
+				if (candidate && (app.amount ?? 0) > remainingGap(candidate, state, fund.id)) return null;
+			}
 			const a = action.agreement;
 			return {
 				...action,
@@ -149,6 +204,10 @@ function authorize(state, action, session) {
 			if (!sponsor || fundOwner(state, action.fundId) !== sponsor) return null;
 			const amount = money(action.amount, LIMITS.maxAmount);
 			if (amount == null) return null;
+			const fund = state.funds.find((f) => f.id === action.fundId);
+			if (stackingBlocker(state, action.studentId, fund)) return null;
+			const candidate = state.pool.find((p) => p.id === action.studentId);
+			if (candidate && amount > remainingGap(candidate, state, fund.id)) return null;
 			return {
 				...action,
 				amount,
@@ -223,6 +282,7 @@ function sanitizeFund(f, sponsorId, existing) {
 		incomeBands: listOrAll(f.incomeBands),
 		minTrust: isTrust(f.minTrust) ? f.minTrust : 2,
 		...f.disabilityOnly === true ? { disabilityOnly: true } : {},
+		...f.terms ? { terms: sanitizeTerms(f.terms) } : {},
 		closesOn,
 		status: existing?.status ?? "open",
 		createdAt: existing?.createdAt ?? (/* @__PURE__ */ new Date()).toISOString()
@@ -465,6 +525,11 @@ function funds(start) {
 			provinces: "all",
 			incomeBands: ["under-350k", "350k-600k"],
 			minTrust: 1,
+			terms: {
+				covers: ["tuition", "accommodation"],
+				minPassMark: 60,
+				workBackYears: 1
+			},
 			closesOn: addDays(start, 30),
 			status: "open",
 			createdAt: hoursAgo(504)
@@ -485,6 +550,10 @@ function funds(start) {
 			],
 			incomeBands: "all",
 			minTrust: 2,
+			terms: {
+				covers: ["tuition"],
+				minPassMark: 55
+			},
 			closesOn: addDays(start, 52),
 			status: "open",
 			createdAt: hoursAgo(216)
@@ -501,6 +570,10 @@ function funds(start) {
 			provinces: "all",
 			incomeBands: ["under-350k", "350k-600k"],
 			minTrust: 2,
+			terms: {
+				covers: "all",
+				minPassMark: 50
+			},
 			disabilityOnly: true,
 			closesOn: addDays(start, 38),
 			status: "open",
@@ -518,6 +591,11 @@ function funds(start) {
 			provinces: "all",
 			incomeBands: "all",
 			minTrust: 2,
+			terms: { covers: [
+				"books",
+				"transport",
+				"other"
+			] },
 			closesOn: addDays(start, 45),
 			status: "open",
 			createdAt: hoursAgo(720)

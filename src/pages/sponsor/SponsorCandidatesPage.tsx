@@ -283,8 +283,8 @@ function CandidateRow({
         <div className="rounded-xl bg-paper p-4">
           <dl className="grid grid-cols-2 gap-2 text-xs lg:grid-cols-1">
             <div className="flex justify-between gap-2">
-              <dt className="text-muted">Funding gap</dt>
-              <dd className="num font-semibold text-ink">{formatZAR(c.gap)}</dd>
+              <dt className="text-muted">{r.fit.remainingGap < c.gap ? 'Gap after other bursaries' : 'Funding gap'}</dt>
+              <dd className="num font-semibold text-ink">{formatZAR(r.fit.remainingGap)}</dd>
             </div>
             <div className="flex justify-between gap-2">
               <dt className="text-muted">Suggested award</dt>
@@ -341,12 +341,14 @@ function OfferModal({
   const amountId = useId();
   const noteId = useId();
   const screen = note.trim() ? screenMessage(note, 'sponsor') : null;
-  const cover = r.candidate.gap > 0 ? Math.min(1, amount / r.candidate.gap) : 0;
+  const gap = r.fit.remainingGap;
+  const cover = gap > 0 ? Math.min(1, amount / gap) : 0;
 
   const send = () => {
     if (amount <= 0) return setError('Enter an amount greater than R0.');
     if (amount > fund.maxPerStudent) return setError(`This fund’s maximum per student is ${formatZAR(fund.maxPerStudent)}.`);
     if (amount > remaining) return setError(`Only ${formatZAR(remaining)} is left in this fund.`);
+    if (amount > gap) return setError(`${r.candidate.firstName} has ${formatZAR(gap)} left to fund after other bursaries. Offer that or less.`);
     if (screen?.blocked) return setError('Your message asks for payment or bank details. Offers can’t include that.');
     onSend(amount, note, docs);
   };
@@ -373,7 +375,7 @@ function OfferModal({
           </label>
           <MoneyInput id={amountId} value={amount} onChange={(v) => { setAmount(v); setError(null); }} invalid={Boolean(error)} />
           <p className="mt-1.5 text-xs text-muted">
-            Covers {percent(cover)} of {r.candidate.firstName}’s {formatZAR(r.candidate.gap)} gap. Suggested: {formatZAR(r.fit.suggestedAmount)}.
+            Covers {percent(cover)} of {r.candidate.firstName}’s {formatZAR(gap)} gap. Suggested: {formatZAR(r.fit.suggestedAmount)}.
           </p>
         </div>
         <div>

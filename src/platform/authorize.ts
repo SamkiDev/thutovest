@@ -24,6 +24,7 @@ import type {
 import type { PlatformAction } from './platformReducer';
 import { DOCUMENT_INFO } from '../data/documents';
 import { validRegistration } from '../utils/trust';
+import { remainingGap, sanitizeTerms, stackingBlocker } from './bursaryRules';
 
 export const LIMITS = {
   message: 1000,
@@ -76,7 +77,14 @@ export function authorize(state: PlatformState, action: PlatformAction, session:
       return student && action.studentId === student ? { ...action, studentName: clip(action.studentName, LIMITS.name) } : null;
     case 'respondOffer': {
       const { app } = appOf(state, action.applicationId);
-      if (!student || app?.studentId !== student) return null;
+      if (!student || !app || app.studentId !== student) return null;
+      if (action.accept) {
+        // Accepting is where an award becomes committed: check stacking and the remaining gap again.
+        const fund = state.funds.find((f) => f.id === app.fundId);
+        if (!fund || stackingBlocker(state, student, fund)) return null;
+        const candidate = state.pool.find((p) => p.id === student);
+        if (candidate && (app.amount ?? 0) > remainingGap(candidate, state, fund.id)) return null;
+      }
       const a = action.agreement;
       return {
         ...action,
@@ -116,6 +124,11 @@ export function authorize(state: PlatformState, action: PlatformAction, session:
       if (!sponsor || fundOwner(state, action.fundId) !== sponsor) return null;
       const amount = money(action.amount, LIMITS.maxAmount);
       if (amount == null) return null;
+      // Two-bursary rule, and never more than the student's costs still unfunded after other awards.
+      const fund = state.funds.find((f) => f.id === action.fundId)!;
+      if (stackingBlocker(state, action.studentId, fund)) return null;
+      const candidate = state.pool.find((p) => p.id === action.studentId);
+      if (candidate && amount > remainingGap(candidate, state, fund.id)) return null;
       return { ...action, amount, note: clip(action.note, LIMITS.note), studentName: clip(action.studentName, LIMITS.name), requiredDocs: action.requiredDocs.filter(isDocKind) };
     }
     case 'reviewDocument':
@@ -178,6 +191,7 @@ function sanitizeFund(f: Fund, sponsorId: string, existing?: Fund): Fund | null 
     incomeBands: listOrAll<IncomeBand>(f.incomeBands),
     minTrust: isTrust(f.minTrust) ? f.minTrust : 2,
     ...(f.disabilityOnly === true ? { disabilityOnly: true } : {}),
+    ...(f.terms ? { terms: sanitizeTerms(f.terms) } : {}),
     closesOn,
     status: existing?.status ?? 'open',
     createdAt: existing?.createdAt ?? new Date().toISOString(),

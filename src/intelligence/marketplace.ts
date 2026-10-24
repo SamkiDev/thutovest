@@ -10,12 +10,14 @@ import { formatZAR } from '../utils/format';
 import { addDays, daysUntil, formatDate, todayISO } from '../utils/dates';
 import { studentChecks, studentTrust, TRUST_LABEL } from '../utils/trust';
 import { onTimeRate } from './forecast';
+import { coversText, remainingGap, stackingBlocker, termsOf } from '../platform/bursaryRules';
 
 const fieldName = (f: string) => FIELDS.find((x) => x.value === f)?.label ?? f;
 
 /** The logged-in student as sponsors see them: anonymised and live. */
 export function liveCandidate(state: StudentState): CandidateProfile {
-  const f = summariseFunding(state);
+  // The gap before sponsor bursaries: those live on the platform, where every sponsor sees them (bursaryRules.remainingGap).
+  const f = summariseFunding({ ...state, fundingSources: state.fundingSources.filter((s) => !s.id.startsWith('sponsor-')) });
   const preferred = state.profile.preferredInstitutionIds[0] ?? null;
   const optionInst = STUDY_OPTIONS.find((o) => o.indicativeTuition === state.costs.tuition)?.institutionId;
   const done = Object.values(state.taskStatus).filter((s) => s === 'completed').length;
@@ -54,6 +56,8 @@ export interface FundFit {
   reasons: string[];
   blockers: string[];
   trustShort: boolean;
+  /** Costs still unfunded after the student's other sponsor bursaries. */
+  remainingGap: number;
   suggestedAmount: number;
   coverage: number;
 }
@@ -86,14 +90,18 @@ export function fundFit(fund: Fund, c: CandidateProfile, platform: PlatformState
   if (trustShort) blockers.push(`Needs “${TRUST_LABEL[fund.minTrust]}” status (you have “${TRUST_LABEL[c.trust]}”)`);
   else reasons.push(`Meets the “${TRUST_LABEL[fund.minTrust]}” requirement`);
 
-  if (c.gap <= 0) blockers.push('No funding gap');
+  const stacking = stackingBlocker(platform, c.id, fund);
+  if (stacking) blockers.push(stacking);
+  const gap = remainingGap(c, platform, fund.id);
+  if (gap <= 0) blockers.push(gap < c.gap ? 'Other bursaries already cover the gap' : 'No funding gap');
+  reasons.push(`Covers: ${coversText(termsOf(fund)).toLowerCase()}`);
 
-  const suggestedAmount = Math.max(0, Math.min(fund.maxPerStudent, c.gap, remainingBudget(fund, platform)));
-  const coverage = c.gap > 0 ? suggestedAmount / c.gap : 0;
+  const suggestedAmount = Math.max(0, Math.min(fund.maxPerStudent, gap, remainingBudget(fund, platform)));
+  const coverage = gap > 0 ? suggestedAmount / gap : 0;
   if (coverage >= 0.99) reasons.push(`One award of ${formatZAR(suggestedAmount)} closes the whole gap`);
   else if (suggestedAmount > 0) reasons.push(`An award could cover ${Math.round(coverage * 100)}% of the gap`);
 
-  return { eligible: blockers.length === 0, reasons, blockers, trustShort, suggestedAmount, coverage };
+  return { eligible: blockers.length === 0, reasons, blockers, trustShort, remainingGap: gap, suggestedAmount, coverage };
 }
 
 export function committed(fund: Fund, platform: PlatformState): number {

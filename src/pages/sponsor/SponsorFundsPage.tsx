@@ -1,7 +1,7 @@
 import { useId, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { CirclePlus, HandCoins, Lock } from 'lucide-react';
-import type { Fund, IncomeBand, Province, StudyField, TrustLevel } from '../../types';
+import type { CoverItem, Fund, IncomeBand, Province, StudyField, TrustLevel } from '../../types';
 import { useSponsor } from '../../hooks/useSponsor';
 import { useToast } from '../../hooks/useToast';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -20,6 +20,7 @@ import { addDays, formatDate, todayISO } from '../../utils/dates';
 import { fieldLabel } from '../../utils/matching';
 import { makeId } from '../../utils/createState';
 import { LIMITS } from '../../platform/authorize';
+import { conditionLines, COVER_ITEMS, COVER_LABEL, coversText, sanitizeTerms, termsOf } from '../../platform/bursaryRules';
 
 export default function SponsorFundsPage() {
   const { sponsor, verified, funds, platform, dispatchPlatform, brief } = useSponsor();
@@ -80,7 +81,13 @@ export default function SponsorFundsPage() {
                   <Item k="Fields" v={f.fields === 'all' ? 'All' : f.fields.map(fieldLabel).join(', ')} />
                   <Item k="Provinces" v={f.provinces === 'all' ? 'All' : f.provinces.join(', ')} />
                   <Item k="Income" v={f.incomeBands === 'all' ? 'Any' : `${f.incomeBands.length} bands`} />
+                  <Item k="Covers" v={coversText(termsOf(f))} />
                 </dl>
+                <ul className="mt-3 space-y-1 text-xs text-muted">
+                  {conditionLines(termsOf(f), sponsor.name).map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
                 <p className="mt-4 rounded-xl bg-paper p-3 text-sm text-body">
                   <strong className="font-semibold text-ink">Forecast: </strong>
                   {fc.headline}
@@ -146,9 +153,14 @@ function FundForm({ fund, sponsorId, onClose, onSave }: { fund: Fund | null; spo
   const [income, setIncome] = useState<IncomeBand[]>(fund?.incomeBands === 'all' || !fund ? [] : fund.incomeBands);
   const [minTrust, setMinTrust] = useState<TrustLevel>(fund?.minTrust ?? 1);
   const [closesIn, setClosesIn] = useState('30');
+  const terms = fund ? termsOf(fund) : { covers: 'all' as const };
+  const [covers, setCovers] = useState<CoverItem[]>(terms.covers === 'all' ? [] : terms.covers);
+  const [passMark, setPassMark] = useState(terms.minPassMark ? String(terms.minPassMark) : '');
+  const [workBack, setWorkBack] = useState(terms.workBackYears ? String(terms.workBackYears) : '');
+  const [exclusive, setExclusive] = useState(Boolean(terms.exclusive));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const descId = useId();
-  const ids = { budget: useId(), max: useId(), places: useId(), trust: useId(), closes: useId() };
+  const ids = { budget: useId(), max: useId(), places: useId(), trust: useId(), closes: useId(), pass: useId(), work: useId() };
 
   const toggle = <T,>(list: T[], v: T) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v]);
 
@@ -163,6 +175,8 @@ function FundForm({ fund, sponsorId, onClose, onSave }: { fund: Fund | null; spo
     if (!Number.isInteger(p) || p < 1 || p > 500) err.places = 'Enter between 1 and 500 places.';
     const days = Number(closesIn);
     if (!fund && (!Number.isInteger(days) || days < 7 || days > 365)) err.closes = 'Choose between 7 and 365 days.';
+    if (passMark && (Number(passMark) < 1 || Number(passMark) > 100)) err.pass = 'Enter a pass mark from 1 to 100, or leave it empty.';
+    if (workBack && Number(workBack) > 10) err.work = 'Enter up to 10 years, or leave it empty.';
     setErrors(err);
     if (Object.keys(err).length) return;
     onSave({
@@ -177,6 +191,7 @@ function FundForm({ fund, sponsorId, onClose, onSave }: { fund: Fund | null; spo
       provinces: provinces.length ? provinces : 'all',
       incomeBands: income.length ? income : 'all',
       minTrust,
+      terms: sanitizeTerms({ covers: covers.length ? covers : 'all', minPassMark: Number(passMark) || undefined, workBackYears: Number(workBack) || undefined, exclusive }),
       closesOn: fund?.closesOn ?? addDays(todayISO(), days),
       status: fund?.status ?? 'open',
       createdAt: fund?.createdAt ?? new Date().toISOString(),
@@ -207,7 +222,7 @@ function FundForm({ fund, sponsorId, onClose, onSave }: { fund: Fund | null; spo
         <TextField label="Fund name" maxLength={LIMITS.name} value={name} onChange={(e) => setName(e.target.value)} error={errors.name} placeholder="e.g. Women in Engineering Bursary" />
         <div>
           <label htmlFor={descId} className="mb-1.5 block text-sm font-semibold text-ink">
-            What it covers <span className="font-normal text-subtle">Optional</span>
+            Description <span className="font-normal text-subtle">Optional</span>
           </label>
           <textarea maxLength={LIMITS.about} id={descId} rows={2} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full rounded-xl border border-line-strong bg-surface px-4 py-3 text-sm focus:border-veld-500 focus:ring-3 focus:ring-veld-100 focus:outline-none" />
         </div>
@@ -222,6 +237,39 @@ function FundForm({ fund, sponsorId, onClose, onSave }: { fund: Fund | null; spo
             {errors.places && <p className="mt-1.5 text-xs font-medium text-clay-600">{errors.places}</p>}
           </div>
         </div>
+        <ChipGroup
+          legend="What it pays for"
+          description="Empty means the full cost of study. Students can add one other bursary for the rest."
+          options={COVER_ITEMS.map((c) => ({ value: c, label: COVER_LABEL[c] }))}
+          selected={covers}
+          multiple
+          onToggle={(v) => setCovers((l) => toggle(l, v))}
+        />
+        <fieldset className="space-y-4">
+          <legend className="mb-1.5 text-sm font-semibold text-ink">Conditions</legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label htmlFor={ids.pass} className="mb-1.5 block text-sm font-semibold text-ink">
+                Minimum pass mark (%) <span className="font-normal text-subtle">Optional</span>
+              </label>
+              <input id={ids.pass} inputMode="numeric" value={passMark} onChange={(e) => setPassMark(e.target.value.replace(/\D/g, '').slice(0, 3))} className={inputCls} aria-invalid={errors.pass ? true : undefined} />
+              {errors.pass && <p className="mt-1.5 text-xs font-medium text-clay-600">{errors.pass}</p>}
+            </div>
+            <div>
+              <label htmlFor={ids.work} className="mb-1.5 block text-sm font-semibold text-ink">
+                Work-back years <span className="font-normal text-subtle">Optional</span>
+              </label>
+              <input id={ids.work} inputMode="numeric" value={workBack} onChange={(e) => setWorkBack(e.target.value.replace(/\D/g, '').slice(0, 2))} className={inputCls} aria-invalid={errors.work ? true : undefined} />
+              {errors.work && <p className="mt-1.5 text-xs font-medium text-clay-600">{errors.work}</p>}
+            </div>
+          </div>
+          <label className="flex items-start gap-3 text-sm text-body">
+            <input type="checkbox" checked={exclusive} onChange={(e) => setExclusive(e.target.checked)} className="mt-0.5 size-4 shrink-0 accent-[var(--color-veld-600)]" />
+            <span>
+              <span className="font-semibold text-ink">Only bursary.</span> The student can’t hold another bursary with this one.
+            </span>
+          </label>
+        </fieldset>
         <ChipGroup legend="Fields" description="Empty means all fields." options={FIELDS} selected={fields} multiple onToggle={(v) => setFields((l) => toggle(l, v))} />
         <ChipGroup legend="Provinces" description="Empty means all provinces." options={PROVINCES.map((p) => ({ value: p, label: p }))} selected={provinces} multiple onToggle={(v) => setProvinces((l) => toggle(l, v))} />
         <ChipGroup legend="Household income" description="Empty means any income." options={INCOME_BANDS.filter((b) => b.value !== 'prefer-not')} selected={income} multiple onToggle={(v) => setIncome((l) => toggle(l, v))} />

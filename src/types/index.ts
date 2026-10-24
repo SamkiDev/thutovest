@@ -396,6 +396,20 @@ export interface SponsorOrg {
   createdAt: string;
 }
 
+/** A cost a bursary can pay for, matching the student's cost plan. */
+export type CoverItem = keyof CostBreakdown;
+
+export interface FundTerms {
+  /** What the award pays for. 'all' = the full cost of study. */
+  covers: CoverItem[] | 'all';
+  /** Average the student must pass with each year to keep the award (percent). */
+  minPassMark?: number;
+  /** Years the student works for the sponsor after qualifying. */
+  workBackYears?: number;
+  /** The award must be the student's only bursary. */
+  exclusive?: boolean;
+}
+
 export interface Fund {
   id: string;
   sponsorId: string;
@@ -410,6 +424,8 @@ export interface Fund {
   minTrust: TrustLevel;
   /** Only students who have told us they have a disability can match. */
   disabilityOnly?: boolean;
+  /** The sponsor's bursary terms. Missing on older funds: then it covers the full cost, with no conditions. */
+  terms?: FundTerms;
   closesOn: string;
   status: 'open' | 'closed';
   createdAt: string;
