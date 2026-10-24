@@ -144,6 +144,83 @@ var GUARDIAN_DOCS = [
 var isMinor = (c) => c.isAdult === false;
 /** Sponsors only ever see a child once a parent or guardian has consented. */
 var visibleToSponsors = (c) => !isMinor(c) || c.checks?.guardian === "verified";
+// src/platform/progressRules.ts
+/** An application in these states means the sponsor is funding the student. */
+var FUNDED_STATUSES = [
+	"accepted",
+	"approved",
+	"paid"
+];
+var isFunded = (a) => FUNDED_STATUSES.includes(a.status);
+/**
+* The early warning a sponsor sends. Written by the platform, not the sponsor,
+* so it is always fair: it explains the requirement, says plainly that no
+* decision has been made, and points to help.
+*/
+function warningText(sponsorName, fundName, latest, passMark, note) {
+	const standing = passMark ? latest.average < passMark ? `below the ${passMark}% this bursary requires` : `close to the ${passMark}% this bursary requires` : "lower than before";
+	const parts = [
+		`Early warning from ${sponsorName} about your ${fundName}.`,
+		`Your latest average is ${latest.average}% (${latest.term}), ${standing}.`,
+		"This is not a decision to stop your funding.",
+		passMark ? `If your results don’t satisfy the bursary’s requirement at the next review, you could be at risk of losing this funding.` : "If your results keep falling, your funding could be reviewed.",
+		"Let’s make a plan together: reply here, and ask us for a tutor if it would help."
+	];
+	if (note) parts.push(note);
+	return parts.join(" ");
+}
+// src/intelligence/moderation.ts
+/**
+* Message safety screen. Runs on every message before it is delivered.
+* - Contact details are removed so conversations stay on the platform
+*   (where they are logged, and a guardian can see them for under-18s).
+* - Requests for money from a sponsor are the most common bursary scam in
+*   South Africa; they are blocked and the sponsor is suspended for review.
+*/
+var RULES = [
+	{
+		kind: "contact-details",
+		label: "Phone number",
+		test: /(\+27|\b0)[\s-]?[1-8]\d[\s-]?\d{3}[\s-]?\d{4}\b/
+	},
+	{
+		kind: "contact-details",
+		label: "Email address",
+		test: /[\w.+-]+@[\w-]+\.[\w.-]+/
+	},
+	{
+		kind: "off-platform",
+		label: "Request to move off the platform",
+		test: /\b(whats\s?app|telegram|call me|sms me|dm me|meet (me|up)|my number|your number|text me)\b/i
+	},
+	{
+		kind: "bank-details",
+		label: "Bank or card details",
+		test: /\b(account (no|number)|acc no|branch code|card number|cvv|pin\b|otp\b|banking password)/i
+	},
+	{
+		kind: "payment-request",
+		label: "Request for payment",
+		test: /\b(admin(istration)? fee|processing fee|application fee|registration fee to us|deposit|pay (us|me|a fee|r\s?\d+)|send (money|r\s?\d+|airtime|cash)|e-?wallet|cash send|voucher)\b/i
+	}
+];
+function screenMessage(text, from) {
+	const flags = [];
+	for (const r of RULES) if (r.test.test(text) && !flags.some((f) => f.label === r.label)) flags.push({
+		kind: r.kind,
+		label: r.label
+	});
+	const blocked = flags.some((f) => f.kind === "payment-request" || f.kind === "bank-details") && from === "sponsor";
+	let cleanText = text;
+	cleanText = cleanText.replace(/(\+27|\b0)[\s-]?[1-8]\d[\s-]?\d{3}[\s-]?\d{4}\b/g, "[number removed]");
+	cleanText = cleanText.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[email removed]");
+	return {
+		flags,
+		blocked,
+		cleanText,
+		suspendSender: blocked
+	};
+}
 // src/platform/authorize.ts
 var LIMITS = {
 	message: 1e3,
@@ -241,6 +318,42 @@ function authorize(state, action, session) {
 				type: "publishCandidate",
 				profile
 			} : null;
+		}
+		case "requestTutor": {
+			const { app } = appOf(state, action.applicationId);
+			if (!student || !app || app.studentId !== student || !isFunded(app)) return null;
+			const subject = clip(action.subject, 60);
+			const open = (app.tutorRequests ?? []).filter((r) => r.status === "requested").length;
+			if (!subject || open >= 3 || (app.tutorRequests ?? []).length >= 20) return null;
+			return {
+				...action,
+				subject,
+				note: clip(action.note, LIMITS.note),
+				studentName: clip(action.studentName, LIMITS.name)
+			};
+		}
+		case "answerTutor": {
+			const { app, sponsorId } = appOf(state, action.applicationId);
+			if (!sponsor || sponsorId !== sponsor || !app) return null;
+			if (!app.tutorRequests?.some((r) => r.id === action.requestId && r.status === "requested")) return null;
+			const note = clip(action.note, LIMITS.note);
+			if (note && screenMessage(note, "sponsor").blocked) return null;
+			return {
+				...action,
+				arranged: action.arranged === true,
+				note
+			};
+		}
+		case "sendProgressWarning": {
+			const { app, sponsorId } = appOf(state, action.applicationId);
+			if (!sponsor || sponsorId !== sponsor || !app || !isFunded(app)) return null;
+			if (!state.pool.find((p) => p.id === app.studentId)?.results?.length) return null;
+			const note = clip(action.note, LIMITS.note);
+			if (note && screenMessage(note, "sponsor").blocked) return null;
+			return {
+				...action,
+				note
+			};
 		}
 		case "sendMessage": {
 			const { app, sponsorId } = appOf(state, action.applicationId);
@@ -418,8 +531,21 @@ function sanitizeCandidate(p, studentId) {
 		tasksCompleted: count(p.tasksCompleted, 1e3),
 		progressRatio: ratio(p.progressRatio),
 		discoverable: p.discoverable === true,
-		isLive: true
+		isLive: true,
+		...Array.isArray(p.results) && p.results.length ? { results: sanitizeResults(p.results) } : {}
 	};
+}
+/** Term averages only, with ranges forced. */
+function sanitizeResults(results) {
+	return results.filter((r) => Boolean(r) && typeof r === "object").slice(-12).map((r) => {
+		const creditsTaken = count(r.creditsTaken, 400);
+		return {
+			term: clip(r.term, 40) || "Term",
+			average: typeof r.average === "number" && Number.isFinite(r.average) ? Math.min(100, Math.max(0, Math.round(r.average * 10) / 10)) : 0,
+			creditsPassed: Math.min(count(r.creditsPassed, 400), creditsTaken),
+			creditsTaken
+		};
+	});
 }
 /** Shape check for state arriving from storage or another tab before it replaces ours. */
 function isPlatformState(v) {
@@ -511,7 +637,7 @@ var JUDGE_ACCOUNTS = [
 		email: `judge1@${BRAND.demoDomain}`,
 		password: "Demo#2026",
 		userId: "stu-judge1",
-		firstName: "Amahle",
+		firstName: "Lwazi",
 		guardian: "Zodwa",
 		relationship: "Mother"
 	},
@@ -898,6 +1024,11 @@ var POOL = [
 			average: 71,
 			creditsPassed: 60,
 			creditsTaken: 64
+		}, {
+			term: "Semester 2 tests, 2026",
+			average: 73,
+			creditsPassed: 32,
+			creditsTaken: 32
 		}]
 	},
 	{
@@ -921,6 +1052,11 @@ var POOL = [
 			average: 64,
 			creditsPassed: 56,
 			creditsTaken: 64
+		}, {
+			term: "Semester 2 tests, 2026",
+			average: 56,
+			creditsPassed: 20,
+			creditsTaken: 32
 		}]
 	}
 ];
@@ -1008,7 +1144,14 @@ function applications() {
 		}, 4800),
 		a("app-zanele", "fund-ridge-dev", "stu-zanele", "paid", {
 			amount: 38e3,
-			paymentReference: "RDG-26-0419"
+			paymentReference: "RDG-26-0419",
+			tutorRequests: [{
+				id: "tut-zanele",
+				subject: "Data Structures and Algorithms",
+				note: "I failed the second test. A tutor once a week before exams would really help.",
+				at: hoursAgo(10),
+				status: "requested"
+			}]
 		}, 4752),
 		a("app-lerato", "fund-ridge-dev", "stu-lerato", "offered", { amount: 58e3 }, 20),
 		a("app-sipho", "fund-ridge-dev", "stu-sipho", "shortlisted", { initiatedBy: "student" }, 30),
@@ -1027,6 +1170,13 @@ function applications() {
 function messages() {
 	return [
 		...DEMO_STUDENTS.flatMap((d) => scamMessages(d.userId, d.firstName)),
+		{
+			id: "m-z1",
+			applicationId: "app-zanele",
+			from: "student",
+			text: "Tutor request: Data Structures and Algorithms. I failed the second test. A tutor once a week before exams would really help.",
+			at: hoursAgo(10)
+		},
 		{
 			id: "m-a1",
 			applicationId: "app-ayesha",
@@ -1222,6 +1372,14 @@ function events() {
 			sponsorId: DEMO_SPONSOR_ID,
 			text: "Ayesha shared her admission letter and results",
 			kind: "document"
+		},
+		{
+			id: "e4",
+			at: hoursAgo(10),
+			audience: "sponsor",
+			sponsorId: DEMO_SPONSOR_ID,
+			text: "Zanele asked for a tutor in Data Structures and Algorithms",
+			kind: "message"
 		}
 	];
 }
@@ -1236,58 +1394,6 @@ function createPlatformSeed(start = todayISO()) {
 		documents: documents(start),
 		decisions: decisions(),
 		events: events()
-	};
-}
-// src/intelligence/moderation.ts
-/**
-* Message safety screen. Runs on every message before it is delivered.
-* - Contact details are removed so conversations stay on the platform
-*   (where they are logged, and a guardian can see them for under-18s).
-* - Requests for money from a sponsor are the most common bursary scam in
-*   South Africa; they are blocked and the sponsor is suspended for review.
-*/
-var RULES = [
-	{
-		kind: "contact-details",
-		label: "Phone number",
-		test: /(\+27|\b0)[\s-]?[1-8]\d[\s-]?\d{3}[\s-]?\d{4}\b/
-	},
-	{
-		kind: "contact-details",
-		label: "Email address",
-		test: /[\w.+-]+@[\w-]+\.[\w.-]+/
-	},
-	{
-		kind: "off-platform",
-		label: "Request to move off the platform",
-		test: /\b(whats\s?app|telegram|call me|sms me|dm me|meet (me|up)|my number|your number|text me)\b/i
-	},
-	{
-		kind: "bank-details",
-		label: "Bank or card details",
-		test: /\b(account (no|number)|acc no|branch code|card number|cvv|pin\b|otp\b|banking password)/i
-	},
-	{
-		kind: "payment-request",
-		label: "Request for payment",
-		test: /\b(admin(istration)? fee|processing fee|application fee|registration fee to us|deposit|pay (us|me|a fee|r\s?\d+)|send (money|r\s?\d+|airtime|cash)|e-?wallet|cash send|voucher)\b/i
-	}
-];
-function screenMessage(text, from) {
-	const flags = [];
-	for (const r of RULES) if (r.test.test(text) && !flags.some((f) => f.label === r.label)) flags.push({
-		kind: r.kind,
-		label: r.label
-	});
-	const blocked = flags.some((f) => f.kind === "payment-request" || f.kind === "bank-details") && from === "sponsor";
-	let cleanText = text;
-	cleanText = cleanText.replace(/(\+27|\b0)[\s-]?[1-8]\d[\s-]?\d{3}[\s-]?\d{4}\b/g, "[number removed]");
-	cleanText = cleanText.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, "[email removed]");
-	return {
-		flags,
-		blocked,
-		cleanText,
-		suspendSender: blocked
 	};
 }
 // src/utils/format.ts
@@ -1395,6 +1501,16 @@ function resetSponsor(state, sponsorId) {
 		documents: [...state.documents.filter((d) => !gone.has(d.applicationId)), ...seed.documents.filter((d) => freshIds.has(d.applicationId))],
 		decisions,
 		events: [...state.events.filter((e) => e.sponsorId !== sponsorId), ...seed.events.filter((e) => e.sponsorId === sponsorId)]
+	};
+}
+function patchApp(state, id, patch) {
+	return {
+		...state,
+		applications: state.applications.map((a) => a.id === id ? {
+			...a,
+			...patch,
+			updatedAt: now()
+		} : a)
 	};
 }
 function decide(state, sponsorId, d) {
@@ -1818,6 +1934,84 @@ function platformReducer(state, action) {
 				isLive: true
 			}, ...state.pool.filter((p) => p.id !== action.profile.id)]
 		};
+		case "requestTutor": {
+			const app = state.applications.find((a) => a.id === action.applicationId);
+			if (!app) return state;
+			const { sponsor } = sponsorOfFund(state, app.fundId);
+			const note = screenMessage(action.note, "student").cleanText;
+			const request = {
+				id: makeId("tut"),
+				subject: action.subject,
+				note,
+				at: now(),
+				status: "requested"
+			};
+			let next = patchApp(state, app.id, { tutorRequests: [...app.tutorRequests ?? [], request] });
+			next = addMessage(next, {
+				applicationId: app.id,
+				from: "student",
+				text: `Tutor request: ${action.subject}.${note ? ` ${note}` : ""}`
+			});
+			return event(next, {
+				audience: "sponsor",
+				sponsorId: sponsor?.id,
+				kind: "message",
+				text: `${action.studentName} asked for a tutor in ${action.subject}`
+			});
+		}
+		case "answerTutor": {
+			const app = state.applications.find((a) => a.id === action.applicationId);
+			const request = app?.tutorRequests?.find((r) => r.id === action.requestId);
+			if (!app || !request) return state;
+			const { sponsor } = sponsorOfFund(state, app.fundId);
+			const status = action.arranged ? "arranged" : "declined";
+			let next = patchApp(state, app.id, { tutorRequests: app.tutorRequests.map((r) => r.id === request.id ? {
+				...r,
+				status,
+				reply: action.note || void 0,
+				answeredAt: now()
+			} : r) });
+			const text = action.arranged ? `Tutor support for ${request.subject} is arranged.${action.note ? ` ${action.note}` : ""}` : `We can’t arrange a tutor for ${request.subject} right now.${action.note ? ` ${action.note}` : ""}`;
+			next = addMessage(next, {
+				applicationId: app.id,
+				from: "sponsor",
+				text
+			});
+			return event(next, {
+				audience: "student",
+				studentId: app.studentId,
+				kind: "message",
+				text: action.arranged ? `${sponsor?.name ?? "Your sponsor"} arranged a tutor for ${request.subject}` : `${sponsor?.name ?? "Your sponsor"} answered your tutor request`
+			});
+		}
+		case "sendProgressWarning": {
+			const app = state.applications.find((a) => a.id === action.applicationId);
+			const latest = state.pool.find((p) => p.id === app?.studentId)?.results?.at(-1);
+			if (!app || !latest) return state;
+			const { fund, sponsor } = sponsorOfFund(state, app.fundId);
+			if (!fund || !sponsor) return state;
+			const passMark = fund.terms?.minPassMark;
+			const warning = {
+				id: makeId("warn"),
+				at: now(),
+				term: latest.term,
+				average: latest.average,
+				passMark,
+				note: action.note || void 0
+			};
+			let next = patchApp(state, app.id, { warnings: [...app.warnings ?? [], warning] });
+			next = addMessage(next, {
+				applicationId: app.id,
+				from: "sponsor",
+				text: warningText(sponsor.name, fund.name, latest, passMark, action.note)
+			});
+			return event(next, {
+				audience: "student",
+				studentId: app.studentId,
+				kind: "message",
+				text: `${sponsor.name} sent an early warning about your results`
+			});
+		}
 		default: return state;
 	}
 }
@@ -1831,7 +2025,8 @@ function platformReducer(state, action) {
 * - Student: their own applications and everything attached to them, events
 *   addressed to them or to all.
 * - Sponsor: the anonymised candidate pool, applications to their own funds and
-*   everything attached to those, their own decisions and events.
+*   everything attached to those, their own decisions and events. Term
+*   averages only for the students they fund.
 * - Signed out: sponsors and open funds only.
 */
 function projectFor(state, session) {
@@ -1868,9 +2063,13 @@ function projectFor(state, session) {
 	const ownFunds = new Set(state.funds.filter((f) => f.sponsorId === session.userId).map((f) => f.id));
 	const apps = state.applications.filter((a) => ownFunds.has(a.fundId));
 	const ids = new Set(apps.map((a) => a.id));
+	const funding = new Set(apps.filter(isFunded).map((a) => a.studentId));
 	return {
 		...base,
-		pool: state.pool.filter(visibleToSponsors),
+		pool: state.pool.filter(visibleToSponsors).map(({ results, ...p }) => funding.has(p.id) && results ? {
+			...p,
+			results
+		} : p),
 		applications: apps,
 		messages: state.messages.filter((m) => ids.has(m.applicationId)),
 		documents: state.documents.filter((d) => ids.has(d.applicationId)),

@@ -141,6 +141,39 @@ export function createDemoState(userId?: string): StudentState {
       guardianConsentAt: daysAgoAt(9, 20),
     },
     discoverable: true,
+    // Two terms already in, so the first new set of marks has something to compare with.
+    marks: [
+      {
+        id: 'marks-term1',
+        term: 'Term 1, 2026',
+        addedAt: daysAgoAt(150, 19),
+        source: 'typed',
+        subjects: [
+          { subject: 'English Home Language', mark: 68 },
+          { subject: 'Mathematics', mark: 66 },
+          { subject: 'Physical Sciences', mark: 62 },
+          { subject: 'Information Technology', mark: 75 },
+          { subject: 'Life Sciences', mark: 64 },
+          { subject: 'Sepedi First Additional Language', mark: 70 },
+          { subject: 'Life Orientation', mark: 80 },
+        ],
+      },
+      {
+        id: 'marks-june',
+        term: 'June exams, 2026',
+        addedAt: daysAgoAt(110, 20),
+        source: 'typed',
+        subjects: [
+          { subject: 'English Home Language', mark: 66 },
+          { subject: 'Mathematics', mark: 61 },
+          { subject: 'Physical Sciences', mark: 58 },
+          { subject: 'Information Technology', mark: 77 },
+          { subject: 'Life Sciences', mark: 63 },
+          { subject: 'Sepedi First Additional Language', mark: 71 },
+          { subject: 'Life Orientation', mark: 82 },
+        ],
+      },
+    ],
     documents: [
       guardianConsentDocument(name, who.guardian, who.relationship, consent, daysAgoAt(9, 20)),
       {
@@ -181,4 +214,9 @@ export function createDemoState(userId?: string): StudentState {
       { id: 'a5', at: daysAgoAt(19, 19, 40), text: 'Built your personal pathway from your answers', kind: 'system' },
     ],
   };
+}
+
+/** Demo plans saved before marks existed get the demo marks, so every judge sees the same starting story. */
+export function upgradeDemoState(state: StudentState): StudentState {
+  return state.isDemoStudent && state.marks === undefined ? { ...state, marks: createDemoState(state.id).marks } : state;
 }

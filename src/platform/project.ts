@@ -1,5 +1,6 @@
 import type { PlatformState, Session } from '../types';
 import { visibleToSponsors } from './guardianRules';
+import { isFunded } from './progressRules';
 
 /**
  * What one signed-in account may read from the shared marketplace. The server
@@ -10,7 +11,8 @@ import { visibleToSponsors } from './guardianRules';
  * - Student: their own applications and everything attached to them, events
  *   addressed to them or to all.
  * - Sponsor: the anonymised candidate pool, applications to their own funds and
- *   everything attached to those, their own decisions and events.
+ *   everything attached to those, their own decisions and events. Term
+ *   averages only for the students they fund.
  * - Signed out: sponsors and open funds only.
  */
 export function projectFor(state: PlatformState, session: Session | null): PlatformState {
@@ -39,10 +41,12 @@ export function projectFor(state: PlatformState, session: Session | null): Platf
   const ownFunds = new Set(state.funds.filter((f) => f.sponsorId === session.userId).map((f) => f.id));
   const apps = state.applications.filter((a) => ownFunds.has(a.fundId));
   const ids = new Set(apps.map((a) => a.id));
+  // Marks are only for the sponsor actually funding the student.
+  const funding = new Set(apps.filter(isFunded).map((a) => a.studentId));
   return {
     ...base,
     // A child stays hidden from every sponsor until a parent or guardian has consented (POPIA s35).
-    pool: state.pool.filter(visibleToSponsors),
+    pool: state.pool.filter(visibleToSponsors).map(({ results, ...p }) => (funding.has(p.id) && results ? { ...p, results } : p)),
     applications: apps,
     messages: state.messages.filter((m) => ids.has(m.applicationId)),
     documents: state.documents.filter((d) => ids.has(d.applicationId)),

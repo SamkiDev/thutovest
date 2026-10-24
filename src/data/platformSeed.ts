@@ -21,7 +21,7 @@ export const DEMO_ACCOUNTS = {
 
 /** One login per judge, each starting from the same story as Tatenda but with a plan of their own. */
 export const JUDGE_ACCOUNTS = [
-  { email: `judge1@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge1', firstName: 'Amahle', guardian: 'Zodwa', relationship: 'Mother' },
+  { email: `judge1@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge1', firstName: 'Lwazi', guardian: 'Zodwa', relationship: 'Mother' },
   { email: `judge2@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge2', firstName: 'Bongani', guardian: 'Themba', relationship: 'Father' },
   { email: `judge3@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge3', firstName: 'Karabo', guardian: 'Dineo', relationship: 'Mother' },
   { email: `judge4@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-judge4', firstName: 'Palesa', guardian: 'Lindiwe', relationship: 'Mother' },
@@ -200,11 +200,18 @@ const POOL: PoolSeed[] = [
   { id: 'stu-themba', firstName: 'Themba', province: 'Mpumalanga', field: 'computing', educationStage: 'grade12', institutionId: 'tut', householdIncome: 'under-350k', apsEstimate: 27, isAdult: true, trust: 0, totalCost: 88000, gap: 64000, onTimeRate: 0.5, tasksCompleted: 3, progressRatio: 0.15, discoverable: false },
   {
     id: 'stu-kagiso', firstName: 'Kagiso', province: 'North West', field: 'computing', educationStage: 'first-year', institutionId: 'up', householdIncome: 'under-350k', apsEstimate: 35, isAdult: true, trust: 3, totalCost: 104000, gap: 0, onTimeRate: 0.95, tasksCompleted: 19, progressRatio: 0.9,
-    results: [{ term: 'Semester 1, 2026', average: 71, creditsPassed: 60, creditsTaken: 64 }],
+    results: [
+      { term: 'Semester 1, 2026', average: 71, creditsPassed: 60, creditsTaken: 64 },
+      { term: 'Semester 2 tests, 2026', average: 73, creditsPassed: 32, creditsTaken: 32 },
+    ],
   },
   {
     id: 'stu-zanele', firstName: 'Zanele', province: 'Eastern Cape', field: 'computing', educationStage: 'first-year', institutionId: 'nmu', householdIncome: 'under-350k', apsEstimate: 30, isAdult: true, trust: 3, totalCost: 86000, gap: 0, onTimeRate: 0.9, tasksCompleted: 17, progressRatio: 0.85,
-    results: [{ term: 'Semester 1, 2026', average: 64, creditsPassed: 56, creditsTaken: 64 }],
+    // Slipping below the Developer Bursary's 60% pass mark: the early-warning example.
+    results: [
+      { term: 'Semester 1, 2026', average: 64, creditsPassed: 56, creditsTaken: 64 },
+      { term: 'Semester 2 tests, 2026', average: 56, creditsPassed: 20, creditsTaken: 32 },
+    ],
   },
 ];
 
@@ -281,7 +288,19 @@ function applications(): FundApplication[] {
   });
   return [
     a('app-kagiso', 'fund-ridge-dev', 'stu-kagiso', 'paid', { amount: 45000, paymentReference: 'RDG-26-0412' }, 24 * 200),
-    a('app-zanele', 'fund-ridge-dev', 'stu-zanele', 'paid', { amount: 38000, paymentReference: 'RDG-26-0419' }, 24 * 198),
+    a('app-zanele', 'fund-ridge-dev', 'stu-zanele', 'paid', {
+      amount: 38000,
+      paymentReference: 'RDG-26-0419',
+      tutorRequests: [
+        {
+          id: 'tut-zanele',
+          subject: 'Data Structures and Algorithms',
+          note: 'I failed the second test. A tutor once a week before exams would really help.',
+          at: hoursAgo(10),
+          status: 'requested',
+        },
+      ],
+    }, 24 * 198),
     a('app-lerato', 'fund-ridge-dev', 'stu-lerato', 'offered', { amount: 58000 }, 20),
     a('app-sipho', 'fund-ridge-dev', 'stu-sipho', 'shortlisted', { initiatedBy: 'student' }, 30),
     a('app-ayesha', 'fund-ridge-dev', 'stu-ayesha', 'accepted', {
@@ -296,6 +315,13 @@ function applications(): FundApplication[] {
 function messages(): Message[] {
   return [
     ...DEMO_STUDENTS.flatMap((d) => scamMessages(d.userId, d.firstName)),
+    {
+      id: 'm-z1',
+      applicationId: 'app-zanele',
+      from: 'student',
+      text: 'Tutor request: Data Structures and Algorithms. I failed the second test. A tutor once a week before exams would really help.',
+      at: hoursAgo(10),
+    },
     { id: 'm-a1', applicationId: 'app-ayesha', from: 'system', text: 'Ayesha accepted and signed the funding agreement in the app. Next: documents.', at: hoursAgo(30) },
     { id: 'm-a2', applicationId: 'app-ayesha', from: 'student', text: 'I’ve shared my admission letter and June results. My mom is getting the SASSA letter this week.', at: hoursAgo(6) },
     { id: 'm-l1', applicationId: 'app-lerato', from: 'sponsor', text: 'Hi Lerato, we’d like to offer you R58,000 towards your BSc at TUT. The full amount is paid to your fee account.', at: hoursAgo(20) },
@@ -393,6 +419,7 @@ function events(): PlatformEvent[] {
     })),
     { id: 'e2', at: hoursAgo(20), audience: 'sponsor', sponsorId: DEMO_SPONSOR_ID, text: 'Offer of R58,000 sent to Lerato', kind: 'offer' },
     { id: 'e3', at: hoursAgo(6), audience: 'sponsor', sponsorId: DEMO_SPONSOR_ID, text: 'Ayesha shared her admission letter and results', kind: 'document' },
+    { id: 'e4', at: hoursAgo(10), audience: 'sponsor', sponsorId: DEMO_SPONSOR_ID, text: 'Zanele asked for a tutor in Data Structures and Algorithms', kind: 'message' },
   ];
 }
 

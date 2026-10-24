@@ -13,6 +13,7 @@ import type {
   StudentState,
   TaskStatus,
   WhatsAppAlertPrefs,
+  MarkRecord,
 } from '../types';
 import { taskById } from '../data/journey';
 import { optionById } from '../data/studyOptions';
@@ -56,7 +57,9 @@ export type StudentAction =
   | { type: 'log'; text: string; kind: ActivityItem['kind'] }
   | { type: 'addDocument'; document: VaultDocument }
   | { type: 'removeDocument'; id: string }
-  | { type: 'setDocumentIssuer'; id: string; status: VerificationStatus };
+  | { type: 'setDocumentIssuer'; id: string; status: VerificationStatus }
+  | { type: 'addMarks'; record: MarkRecord; summary: string }
+  | { type: 'removeMarks'; id: string };
 
 function log(state: StudentState, text: string, kind: ActivityItem['kind']): StudentState {
   const item: ActivityItem = { id: makeId('act'), at: new Date().toISOString(), text, kind };
@@ -345,6 +348,12 @@ export function studentReducer(state: StudentState | null, action: StudentAction
       }
       return log(next, `Added ${action.document.fileName} to your document vault`, 'profile');
     }
+
+    case 'addMarks':
+      return log({ ...state, marks: [...(state.marks ?? []), action.record] }, action.summary, 'profile');
+
+    case 'removeMarks':
+      return { ...state, marks: (state.marks ?? []).filter((m) => m.id !== action.id) };
 
     case 'removeDocument':
       return { ...state, documents: (state.documents ?? []).filter((d) => d.id !== action.id) };

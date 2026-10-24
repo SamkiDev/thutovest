@@ -259,6 +259,35 @@ export interface StudentState {
   documents: VaultDocument[];
   /** WhatsApp companion: read-and-remind only. Absent until the student links a number. */
   whatsapp?: WhatsAppLink;
+  /** Marks the student added, oldest first. Analysed every time a new set is added. */
+  marks?: MarkRecord[];
+}
+
+export interface SubjectMark {
+  subject: string;
+  /** Percentage, 0 to 100. */
+  mark: number;
+}
+
+export interface MarkRecord {
+  id: string;
+  /** For example "Term 1, 2026" or "Semester 1, 2026". */
+  term: string;
+  addedAt: string;
+  subjects: SubjectMark[];
+  /** University and college only. */
+  creditsTaken?: number;
+  creditsPassed?: number;
+  source: 'typed' | 'report';
+  fileName?: string;
+}
+
+/** What a funding sponsor sees about a term: averages only, never the report or subject marks. */
+export interface TermSummary {
+  term: string;
+  average: number;
+  creditsPassed: number;
+  creditsTaken: number;
 }
 
 export interface WhatsAppAlertPrefs {
@@ -462,8 +491,8 @@ export interface CandidateProfile {
   progressRatio: number;
   discoverable: boolean;
   isLive: boolean;
-  /** Semester results for funded students (impact tracking). */
-  results?: { term: string; average: number; creditsPassed: number; creditsTaken: number }[];
+  /** Term averages, oldest first. Only the sponsor funding the student receives these. */
+  results?: TermSummary[];
 }
 
 export type ApplicationStatus =
@@ -487,8 +516,31 @@ export interface FundApplication {
   paymentReference?: string;
   agreement?: FundingAgreement;
   offerNote?: string;
+  /** Funded students can ask their sponsor for a tutor. */
+  tutorRequests?: TutorRequest[];
+  /** Early warnings the sponsor sent about falling results. */
+  warnings?: ProgressWarning[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface TutorRequest {
+  id: string;
+  subject: string;
+  note: string;
+  at: string;
+  status: 'requested' | 'arranged' | 'declined';
+  reply?: string;
+  answeredAt?: string;
+}
+
+export interface ProgressWarning {
+  id: string;
+  at: string;
+  term: string;
+  average: number;
+  passMark?: number;
+  note?: string;
 }
 
 export interface MessageFlag {

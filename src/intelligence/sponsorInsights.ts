@@ -1,6 +1,7 @@
 import type { CandidateProfile, PlatformState, SponsorOrg } from '../types';
 import { formatZAR } from '../utils/format';
 import { formatDate } from '../utils/dates';
+import { analyseSummaries, isFunded } from '../platform/progressRules';
 import { forecastFund, learnPreferences, rankCandidates, type LearnedPreferences, type RankedCandidate } from './marketplace';
 
 export interface SponsorInsight {
@@ -103,6 +104,30 @@ export function sponsorBrief(sponsor: SponsorOrg, platform: PlatformState, candi
         link: { label: 'View candidate', to: `/sponsor/candidates?fund=${f.id}&focus=${top.candidate.id}` },
       });
     }
+  }
+
+  // Funded students whose results are slipping, and tutor requests to answer.
+  const fundedApps = platform.applications.filter((a) => funds.some((f) => f.id === a.fundId) && isFunded(a));
+  const slipping = fundedApps
+    .map((a) => ({ a, p: analyseSummaries(candidates.find((c) => c.id === a.studentId)?.results ?? [], funds.find((f) => f.id === a.fundId)?.terms?.minPassMark) }))
+    .filter((x) => x.p.status !== 'on-track');
+  const tutors = fundedApps.flatMap((a) => (a.tutorRequests ?? []).filter((r) => r.status === 'requested').map((r) => ({ a, r })));
+  if (slipping.length || tutors.length) {
+    insights.unshift({
+      id: 'progress',
+      tone: 'action',
+      title: slipping.length
+        ? `${slipping.map((x) => nameOf(x.a.studentId)).join(', ')} ${slipping.length === 1 ? 'is' : 'are'} slipping`
+        : `${tutors.length} tutor ${tutors.length === 1 ? 'request' : 'requests'} waiting`,
+      detail: slipping.length
+        ? 'A short, fair warning now, and a tutor if they ask, does more than a funding review at year end.'
+        : 'Funded students asked for help with a subject.',
+      evidence: [
+        ...slipping.flatMap((x) => x.p.reasons.map((r) => `${nameOf(x.a.studentId)}: ${r}`)),
+        ...tutors.map(({ a, r }) => `${nameOf(a.studentId)} asked for a tutor in ${r.subject}`),
+      ],
+      link: { label: 'See student progress', to: '/sponsor#impact' },
+    });
   }
 
   // Impact of funded students.

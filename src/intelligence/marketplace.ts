@@ -1,6 +1,7 @@
 /* ------------------------------------------------------------------
  * Fund ↔ student matching, sponsor preference learning and fund forecasts.
  * ------------------------------------------------------------------ */
+import { summarise } from '../platform/progressRules';
 import type { CandidateProfile, Fund, FundApplication, PlatformState, SponsorDecision, StudentState } from '../types';
 import { FIELDS, INCOME_BANDS } from '../data/labels';
 import { institutionById } from '../data/institutions';
@@ -42,6 +43,8 @@ export function liveCandidate(state: StudentState): CandidateProfile {
     progressRatio: Math.min(1, done / 20),
     discoverable: state.discoverable,
     isLive: true,
+    // Averages only. The server passes them on only to a sponsor funding this student.
+    ...(state.marks?.length ? { results: state.marks.map(summarise) } : {}),
   };
 }
 

@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Brain, ChartLine, GraduationCap, MousePointerClick } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { RouteMark } from '../../components/layout/Logo';
+import { StudentProgress } from '../../components/sponsor/StudentProgress';
 import { useSponsor } from '../../hooks/useSponsor';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
 import { PageHeader } from '../../components/ui/Misc';
@@ -11,7 +12,6 @@ import { ButtonLink } from '../../components/ui/Button';
 import type { SponsorInsight } from '../../intelligence/sponsorInsights';
 import { formatZAR, percent } from '../../utils/format';
 import { timeAgo } from '../../utils/dates';
-import { institutionById } from '../../data/institutions';
 import { cn } from '../../utils/cn';
 
 const STAGES = [
@@ -31,7 +31,7 @@ const TONE_ICON: Record<SponsorInsight['tone'], LucideIcon> = {
 };
 
 export default function SponsorOverviewPage() {
-  const { sponsor, funds, applications, brief, platform, candidateById } = useSponsor();
+  const { sponsor, funds, applications, brief, platform, candidateById, dispatchPlatform } = useSponsor();
   const location = useLocation();
   useDocumentTitle('Sponsor overview');
 
@@ -145,37 +145,7 @@ export default function SponsorOverviewPage() {
             </ol>
           </section>
 
-          <section id="impact" tabIndex={-1} className="card scroll-mt-20 p-5 outline-none sm:p-6" aria-labelledby="impact-heading">
-            <h2 id="impact-heading" className="text-lg font-semibold">
-              Impact
-            </h2>
-            <p className="mt-0.5 text-sm text-muted">Verified results from students you’ve funded.</p>
-            <ul className="mt-3 divide-y divide-line">
-              {paid.map((a) => {
-                const c = candidateById(a.studentId);
-                const r = c?.results?.[c.results.length - 1];
-                return (
-                  <li key={a.id} className="py-3">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className="font-semibold text-ink">
-                        {c?.firstName}
-                        <span className="ml-1.5 text-sm font-normal text-muted">{institutionById(c?.institutionId ?? '')?.shortName}</span>
-                      </p>
-                      <span className="num text-sm text-muted">{formatZAR(a.amount ?? 0)}</span>
-                    </div>
-                    {r ? (
-                      <p className="mt-0.5 text-sm text-body">
-                        {r.term}: average {r.average}%, {r.creditsPassed} of {r.creditsTaken} credits passed
-                      </p>
-                    ) : (
-                      <p className="mt-0.5 text-sm text-muted">First results due after the June exams</p>
-                    )}
-                  </li>
-                );
-              })}
-              {paid.length === 0 && <li className="py-3 text-sm text-muted">Results appear here once a funded student finishes a semester.</li>}
-            </ul>
-          </section>
+          <StudentProgress sponsorName={sponsor.name} applications={applications} funds={funds} candidateById={candidateById} dispatch={dispatchPlatform} />
         </div>
       </div>
     </div>

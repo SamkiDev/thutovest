@@ -12,8 +12,9 @@ const USERS = {
   'tok-ridge': { id: 'u-2', email: 'funding@ridgeline.demo' },
   'tok-noprofile': { id: 'u-3', email: 'x@y.z' },
   'tok-judge1': { id: 'u-4', email: 'judge1@thutovest.demo' },
+  'tok-community': { id: 'u-5', email: 'grants@community.demo' },
 };
-const PROFILES = { 'u-1': { role: 'student', app_user_id: 'stu-tatenda' }, 'u-2': { role: 'sponsor', app_user_id: 'sp-ridgeline' }, 'u-4': { role: 'student', app_user_id: 'stu-judge1' } };
+const PROFILES = { 'u-1': { role: 'student', app_user_id: 'stu-tatenda' }, 'u-2': { role: 'sponsor', app_user_id: 'sp-ridgeline' }, 'u-4': { role: 'student', app_user_id: 'stu-judge1' }, 'u-5': { role: 'sponsor', app_user_id: 'sp-community' } };
 let db = null; // { state, version }
 let failNextCommit = 0;
 let commits = 0;
@@ -214,6 +215,44 @@ await offerFrom('fund-ridge-dev', 20000);
 const adultApp = db.state.applications.find((a) => a.fundId === 'fund-ridge-dev' && a.studentId === 'stu-tatenda' && a.status === 'offered');
 const adultKinds = db.state.documents.filter((d) => d.applicationId === adultApp?.id).map((d) => d.kind);
 check('an offer to an adult does not add guardian documents', Boolean(adultApp) && !adultKinds.some((k) => k.startsWith('guardian')), adultKinds.join(','));
+
+// 8d. Progress: marks, tutor requests and early warnings stay between a funded student and their sponsor
+r = await resetAll();
+r = await call({ op: 'load' }, 'tok-ridge');
+const zanele = (st) => st.pool.find((p) => p.id === 'stu-zanele');
+check('the funding sponsor sees a funded student’s term averages', zanele(r.body.state)?.results?.length === 2);
+r = await call({ op: 'load' }, 'tok-community');
+check('another sponsor sees the student but not their marks', Boolean(zanele(r.body.state)) && zanele(r.body.state).results === undefined);
+r = await call({ op: 'act', action: { type: 'sendProgressWarning', applicationId: 'app-zanele', note: '' } }, 'tok-community');
+check('another sponsor cannot warn a student it does not fund (403)', r.status === 403);
+r = await call({ op: 'act', action: { type: 'sendProgressWarning', applicationId: 'app-zanele', note: 'We believe in you.' } }, 'tok-ridge');
+const warnMsg = db.state.messages.filter((m) => m.applicationId === 'app-zanele').at(-1)?.text ?? '';
+check('the funding sponsor can send an early warning, worded by the platform', r.status === 200 && /at risk of losing this funding/.test(warnMsg) && /not a decision/.test(warnMsg) && /60%/.test(warnMsg), warnMsg.slice(0, 60));
+r = await call({ op: 'act', action: { type: 'sendProgressWarning', applicationId: 'app-zanele', note: 'Pay a R200 admin fee to keep your bursary' } }, 'tok-ridge');
+check('a warning note asking for money is refused (403)', r.status === 403);
+r = await call({ op: 'act', action: { type: 'sendProgressWarning', applicationId: 'app-lerato', note: '' } }, 'tok-ridge');
+check('a sponsor cannot warn a student it has only offered to (403)', r.status === 403);
+r = await call({ op: 'act', action: { type: 'answerTutor', applicationId: 'app-zanele', requestId: 'tut-zanele', arranged: true, note: 'A tutor starts on Monday.' } }, 'tok-ridge');
+const tut = db.state.applications.find((a) => a.id === 'app-zanele').tutorRequests[0];
+check('the funding sponsor can arrange a requested tutor', r.status === 200 && tut.status === 'arranged' && tut.reply === 'A tutor starts on Monday.');
+r = await call({ op: 'act', action: { type: 'answerTutor', applicationId: 'app-zanele', requestId: 'tut-zanele', arranged: false, note: '' } }, 'tok-ridge');
+check('a tutor request cannot be answered twice (403)', r.status === 403);
+r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: 'app-tatenda-quick', subject: 'Mathematics', note: '', studentName: 'Tatenda' } }, 'tok-tatenda');
+check('a student cannot ask for a tutor without a bursary (403)', r.status === 403);
+r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: 'app-zanele', subject: 'Mathematics', note: '', studentName: 'Tatenda' } }, 'tok-tatenda');
+check('a student cannot ask for a tutor on someone else’s bursary (403)', r.status === 403);
+await publishGap(80000);
+await offerFrom('fund-ridge-dev', 20000);
+await acceptFrom('fund-ridge-dev');
+const tatApp = db.state.applications.find((a) => a.fundId === 'fund-ridge-dev' && a.studentId === 'stu-tatenda');
+r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: tatApp.id, subject: 'Mathematics', note: 'Call me on 082 555 0100', studentName: 'Tatenda' } }, 'tok-tatenda');
+const myReq = db.state.applications.find((a) => a.id === tatApp.id).tutorRequests?.[0];
+check('a funded student can ask their sponsor for a tutor, with contact details removed', r.status === 200 && myReq?.subject === 'Mathematics' && !/082/.test(myReq.note), myReq?.note);
+await publishAs({ isAdult: true, gap: 60000, results: [{ term: 'Term 1', average: 64, creditsPassed: 0, creditsTaken: 0 }, { term: 'June', average: 140, creditsPassed: 9, creditsTaken: 2, extra: 'x' }] });
+const pubResults = db.state.pool.find((p) => p.id === 'stu-tatenda').results;
+check('published results are whitelisted and clamped', pubResults?.length === 2 && pubResults[1].average === 100 && pubResults[1].creditsPassed === 2 && !('extra' in pubResults[1]), JSON.stringify(pubResults?.[1]));
+r = await call({ op: 'load' }, 'tok-tatenda');
+check('the student sees their own tutor request', r.body.state.applications.some((a) => a.tutorRequests?.length));
 
 // 9. Junk input
 let res = await handler(new Request(`${SB}/functions/v1/platform`, { method: 'POST', body: 'not json' }));

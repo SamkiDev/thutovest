@@ -17,6 +17,7 @@ import { createPlatformSeed } from '../data/platformSeed';
 import { screenMessage } from '../intelligence/moderation';
 import { formatZAR } from '../utils/format';
 import { makeId } from '../utils/createState';
+import { warningText } from './progressRules';
 import { DOCUMENT_INFO, docName } from '../data/documents';
 import { GUARDIAN_DOCS, isMinor } from './guardianRules';
 import { addDays, todayISO } from '../utils/dates';
@@ -43,7 +44,12 @@ export type PlatformAction =
   | { type: 'registerSponsor'; sponsor: SponsorOrg }
   | { type: 'setSponsorCheck'; sponsorId: string; key: SponsorCheckKey; item: VerificationItem }
   /** A signed-in student publishes their anonymised profile so sponsors on other devices can find them. */
-  | { type: 'publishCandidate'; profile: CandidateProfile };
+  | { type: 'publishCandidate'; profile: CandidateProfile }
+  /** A funded student asks their sponsor for a tutor. */
+  | { type: 'requestTutor'; applicationId: string; subject: string; note: string; studentName: string }
+  | { type: 'answerTutor'; applicationId: string; requestId: string; arranged: boolean; note: string }
+  /** The sponsor warns a funded student early that their results are slipping. The platform writes the wording. */
+  | { type: 'sendProgressWarning'; applicationId: string; note: string };
 
 const now = () => new Date().toISOString();
 
@@ -120,6 +126,10 @@ function resetSponsor(state: PlatformState, sponsorId: string): PlatformState {
     decisions,
     events: [...state.events.filter((e) => e.sponsorId !== sponsorId), ...seed.events.filter((e) => e.sponsorId === sponsorId)],
   };
+}
+
+function patchApp(state: PlatformState, id: string, patch: Partial<FundApplication>): PlatformState {
+  return { ...state, applications: state.applications.map((a) => (a.id === id ? { ...a, ...patch, updatedAt: now() } : a)) };
 }
 
 function decide(state: PlatformState, sponsorId: string, d: Omit<SponsorDecision, 'at'>): PlatformState {
@@ -393,6 +403,51 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
 
     case 'publishCandidate':
       return { ...state, pool: [{ ...action.profile, isLive: true }, ...state.pool.filter((p) => p.id !== action.profile.id)] };
+
+    case 'requestTutor': {
+      const app = state.applications.find((a) => a.id === action.applicationId);
+      if (!app) return state;
+      const { sponsor } = sponsorOfFund(state, app.fundId);
+      const note = screenMessage(action.note, 'student').cleanText;
+      const request = { id: makeId('tut'), subject: action.subject, note, at: now(), status: 'requested' as const };
+      let next = patchApp(state, app.id, { tutorRequests: [...(app.tutorRequests ?? []), request] });
+      next = addMessage(next, { applicationId: app.id, from: 'student', text: `Tutor request: ${action.subject}.${note ? ` ${note}` : ''}` });
+      return event(next, { audience: 'sponsor', sponsorId: sponsor?.id, kind: 'message', text: `${action.studentName} asked for a tutor in ${action.subject}` });
+    }
+
+    case 'answerTutor': {
+      const app = state.applications.find((a) => a.id === action.applicationId);
+      const request = app?.tutorRequests?.find((r) => r.id === action.requestId);
+      if (!app || !request) return state;
+      const { sponsor } = sponsorOfFund(state, app.fundId);
+      const status = action.arranged ? ('arranged' as const) : ('declined' as const);
+      let next = patchApp(state, app.id, {
+        tutorRequests: app.tutorRequests!.map((r) => (r.id === request.id ? { ...r, status, reply: action.note || undefined, answeredAt: now() } : r)),
+      });
+      const text = action.arranged
+        ? `Tutor support for ${request.subject} is arranged.${action.note ? ` ${action.note}` : ''}`
+        : `We can’t arrange a tutor for ${request.subject} right now.${action.note ? ` ${action.note}` : ''}`;
+      next = addMessage(next, { applicationId: app.id, from: 'sponsor', text });
+      return event(next, {
+        audience: 'student',
+        studentId: app.studentId,
+        kind: 'message',
+        text: action.arranged ? `${sponsor?.name ?? 'Your sponsor'} arranged a tutor for ${request.subject}` : `${sponsor?.name ?? 'Your sponsor'} answered your tutor request`,
+      });
+    }
+
+    case 'sendProgressWarning': {
+      const app = state.applications.find((a) => a.id === action.applicationId);
+      const latest = state.pool.find((p) => p.id === app?.studentId)?.results?.at(-1);
+      if (!app || !latest) return state;
+      const { fund, sponsor } = sponsorOfFund(state, app.fundId);
+      if (!fund || !sponsor) return state;
+      const passMark = fund.terms?.minPassMark;
+      const warning = { id: makeId('warn'), at: now(), term: latest.term, average: latest.average, passMark, note: action.note || undefined };
+      let next = patchApp(state, app.id, { warnings: [...(app.warnings ?? []), warning] });
+      next = addMessage(next, { applicationId: app.id, from: 'sponsor', text: warningText(sponsor.name, fund.name, latest, passMark, action.note) });
+      return event(next, { audience: 'student', studentId: app.studentId, kind: 'message', text: `${sponsor.name} sent an early warning about your results` });
+    }
 
     default:
       return state;

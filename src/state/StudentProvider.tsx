@@ -4,11 +4,12 @@ import { studentReducer, type StudentAction } from './studentReducer';
 import { computeEngine } from '../utils/engine';
 import { dataStore, KEYS } from '../platform/dataStore';
 import { usePlatform } from '../platform/PlatformProvider';
+import { upgradeDemoState } from '../utils/createState';
 import { loadStudentState, saveStudentState, subscribeToStudentState } from '../platform/backend';
 
 function loadState(): StudentState | null {
   const parsed = dataStore.load<StudentState>(KEYS.student);
-  return valid(parsed) ? { ...parsed, documents: parsed.documents ?? [] } : null;
+  return valid(parsed) ? upgradeDemoState({ ...parsed, documents: parsed.documents ?? [] }) : null;
 }
 
 const valid = (s: StudentState | null | undefined): s is StudentState => s?.version === 1 && Boolean(s.onboarded) && Boolean(s.taskHistory);
@@ -70,7 +71,7 @@ export function StudentProvider({ children }: { children: ReactNode }) {
         if (valid(saved) && saved.id === session?.userId) {
           lastSent.current = JSON.stringify(saved);
           fromRemote.current = true;
-          dispatch({ type: 'hydrate', state: { ...saved, documents: saved.documents ?? [] } });
+          dispatch({ type: 'hydrate', state: upgradeDemoState({ ...saved, documents: saved.documents ?? [] }) });
         }
         synced.current = true;
         // Saves the current plan if the server had none.

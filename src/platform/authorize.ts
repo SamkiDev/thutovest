@@ -16,6 +16,7 @@ import type {
   SponsorOrg,
   StudentCheckKey,
   StudyField,
+  TermSummary,
   Province,
   IncomeBand,
   TrustLevel,
@@ -26,6 +27,8 @@ import { DOCUMENT_INFO } from '../data/documents';
 import { validRegistration } from '../utils/trust';
 import { remainingGap, sanitizeTerms, stackingBlocker } from './bursaryRules';
 import { visibleToSponsors } from './guardianRules';
+import { isFunded } from './progressRules';
+import { screenMessage } from '../intelligence/moderation';
 
 export const LIMITS = {
   message: 1000,
@@ -114,6 +117,33 @@ export function authorize(state: PlatformState, action: PlatformAction, session:
       if (!student || action.profile?.id !== student) return null;
       const profile = sanitizeCandidate(action.profile, student);
       return profile ? { type: 'publishCandidate', profile } : null;
+    }
+
+    // ---- Progress: only between a funded student and the sponsor funding them ----
+    case 'requestTutor': {
+      const { app } = appOf(state, action.applicationId);
+      if (!student || !app || app.studentId !== student || !isFunded(app)) return null;
+      const subject = clip(action.subject, 60);
+      const open = (app.tutorRequests ?? []).filter((r) => r.status === 'requested').length;
+      if (!subject || open >= 3 || (app.tutorRequests ?? []).length >= 20) return null;
+      return { ...action, subject, note: clip(action.note, LIMITS.note), studentName: clip(action.studentName, LIMITS.name) };
+    }
+    case 'answerTutor': {
+      const { app, sponsorId } = appOf(state, action.applicationId);
+      if (!sponsor || sponsorId !== sponsor || !app) return null;
+      if (!app.tutorRequests?.some((r) => r.id === action.requestId && r.status === 'requested')) return null;
+      const note = clip(action.note, LIMITS.note);
+      if (note && screenMessage(note, 'sponsor').blocked) return null;
+      return { ...action, arranged: action.arranged === true, note };
+    }
+    case 'sendProgressWarning': {
+      const { app, sponsorId } = appOf(state, action.applicationId);
+      if (!sponsor || sponsorId !== sponsor || !app || !isFunded(app)) return null;
+      // There has to be a result to warn about.
+      if (!state.pool.find((p) => p.id === app.studentId)?.results?.length) return null;
+      const note = clip(action.note, LIMITS.note);
+      if (note && screenMessage(note, 'sponsor').blocked) return null;
+      return { ...action, note };
     }
 
     // ---- Messages: either party of the application, as themselves ----
@@ -272,7 +302,24 @@ function sanitizeCandidate(p: CandidateProfile, studentId: string): CandidatePro
     progressRatio: ratio(p.progressRatio),
     discoverable: p.discoverable === true,
     isLive: true,
+    ...(Array.isArray(p.results) && p.results.length ? { results: sanitizeResults(p.results) } : {}),
   };
+}
+
+/** Term averages only, with ranges forced. */
+function sanitizeResults(results: unknown[]): TermSummary[] {
+  return results
+    .filter((r): r is TermSummary => Boolean(r) && typeof r === 'object')
+    .slice(-12)
+    .map((r) => {
+      const creditsTaken = count(r.creditsTaken, 400);
+      return {
+        term: clip(r.term, 40) || 'Term',
+        average: typeof r.average === 'number' && Number.isFinite(r.average) ? Math.min(100, Math.max(0, Math.round(r.average * 10) / 10)) : 0,
+        creditsPassed: Math.min(count(r.creditsPassed, 400), creditsTaken),
+        creditsTaken,
+      };
+    });
 }
 
 /** Shape check for state arriving from storage or another tab before it replaces ours. */
