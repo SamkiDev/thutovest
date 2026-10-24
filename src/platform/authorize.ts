@@ -27,7 +27,7 @@ import { DOCUMENT_INFO } from '../data/documents';
 import { validRegistration } from '../utils/trust';
 import { remainingGap, sanitizeTerms, stackingBlocker } from './bursaryRules';
 import { visibleToSponsors } from './guardianRules';
-import { isFunded } from './progressRules';
+import { isEnrolledStage, isFunded } from './progressRules';
 import { screenMessage } from '../intelligence/moderation';
 
 export const LIMITS = {
@@ -123,6 +123,8 @@ export function authorize(state: PlatformState, action: PlatformAction, session:
     case 'requestTutor': {
       const { app } = appOf(state, action.applicationId);
       if (!student || !app || app.studentId !== student || !isFunded(app)) return null;
+      // Tutors are for students already at university or college.
+      if (!isEnrolledStage(state.pool.find((p) => p.id === student)?.educationStage)) return null;
       const subject = clip(action.subject, 60);
       const open = (app.tutorRequests ?? []).filter((r) => r.status === 'requested').length;
       if (!subject || open >= 3 || (app.tutorRequests ?? []).length >= 20) return null;
@@ -306,18 +308,25 @@ function sanitizeCandidate(p: CandidateProfile, studentId: string): CandidatePro
   };
 }
 
-/** Term averages only, with ranges forced. */
+/** Term results and subject marks, with ranges forced and nothing else kept. */
 function sanitizeResults(results: unknown[]): TermSummary[] {
   return results
     .filter((r): r is TermSummary => Boolean(r) && typeof r === 'object')
     .slice(-12)
     .map((r) => {
       const creditsTaken = count(r.creditsTaken, 400);
+      const subjects = Array.isArray(r.subjects)
+        ? r.subjects
+            .filter((s) => s && typeof s === 'object' && clip(s.subject, 60))
+            .slice(0, 20)
+            .map((s) => ({ subject: clip(s.subject, 60), mark: count(s.mark, 100) }))
+        : [];
       return {
         term: clip(r.term, 40) || 'Term',
         average: typeof r.average === 'number' && Number.isFinite(r.average) ? Math.min(100, Math.max(0, Math.round(r.average * 10) / 10)) : 0,
         creditsPassed: Math.min(count(r.creditsPassed, 400), creditsTaken),
         creditsTaken,
+        ...(subjects.length ? { subjects } : {}),
       };
     });
 }

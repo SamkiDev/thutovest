@@ -220,7 +220,7 @@ check('an offer to an adult does not add guardian documents', Boolean(adultApp) 
 r = await resetAll();
 r = await call({ op: 'load' }, 'tok-ridge');
 const zanele = (st) => st.pool.find((p) => p.id === 'stu-zanele');
-check('the funding sponsor sees a funded student’s term averages', zanele(r.body.state)?.results?.length === 2);
+check('the funding sponsor sees a funded student’s results, module by module', zanele(r.body.state)?.results?.length === 2 && zanele(r.body.state).results[1].subjects?.length === 4);
 r = await call({ op: 'load' }, 'tok-community');
 check('another sponsor sees the student but not their marks', Boolean(zanele(r.body.state)) && zanele(r.body.state).results === undefined);
 r = await call({ op: 'act', action: { type: 'sendProgressWarning', applicationId: 'app-zanele', note: '' } }, 'tok-community');
@@ -241,16 +241,19 @@ r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: 'app-
 check('a student cannot ask for a tutor without a bursary (403)', r.status === 403);
 r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: 'app-zanele', subject: 'Mathematics', note: '', studentName: 'Tatenda' } }, 'tok-tatenda');
 check('a student cannot ask for a tutor on someone else’s bursary (403)', r.status === 403);
-await publishGap(80000);
+await publishAs({ isAdult: true, gap: 80000, educationStage: 'grade12' });
 await offerFrom('fund-ridge-dev', 20000);
 await acceptFrom('fund-ridge-dev');
 const tatApp = db.state.applications.find((a) => a.fundId === 'fund-ridge-dev' && a.studentId === 'stu-tatenda');
+r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: tatApp.id, subject: 'Mathematics', note: '', studentName: 'Tatenda' } }, 'tok-tatenda');
+check('a funded learner still at school cannot ask for a tutor yet (403)', r.status === 403);
+await publishAs({ isAdult: true, gap: 80000, educationStage: 'first-year' });
 r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: tatApp.id, subject: 'Mathematics', note: 'Call me on 082 555 0100', studentName: 'Tatenda' } }, 'tok-tatenda');
 const myReq = db.state.applications.find((a) => a.id === tatApp.id).tutorRequests?.[0];
 check('a funded student can ask their sponsor for a tutor, with contact details removed', r.status === 200 && myReq?.subject === 'Mathematics' && !/082/.test(myReq.note), myReq?.note);
-await publishAs({ isAdult: true, gap: 60000, results: [{ term: 'Term 1', average: 64, creditsPassed: 0, creditsTaken: 0 }, { term: 'June', average: 140, creditsPassed: 9, creditsTaken: 2, extra: 'x' }] });
+await publishAs({ isAdult: true, gap: 60000, results: [{ term: 'Term 1', average: 64, creditsPassed: 0, creditsTaken: 0 }, { term: 'June', average: 140, creditsPassed: 9, creditsTaken: 2, extra: 'x', subjects: [{ subject: 'Maths', mark: 250, idNumber: '1' }, { subject: '', mark: 50 }, 'junk'] }] });
 const pubResults = db.state.pool.find((p) => p.id === 'stu-tatenda').results;
-check('published results are whitelisted and clamped', pubResults?.length === 2 && pubResults[1].average === 100 && pubResults[1].creditsPassed === 2 && !('extra' in pubResults[1]), JSON.stringify(pubResults?.[1]));
+check('published results and module marks are whitelisted and clamped', pubResults?.length === 2 && pubResults[1].average === 100 && pubResults[1].creditsPassed === 2 && !('extra' in pubResults[1]) && JSON.stringify(pubResults[1].subjects) === JSON.stringify([{ subject: 'Maths', mark: 100 }]), JSON.stringify(pubResults?.[1]));
 r = await call({ op: 'load' }, 'tok-tatenda');
 check('the student sees their own tutor request', r.body.state.applications.some((a) => a.tutorRequests?.length));
 

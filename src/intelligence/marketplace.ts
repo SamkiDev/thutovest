@@ -43,7 +43,7 @@ export function liveCandidate(state: StudentState): CandidateProfile {
     progressRatio: Math.min(1, done / 20),
     discoverable: state.discoverable,
     isLive: true,
-    // Averages only. The server passes them on only to a sponsor funding this student.
+    // The server passes marks on only to a sponsor funding this student.
     ...(state.marks?.length ? { results: state.marks.map(summarise) } : {}),
   };
 }

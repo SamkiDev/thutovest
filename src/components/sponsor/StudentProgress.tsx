@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowDownRight, ArrowUpRight, Minus, ShieldAlert, UserRoundPlus } from 'lucide-react';
 import type { CandidateProfile, Fund, FundApplication } from '../../types';
 import type { PlatformAction } from '../../platform/platformReducer';
-import { analyseSummaries, isFunded, STATUS_LABEL, warningText, type ProgressStatus } from '../../platform/progressRules';
+import { analyseResults, isFunded, STATUS_LABEL, warningText, type ProgressStatus } from '../../platform/progressRules';
 import { institutionById } from '../../data/institutions';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -40,7 +40,7 @@ export function StudentProgress({
     .map((app) => {
       const fund = funds.find((f) => f.id === app.fundId);
       const c = candidateById(app.studentId);
-      return { app, fund, c, a: analyseSummaries(c?.results ?? [], fund?.terms?.minPassMark) };
+      return { app, fund, c, a: analyseResults(c?.results ?? [], fund?.terms?.minPassMark) };
     })
     .sort((x, y) => (x.a.latest && y.a.latest ? ORDER[x.a.status] - ORDER[y.a.status] : x.a.latest ? -1 : 1));
 
@@ -51,7 +51,7 @@ export function StudentProgress({
       <h2 id="impact-heading" className="text-lg font-semibold">
         Student progress
       </h2>
-      <p className="mt-0.5 text-sm text-muted">Term averages from the students you fund, read as soon as they add them.</p>
+      <p className="mt-0.5 text-sm text-muted">Marks from the students you fund, read as soon as they add them.</p>
       <ul className="mt-3 divide-y divide-line">
         {rows.map(({ app, fund, c, a }) => {
           const Arrow = a.change == null || a.change === 0 ? Minus : a.change > 0 ? ArrowUpRight : ArrowDownRight;
@@ -85,8 +85,19 @@ export function StudentProgress({
                       </span>
                     )}
                   </p>
+                  {a.latest.subjects && a.latest.subjects.length > 0 && (
+                    <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={`${c?.firstName ?? 'Student'}’s marks for ${a.latest.term}`}>
+                      {[...a.latest.subjects]
+                        .sort((x, y) => x.mark - y.mark)
+                        .map((s) => (
+                          <li key={s.subject} className={cn('rounded-full px-2.5 py-0.5 text-xs', s.mark < 50 ? 'bg-clay-50 text-clay-700' : 'bg-sunken text-body')}>
+                            {s.subject} {s.mark}%
+                          </li>
+                        ))}
+                    </ul>
+                  )}
                   {a.reasons.length > 0 && (
-                    <ul className="mt-1 space-y-0.5 text-sm text-body">
+                    <ul className="mt-2 space-y-0.5 text-sm text-body">
                       {a.reasons.map((r) => (
                         <li key={r} className="flex items-start gap-1.5">
                           <ShieldAlert aria-hidden className={cn('mt-0.5 size-4 shrink-0', a.status === 'at-risk' ? 'text-clay-600' : 'text-amber-700')} />
@@ -123,7 +134,7 @@ export function StudentProgress({
         {rows.length === 0 && <li className="py-3 text-sm text-muted">Students you fund appear here, with their results as they come in.</li>}
       </ul>
       <Why className="mt-2">
-        Students share term averages only, never their report or subject marks, and only with the sponsor funding them. Below your fund’s pass mark, or fewer than half the credits passed, is at risk. A drop of 5 points or more is worth watching.
+        Students share their marks for every subject or module with the sponsor funding them, as their bursary agreement asks, and with nobody else. Below your fund’s pass mark, a module under 40%, or fewer than half the credits passed, is at risk. A drop of 5 points or more is worth watching.
       </Why>
 
       <Modal

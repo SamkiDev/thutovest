@@ -11,7 +11,7 @@ import { Badge } from '../components/ui/Badge';
 import { Button } from '../components/ui/Button';
 import { Why } from '../components/ui/Why';
 import { SelectField } from '../components/forms/Fields';
-import { analyseMarks, apsFromMarks, averageOf, fundedApplications, nscLevel, STATUS_LABEL, type ProgressAnalysis, type ProgressStatus } from '../platform/progressRules';
+import { analyseMarks, apsFromMarks, averageOf, fundedApplications, isEnrolledStage, nscLevel, STATUS_LABEL, type ProgressAnalysis, type ProgressStatus } from '../platform/progressRules';
 import { optionById } from '../data/studyOptions';
 import { institutionById } from '../data/institutions';
 import { makeId } from '../utils/createState';
@@ -56,7 +56,7 @@ function adviceFor(state: StudentState, a: ProgressAnalysis, funded: boolean): {
           : `At ${focus.to}% it is your weakest subject. Two short sessions a week beat one long one.`,
     });
   }
-  if (funded && a.status !== 'on-track') {
+  if (funded && isEnrolledStage(state.profile.educationStage) && a.status !== 'on-track') {
     out.push({
       title: 'Ask your sponsor for a tutor',
       detail: 'Sponsors would rather help early than review your funding later. Use the form on this page; it goes straight to them.',
@@ -168,6 +168,7 @@ export default function ProgressPage() {
                   key={app.id}
                   sponsorName={sponsor?.name ?? 'Your sponsor'}
                   fundName={fund?.name ?? 'Your bursary'}
+                  canAskTutor={isEnrolledStage(state.profile.educationStage)}
                   passMark={fund?.terms?.minPassMark}
                   requests={app.tutorRequests ?? []}
                   warnings={app.warnings ?? []}
@@ -186,7 +187,9 @@ export default function ProgressPage() {
                 <UserRoundPlus aria-hidden className="size-5 text-veld-600" /> Ask for a tutor
               </h2>
               <p className="mt-2 text-sm text-body">
-                Once a sponsor funds you, you can ask them for a tutor here, and they will see your term averages (never your report or subject marks).
+                {isEnrolledStage(state.profile.educationStage)
+                  ? 'Once a sponsor funds you, you can ask them for a tutor here. Only that sponsor sees your marks.'
+                  : 'When you are at university or college with a bursary, you can ask your sponsor for a tutor here. Only that sponsor sees your marks.'}
               </p>
               <Link to="/app/sponsors" className="mt-3 inline-block text-sm font-semibold text-veld-700 hover:underline">
                 Find a sponsor
@@ -419,6 +422,7 @@ function AddMarks({ state, school, onSave }: { state: StudentState; school: bool
 function TutorPanel({
   sponsorName,
   fundName,
+  canAskTutor,
   passMark,
   requests,
   warnings,
@@ -428,6 +432,7 @@ function TutorPanel({
 }: {
   sponsorName: string;
   fundName: string;
+  canAskTutor: boolean;
   passMark?: number;
   requests: NonNullable<FundApplication['tutorRequests']>;
   warnings: NonNullable<FundApplication['warnings']>;
@@ -445,7 +450,7 @@ function TutorPanel({
       </h2>
       <p className="mt-1 text-sm text-muted">
         Funded by {sponsorName}
-        {passMark ? `. Asks for an average of ${passMark}% to keep it.` : '.'} They see your term averages, never your report or subject marks.
+        {passMark ? `. Asks for an average of ${passMark}% to keep it.` : '.'} They see the marks you add here, as your bursary agreement asks. Nobody else does.
       </p>
 
       {warnings.length > 0 && (
@@ -462,7 +467,9 @@ function TutorPanel({
         </div>
       )}
 
-      {subjects.length > 0 ? (
+      {!canAskTutor ? (
+        <p className="mt-3 text-sm text-body">Your bursary starts when you begin studying. From then on you can ask {sponsorName} for a tutor here.</p>
+      ) : subjects.length > 0 ? (
         <form
           className="mt-4 space-y-3"
           onSubmit={(e) => {

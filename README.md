@@ -33,7 +33,7 @@ The sign-in page has one-click buttons for all of them. Each judge login starts 
 5. **Sponsor:** approve the documents, then **Approve funding** and **Pay institution**. Payment stays locked until every required document is approved, and it only ever goes to the institution.
 6. **Safety:** as the sponsor, send "pay a R500 admin fee". The message is blocked and the sponsor suspended.
 7. **Student progress:** open **Marks and progress**, tap **Use a sample report**, then **Save and analyse**. Maths and Physical Sciences slip, the APS drops from 31 to 30, and the advice names the saved courses now out of reach.
-8. **Sponsor:** on the overview, **Student progress** shows Zanele below Ridgeline's 60% pass mark. Send her an **early warning** and arrange the tutor she asked for.
+8. **Sponsor:** on the overview, **Student progress** shows Zanele, a first-year at Nelson Mandela University, below Ridgeline's 60% pass mark, with her module marks (Data Structures and Algorithms at 44%). Send her an **early warning** and arrange the tutor she asked for.
 
 **Reset demo** in the menu puts your own account back to the start: your plan, applications, offers and messages. Other demo accounts are not affected.
 
@@ -43,7 +43,7 @@ The sign-in page has one-click buttons for all of them. Each judge login starts 
 
 - A personal plan from choosing a course to first year, with one next best action at every step
 - Course matches by field, APS, budget, province and preferred institutions. Change the APS and every match is re-scored. Every field has at least six options, including diplomas and higher certificates for lower APS scores.
-- Marks and progress: each time a student adds marks (typed, or read from a report), the app works out the average, the change since last time, the APS and the subjects slipping, compares them with the bursary's pass mark, and says what to do next. A funded student can ask their sponsor for a tutor in one tap.
+- Marks and progress: each time a student adds marks (typed, or read from a report), the app works out the average, the change since last time, the APS and the subjects slipping, compares them with the bursary's pass mark, and says what to do next. A student at university or college with a bursary can ask their sponsor for a tutor in one tap.
 - Risk Radar: early warnings for deadlines, missing documents and money gaps, each with its reason
 - Funding Gap Solver: NSFAS, ISFAP, Funza Lushaka, university aid and loans in one view
 - All 26 public universities, all 50 public TVET colleges and the DHET private college register, with official links
@@ -56,8 +56,8 @@ The sign-in page has one-click buttons for all of them. Each judge login starts 
 - Candidates ranked by fit and by what this sponsor tends to fund
 - Funds with their own terms: what the bursary pays for (tuition, accommodation, books, transport, living costs or the full cost), a minimum pass mark, work-back years, and whether it must be the student's only bursary
 - Offers, document review, funding approval and payment to the institution, with a forecast of when each fund runs out
-- Student progress for the students they fund: term averages as they come in, flagged when a student slips below the pass mark. The sponsor can send an early warning, worded by the platform so it is fair: it states the requirement, says no decision has been made, and offers help. Tutor requests are answered from the same place.
-- Students share term averages only, never the report or subject marks, and only with the sponsor funding them
+- Student progress for the students they fund: every subject or module mark as it comes in, flagged when a student slips below the pass mark. The sponsor can send an early warning, worded by the platform so it is fair: it states the requirement, says no decision has been made, and offers help. Tutor requests are answered from the same place.
+- Only the sponsor funding a student sees their marks, as the bursary agreement asks. Other sponsors never do, and the report file itself is never shared
 
 **Fair funding rules, enforced on the server**
 
@@ -153,11 +153,11 @@ A Meta WhatsApp Cloud API version (`supabase/functions/whatsapp-webhook`) is als
 npm run typecheck    # TypeScript, strict
 npm run build        # production build
 npm run audit        # known vulnerabilities in dependencies
-npm test             # 91 offline checks, no network or keys needed
+npm test             # 92 offline checks, no network or keys needed
 npm run test:live    # 38 attack probes against the live backend (changes nothing)
 ```
 
-- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 59 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, each account's reset touching only its own records, who may see marks and send warnings or tutor requests, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
+- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 60 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, each account's reset touching only its own records, who may see marks and send warnings or tutor requests, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
 - `npm run test:live` reads the public values from `.env.local` and tries what an attacker would: reading every table signed out, forged tokens, oversized requests, students and sponsors acting on each other's records, and replacing the whole state. Every probe must be refused and the data must be unchanged afterwards.
 
 ## Security

@@ -282,12 +282,14 @@ export interface MarkRecord {
   fileName?: string;
 }
 
-/** What a funding sponsor sees about a term: averages only, never the report or subject marks. */
+/** One term's results as the sponsor funding the student sees them. Never the report file itself. */
 export interface TermSummary {
   term: string;
   average: number;
   creditsPassed: number;
   creditsTaken: number;
+  /** Each subject or module mark, so the sponsor can see where help is needed. */
+  subjects?: SubjectMark[];
 }
 
 export interface WhatsAppAlertPrefs {
@@ -491,7 +493,7 @@ export interface CandidateProfile {
   progressRatio: number;
   discoverable: boolean;
   isLive: boolean;
-  /** Term averages, oldest first. Only the sponsor funding the student receives these. */
+  /** Term results with subject or module marks, oldest first. Only the sponsor funding the student receives these. */
   results?: TermSummary[];
 }
 

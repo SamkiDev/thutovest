@@ -11,8 +11,8 @@ import { isFunded } from './progressRules';
  * - Student: their own applications and everything attached to them, events
  *   addressed to them or to all.
  * - Sponsor: the anonymised candidate pool, applications to their own funds and
- *   everything attached to those, their own decisions and events. Term
- *   averages only for the students they fund.
+ *   everything attached to those, their own decisions and events. Marks
+ *   only for the students they fund.
  * - Signed out: sponsors and open funds only.
  */
 export function projectFor(state: PlatformState, session: Session | null): PlatformState {

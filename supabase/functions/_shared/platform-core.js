@@ -152,6 +152,8 @@ var FUNDED_STATUSES = [
 	"paid"
 ];
 var isFunded = (a) => FUNDED_STATUSES.includes(a.status);
+/** Studying at a university or college now. Tutor requests are for these students; a school learner's bursary starts later. */
+var isEnrolledStage = (stage) => stage === "first-year" || stage === "continuing";
 /**
 * The early warning a sponsor sends. Written by the platform, not the sponsor,
 * so it is always fair: it explains the requirement, says plainly that no
@@ -322,6 +324,7 @@ function authorize(state, action, session) {
 		case "requestTutor": {
 			const { app } = appOf(state, action.applicationId);
 			if (!student || !app || app.studentId !== student || !isFunded(app)) return null;
+			if (!isEnrolledStage(state.pool.find((p) => p.id === student)?.educationStage)) return null;
 			const subject = clip(action.subject, 60);
 			const open = (app.tutorRequests ?? []).filter((r) => r.status === "requested").length;
 			if (!subject || open >= 3 || (app.tutorRequests ?? []).length >= 20) return null;
@@ -535,15 +538,20 @@ function sanitizeCandidate(p, studentId) {
 		...Array.isArray(p.results) && p.results.length ? { results: sanitizeResults(p.results) } : {}
 	};
 }
-/** Term averages only, with ranges forced. */
+/** Term results and subject marks, with ranges forced and nothing else kept. */
 function sanitizeResults(results) {
 	return results.filter((r) => Boolean(r) && typeof r === "object").slice(-12).map((r) => {
 		const creditsTaken = count(r.creditsTaken, 400);
+		const subjects = Array.isArray(r.subjects) ? r.subjects.filter((s) => s && typeof s === "object" && clip(s.subject, 60)).slice(0, 20).map((s) => ({
+			subject: clip(s.subject, 60),
+			mark: count(s.mark, 100)
+		})) : [];
 		return {
 			term: clip(r.term, 40) || "Term",
 			average: typeof r.average === "number" && Number.isFinite(r.average) ? Math.min(100, Math.max(0, Math.round(r.average * 10) / 10)) : 0,
 			creditsPassed: Math.min(count(r.creditsPassed, 400), creditsTaken),
-			creditsTaken
+			creditsTaken,
+			...subjects.length ? { subjects } : {}
 		};
 	});
 }
@@ -1023,12 +1031,14 @@ var POOL = [
 			term: "Semester 1, 2026",
 			average: 71,
 			creditsPassed: 60,
-			creditsTaken: 64
+			creditsTaken: 64,
+			subjects: mods(["Programming 1", 78], ["Mathematics 1", 64], ["Information Systems 1", 70], ["Statistics 1", 72])
 		}, {
 			term: "Semester 2 tests, 2026",
 			average: 73,
 			creditsPassed: 32,
-			creditsTaken: 32
+			creditsTaken: 32,
+			subjects: mods(["Programming 2", 80], ["Mathematics 1B", 66], ["Databases", 72], ["Statistics 1B", 74])
 		}]
 	},
 	{
@@ -1051,15 +1061,23 @@ var POOL = [
 			term: "Semester 1, 2026",
 			average: 64,
 			creditsPassed: 56,
-			creditsTaken: 64
+			creditsTaken: 64,
+			subjects: mods(["Programming 1", 72], ["Discrete Mathematics", 58], ["Computer Systems", 66], ["Statistics 1", 60])
 		}, {
 			term: "Semester 2 tests, 2026",
 			average: 56,
 			creditsPassed: 20,
-			creditsTaken: 32
+			creditsTaken: 32,
+			subjects: mods(["Data Structures and Algorithms", 44], ["Discrete Mathematics 2", 55], ["Computer Systems 2", 66], ["Statistics 1B", 59])
 		}]
 	}
 ];
+function mods(...list) {
+	return list.map(([subject, mark]) => ({
+		subject,
+		mark
+	}));
+}
 function pool() {
 	return POOL.map((p) => {
 		const v = (cond) => cond ? "verified" : "not-started";
@@ -2025,8 +2043,8 @@ function platformReducer(state, action) {
 * - Student: their own applications and everything attached to them, events
 *   addressed to them or to all.
 * - Sponsor: the anonymised candidate pool, applications to their own funds and
-*   everything attached to those, their own decisions and events. Term
-*   averages only for the students they fund.
+*   everything attached to those, their own decisions and events. Marks
+*   only for the students they fund.
 * - Signed out: sponsors and open funds only.
 */
 function projectFor(state, session) {

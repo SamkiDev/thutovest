@@ -1,7 +1,7 @@
 import type { CandidateProfile, PlatformState, SponsorOrg } from '../types';
 import { formatZAR } from '../utils/format';
 import { formatDate } from '../utils/dates';
-import { analyseSummaries, isFunded } from '../platform/progressRules';
+import { analyseResults, isFunded } from '../platform/progressRules';
 import { forecastFund, learnPreferences, rankCandidates, type LearnedPreferences, type RankedCandidate } from './marketplace';
 
 export interface SponsorInsight {
@@ -109,7 +109,7 @@ export function sponsorBrief(sponsor: SponsorOrg, platform: PlatformState, candi
   // Funded students whose results are slipping, and tutor requests to answer.
   const fundedApps = platform.applications.filter((a) => funds.some((f) => f.id === a.fundId) && isFunded(a));
   const slipping = fundedApps
-    .map((a) => ({ a, p: analyseSummaries(candidates.find((c) => c.id === a.studentId)?.results ?? [], funds.find((f) => f.id === a.fundId)?.terms?.minPassMark) }))
+    .map((a) => ({ a, p: analyseResults(candidates.find((c) => c.id === a.studentId)?.results ?? [], funds.find((f) => f.id === a.fundId)?.terms?.minPassMark) }))
     .filter((x) => x.p.status !== 'on-track');
   const tutors = fundedApps.flatMap((a) => (a.tutorRequests ?? []).filter((r) => r.status === 'requested').map((r) => ({ a, r })));
   if (slipping.length || tutors.length) {

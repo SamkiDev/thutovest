@@ -52,8 +52,12 @@ export function summarise(record: MarkRecord): TermSummary {
     average: averageOf(record.subjects),
     creditsPassed: record.creditsPassed ?? 0,
     creditsTaken: record.creditsTaken ?? 0,
+    subjects: record.subjects,
   };
 }
+
+/** Studying at a university or college now. Tutor requests are for these students; a school learner's bursary starts later. */
+export const isEnrolledStage = (stage: string | undefined) => stage === 'first-year' || stage === 'continuing';
 
 export type ProgressStatus = 'on-track' | 'watch' | 'at-risk';
 
@@ -103,7 +107,18 @@ export function analyseSummaries(results: TermSummary[], passMark?: number): Pro
   return out;
 }
 
-/** Full analysis for the student, who can see their own subject marks. */
+/** What the funding sponsor sees: the full analysis when module marks were shared, averages otherwise. */
+export function analyseResults(results: TermSummary[], passMark?: number): ProgressAnalysis {
+  if (!results.length || results.some((r) => !r.subjects?.length)) return analyseSummaries(results, passMark);
+  const out = analyseMarks(
+    results.map((r, i) => ({ id: `r${i}`, term: r.term, addedAt: '', subjects: r.subjects!, creditsTaken: r.creditsTaken, creditsPassed: r.creditsPassed, source: 'typed' as const })),
+    passMark,
+  );
+  // University modules change every semester, so an APS from them means nothing.
+  return { ...out, aps: null, previousAps: null };
+}
+
+/** Full analysis for the student and their funding sponsor, from subject or module marks. */
 export function analyseMarks(records: MarkRecord[], passMark?: number): ProgressAnalysis {
   const out = analyseSummaries(records.map(summarise), passMark);
   const latest = records.at(-1);

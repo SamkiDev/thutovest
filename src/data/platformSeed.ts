@@ -201,19 +201,23 @@ const POOL: PoolSeed[] = [
   {
     id: 'stu-kagiso', firstName: 'Kagiso', province: 'North West', field: 'computing', educationStage: 'first-year', institutionId: 'up', householdIncome: 'under-350k', apsEstimate: 35, isAdult: true, trust: 3, totalCost: 104000, gap: 0, onTimeRate: 0.95, tasksCompleted: 19, progressRatio: 0.9,
     results: [
-      { term: 'Semester 1, 2026', average: 71, creditsPassed: 60, creditsTaken: 64 },
-      { term: 'Semester 2 tests, 2026', average: 73, creditsPassed: 32, creditsTaken: 32 },
+      { term: 'Semester 1, 2026', average: 71, creditsPassed: 60, creditsTaken: 64, subjects: mods(['Programming 1', 78], ['Mathematics 1', 64], ['Information Systems 1', 70], ['Statistics 1', 72]) },
+      { term: 'Semester 2 tests, 2026', average: 73, creditsPassed: 32, creditsTaken: 32, subjects: mods(['Programming 2', 80], ['Mathematics 1B', 66], ['Databases', 72], ['Statistics 1B', 74]) },
     ],
   },
   {
     id: 'stu-zanele', firstName: 'Zanele', province: 'Eastern Cape', field: 'computing', educationStage: 'first-year', institutionId: 'nmu', householdIncome: 'under-350k', apsEstimate: 30, isAdult: true, trust: 3, totalCost: 86000, gap: 0, onTimeRate: 0.9, tasksCompleted: 17, progressRatio: 0.85,
     // Slipping below the Developer Bursary's 60% pass mark: the early-warning example.
     results: [
-      { term: 'Semester 1, 2026', average: 64, creditsPassed: 56, creditsTaken: 64 },
-      { term: 'Semester 2 tests, 2026', average: 56, creditsPassed: 20, creditsTaken: 32 },
+      { term: 'Semester 1, 2026', average: 64, creditsPassed: 56, creditsTaken: 64, subjects: mods(['Programming 1', 72], ['Discrete Mathematics', 58], ['Computer Systems', 66], ['Statistics 1', 60]) },
+      { term: 'Semester 2 tests, 2026', average: 56, creditsPassed: 20, creditsTaken: 32, subjects: mods(['Data Structures and Algorithms', 44], ['Discrete Mathematics 2', 55], ['Computer Systems 2', 66], ['Statistics 1B', 59]) },
     ],
   },
 ];
+
+function mods(...list: [string, number][]) {
+  return list.map(([subject, mark]) => ({ subject, mark }));
+}
 
 function pool(): CandidateProfile[] {
   return POOL.map((p) => {
