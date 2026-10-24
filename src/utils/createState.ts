@@ -5,7 +5,7 @@ import { estimateCosts } from './funding';
 import { addDays, todayISO } from './dates';
 import { matchAll } from './matching';
 import { emptyVerification } from './trust';
-import { DEMO_STUDENTS, demoStudent } from '../data/platformSeed';
+import { DEMO_STUDENTS, UNI_ACCOUNT, UNI_AWARD, UNI_MARKS, demoStudent } from '../data/platformSeed';
 import { guardianConsentDocument, guardianConsentStatement } from '../platform/guardianRules';
 
 export const BUDGET_SOURCE_ID = 'src-own';
@@ -101,6 +101,7 @@ function daysAgoAt(days: number, hour: number, minute = 10): string {
 
 /** The demo story for Tatenda, or for a judge login (same story, the judge's own name and plan). */
 export function createDemoState(userId?: string): StudentState {
+  if (userId === UNI_ACCOUNT.userId) return createUniDemoState();
   const who = demoStudent(userId) ?? DEMO_STUDENTS[0];
   const name = who.firstName;
   const consent = guardianConsentStatement(name, who.guardian, who.relationship);
@@ -219,4 +220,56 @@ export function createDemoState(userId?: string): StudentState {
 /** Demo plans saved before marks existed get the demo marks, so every judge sees the same starting story. */
 export function upgradeDemoState(state: StudentState): StudentState {
   return state.isDemoStudent && state.marks === undefined ? { ...state, marks: createDemoState(state.id).marks } : state;
+}
+
+/** Nandi: a first-year at UJ whose Ridgeline bursary is already paid. Used to try marks, advice and tutor requests. */
+export function createUniDemoState(): StudentState {
+  const base = createStateFromProfile(
+    {
+      firstName: UNI_ACCOUNT.firstName,
+      province: 'Gauteng',
+      educationStage: 'first-year',
+      field: 'computing',
+      studyMode: 'contact',
+      preferredInstitutionIds: ['uj'],
+      apsEstimate: 34,
+      annualBudget: 12000,
+      fundingNeed: 'yes',
+      householdIncome: 'under-350k',
+      livingArrangement: 'residence',
+      applicationProgress: 'accepted',
+      documentsReady: ['id-copy', 'latest-results'],
+      isAdult: true,
+    },
+    true,
+    UNI_ACCOUNT.userId,
+  );
+  const verified = (days: number, note?: string) => ({ status: 'verified' as const, updatedAt: daysAgoAt(days, 19), note });
+  // Applying, funding and registering are behind her. What is left: support this year, renewing funding and registering for second year.
+  const stillOpen = new Set(['t-support', 't-academic', 't-funding-renew', 't-reregister']);
+  const done = TASKS.map((t) => t.id).filter((id) => !stillOpen.has(id));
+  return {
+    ...base,
+    taskStatus: { ...base.taskStatus, ...Object.fromEntries(done.map((id) => [id, 'completed' as TaskStatus])) },
+    taskHistory: [...base.taskHistory.filter((e) => stillOpen.has(e.taskId)), ...done.map((taskId, i) => ({ taskId, status: 'completed' as TaskStatus, at: daysAgoAt(330 - i * 12, 19) }))],
+    costs: { tuition: 58200, accommodation: 42000, books: 6500, transport: 3600, other: 5400 },
+    fundingSources: [
+      { id: BUDGET_SOURCE_ID, label: 'Family contribution', kind: 'family', amount: 12000 },
+      { id: 'src-holiday', label: 'Holiday job savings', kind: 'savings', amount: 4000 },
+      { id: 'sponsor-app-nandi', label: 'Future Developers Bursary 2027', kind: 'bursary', amount: UNI_AWARD },
+    ],
+    verification: {
+      ...base.verification,
+      identity: verified(210, 'Document, face match and liveness passed'),
+      enrolment: verified(200, 'Admission letter confirmed by the institution'),
+      results: verified(120, 'Semester 1 results confirmed'),
+    },
+    discoverable: true,
+    marks: UNI_MARKS.map((m, i) => ({ id: `marks-s1-${i}`, ...m, addedAt: daysAgoAt(i ? 100 : 140, 20), source: 'typed' as const })),
+    activity: [
+      { id: 'n1', at: daysAgoAt(100, 20), text: 'Added Semester 1 exams, 2026 marks: average 66.3%, up 0.8 points', kind: 'profile' },
+      { id: 'n2', at: daysAgoAt(190, 9), text: 'Ridgeline Technologies paid R55,000 to the University of Johannesburg', kind: 'funding' },
+      { id: 'n3', at: daysAgoAt(205, 18), text: 'Accepted Future Developers Bursary 2027 (R55,000, paid to your institution)', kind: 'funding' },
+    ],
+  };
 }

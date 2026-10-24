@@ -36,6 +36,37 @@ export const DEMO_STUDENTS = [
 
 export const demoStudent = (userId: string | undefined) => DEMO_STUDENTS.find((d) => d.userId === userId);
 
+/** A funded first-year at university, so judges can add module marks and ask their sponsor for a tutor. */
+export const UNI_ACCOUNT = { email: `nandi@${BRAND.demoDomain}`, password: 'Demo#2026', userId: 'stu-nandi', firstName: 'Nandi' };
+export const UNI_AWARD = 55000;
+
+/** Nandi's Semester 1 marks. Her plan and the seed sponsor view share them, so both sides start from the same results. */
+export const UNI_MARKS = [
+  {
+    term: 'Semester 1 tests, 2026',
+    subjects: [
+      { subject: 'Programming 1A', mark: 72 },
+      { subject: 'Mathematics 1A', mark: 64 },
+      { subject: 'Information Systems 1A', mark: 66 },
+      { subject: 'Statistics 1A', mark: 60 },
+    ],
+  },
+  {
+    term: 'Semester 1 exams, 2026',
+    creditsTaken: 64,
+    creditsPassed: 64,
+    subjects: [
+      { subject: 'Programming 1A', mark: 74 },
+      { subject: 'Mathematics 1A', mark: 62 },
+      { subject: 'Information Systems 1A', mark: 68 },
+      { subject: 'Statistics 1A', mark: 61 },
+    ],
+  },
+];
+
+/** Any built-in demo login: Tatenda, the judges or Nandi. */
+export const isDemoLogin = (userId: string | undefined) => Boolean(demoStudent(userId)) || userId === UNI_ACCOUNT.userId;
+
 /** Seed ids for a demo student's records, e.g. app-tatenda-quick. */
 const short = (userId: string) => userId.replace(/^stu-/, '');
 
@@ -215,12 +246,23 @@ const POOL: PoolSeed[] = [
   },
 ];
 
+const NANDI: PoolSeed = {
+  id: UNI_ACCOUNT.userId, firstName: 'Nandi', province: 'Gauteng', field: 'computing', educationStage: 'first-year', institutionId: 'uj', householdIncome: 'under-350k', apsEstimate: 34, isAdult: true, trust: 3, totalCost: 115700, gap: 99700, onTimeRate: 0.9, tasksCompleted: 16, progressRatio: 0.8,
+  results: UNI_MARKS.map((m) => ({
+    term: m.term,
+    average: Math.round((m.subjects.reduce((s, x) => s + x.mark, 0) / m.subjects.length) * 10) / 10,
+    creditsPassed: m.creditsPassed ?? 0,
+    creditsTaken: m.creditsTaken ?? 0,
+    subjects: m.subjects,
+  })),
+};
+
 function mods(...list: [string, number][]) {
   return list.map(([subject, mark]) => ({ subject, mark }));
 }
 
 function pool(): CandidateProfile[] {
-  return POOL.map((p) => {
+  return [...POOL, NANDI].map((p) => {
     const v = (cond: boolean): VerificationStatus => (cond ? 'verified' : 'not-started');
     return {
       ...p,
@@ -305,6 +347,11 @@ function applications(): FundApplication[] {
         },
       ],
     }, 24 * 198),
+    a('app-nandi', 'fund-ridge-dev', UNI_ACCOUNT.userId, 'paid', {
+      amount: UNI_AWARD,
+      paymentReference: 'RDG-26-0427',
+      agreement: { signedName: 'Nandi (surname on file)', signedAt: hoursAgo(24 * 205), terms: [] },
+    }, 24 * 196),
     a('app-lerato', 'fund-ridge-dev', 'stu-lerato', 'offered', { amount: 58000 }, 20),
     a('app-sipho', 'fund-ridge-dev', 'stu-sipho', 'shortlisted', { initiatedBy: 'student' }, 30),
     a('app-ayesha', 'fund-ridge-dev', 'stu-ayesha', 'accepted', {
@@ -326,6 +373,7 @@ function messages(): Message[] {
       text: 'Tutor request: Data Structures and Algorithms. I failed the second test. A tutor once a week before exams would really help.',
       at: hoursAgo(10),
     },
+    { id: 'm-n1', applicationId: 'app-nandi', from: 'sponsor', text: 'Welcome to the Future Developers programme, Nandi. Keep adding your marks after each test so we can support you early.', at: hoursAgo(24 * 190) },
     { id: 'm-a1', applicationId: 'app-ayesha', from: 'system', text: 'Ayesha accepted and signed the funding agreement in the app. Next: documents.', at: hoursAgo(30) },
     { id: 'm-a2', applicationId: 'app-ayesha', from: 'student', text: 'I’ve shared my admission letter and June results. My mom is getting the SASSA letter this week.', at: hoursAgo(6) },
     { id: 'm-l1', applicationId: 'app-lerato', from: 'sponsor', text: 'Hi Lerato, we’d like to offer you R58,000 towards your BSc at TUT. The full amount is paid to your fee account.', at: hoursAgo(20) },
@@ -387,6 +435,7 @@ function documents(start: string): DocumentShare[] {
     share('d-ka-adm', 'app-kagiso', 'admission-letter', 'approved', snap('admission-letter', 'UP_admission_Kagiso.pdf', [{ label: 'Institution', value: 'University of Pretoria' }], { issuer: 'verified', h: 24 * 200 }), 24 * 200),
     share('d-ka-sem', 'app-kagiso', 'semester-results', 'approved', snap('semester-results', 'UP_semester1_record_Kagiso.pdf', [{ label: 'Average', value: '71%' }, { label: 'Credits', value: '60 of 64' }], { issuer: 'verified', h: 24 * 60 }), 24 * 60),
     share('d-za-adm', 'app-zanele', 'admission-letter', 'approved', snap('admission-letter', 'NMU_admission_Zanele.pdf', [{ label: 'Institution', value: 'Nelson Mandela University' }], { issuer: 'verified', h: 24 * 198 }), 24 * 198),
+    share('d-na-adm', 'app-nandi', 'admission-letter', 'approved', snap('admission-letter', 'UJ_admission_Nandi.pdf', [{ label: 'Institution', value: 'University of Johannesburg' }, { label: 'Qualification', value: 'BSc Information Technology' }], { issuer: 'verified', h: 24 * 200 }), 24 * 200),
     share('d-za-sem', 'app-zanele', 'semester-results', 'approved', snap('semester-results', 'NMU_semester1_record_Zanele.pdf', [{ label: 'Average', value: '64%' }, { label: 'Credits', value: '56 of 64' }], { issuer: 'verified', h: 24 * 58 }), 24 * 58),
   ];
 }
@@ -403,6 +452,7 @@ function decisions(): Record<string, SponsorDecision[]> {
     [DEMO_SPONSOR_ID]: [
       d('stu-kagiso', 'positive', undefined, 24 * 201),
       d('stu-zanele', 'positive', undefined, 24 * 199),
+      d(UNI_ACCOUNT.userId, 'positive', undefined, 24 * 206),
       d('stu-lerato', 'positive', undefined, 21),
       d('stu-sipho', 'positive', undefined, 30),
       d('stu-pieter', 'negative', 'Gap is larger than one award can cover', 40),

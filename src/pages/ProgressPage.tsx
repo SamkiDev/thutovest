@@ -440,7 +440,9 @@ function TutorPanel({
   suggested?: string;
   onSend: (subject: string, note: string) => void;
 }) {
-  const [subject, setSubject] = useState(suggested ?? subjects[0] ?? '');
+  // Follows the latest analysis until the student picks a subject themselves.
+  const [picked, setPicked] = useState<string | null>(null);
+  const subject = picked && subjects.includes(picked) ? picked : (suggested ?? subjects[0] ?? '');
   const [note, setNote] = useState('');
   const open = requests.filter((r) => r.status === 'requested').length;
   return (
@@ -477,9 +479,10 @@ function TutorPanel({
             if (!subject || open >= 3) return;
             onSend(subject, note.trim());
             setNote('');
+            setPicked(null);
           }}
         >
-          <SelectField label="Ask for a tutor in" value={subject} onChange={(e) => setSubject(e.target.value)} options={subjects.map((s) => ({ value: s, label: s }))} />
+          <SelectField label="Ask for a tutor in" value={subject} onChange={(e) => setPicked(e.target.value)} options={subjects.map((s) => ({ value: s, label: s }))} />
           <label className="block text-sm font-semibold text-ink">
             Anything they should know? <span className="font-normal text-subtle">Optional</span>
             <textarea

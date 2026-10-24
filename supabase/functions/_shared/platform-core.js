@@ -689,6 +689,58 @@ var DEMO_STUDENTS = [{
 	guardian: "Nomsa",
 	relationship: "Mother"
 }, ...JUDGE_ACCOUNTS];
+/** A funded first-year at university, so judges can add module marks and ask their sponsor for a tutor. */
+var UNI_ACCOUNT = {
+	email: `nandi@${BRAND.demoDomain}`,
+	password: "Demo#2026",
+	userId: "stu-nandi",
+	firstName: "Nandi"
+};
+var UNI_AWARD = 55e3;
+/** Nandi's Semester 1 marks. Her plan and the seed sponsor view share them, so both sides start from the same results. */
+var UNI_MARKS = [{
+	term: "Semester 1 tests, 2026",
+	subjects: [
+		{
+			subject: "Programming 1A",
+			mark: 72
+		},
+		{
+			subject: "Mathematics 1A",
+			mark: 64
+		},
+		{
+			subject: "Information Systems 1A",
+			mark: 66
+		},
+		{
+			subject: "Statistics 1A",
+			mark: 60
+		}
+	]
+}, {
+	term: "Semester 1 exams, 2026",
+	creditsTaken: 64,
+	creditsPassed: 64,
+	subjects: [
+		{
+			subject: "Programming 1A",
+			mark: 74
+		},
+		{
+			subject: "Mathematics 1A",
+			mark: 62
+		},
+		{
+			subject: "Information Systems 1A",
+			mark: 68
+		},
+		{
+			subject: "Statistics 1A",
+			mark: 61
+		}
+	]
+}];
 /** Seed ids for a demo student's records, e.g. app-tatenda-quick. */
 var short = (userId) => userId.replace(/^stu-/, "");
 function sponsors() {
@@ -1072,6 +1124,30 @@ var POOL = [
 		}]
 	}
 ];
+var NANDI = {
+	id: UNI_ACCOUNT.userId,
+	firstName: "Nandi",
+	province: "Gauteng",
+	field: "computing",
+	educationStage: "first-year",
+	institutionId: "uj",
+	householdIncome: "under-350k",
+	apsEstimate: 34,
+	isAdult: true,
+	trust: 3,
+	totalCost: 115700,
+	gap: 99700,
+	onTimeRate: .9,
+	tasksCompleted: 16,
+	progressRatio: .8,
+	results: UNI_MARKS.map((m) => ({
+		term: m.term,
+		average: Math.round(m.subjects.reduce((s, x) => s + x.mark, 0) / m.subjects.length * 10) / 10,
+		creditsPassed: m.creditsPassed ?? 0,
+		creditsTaken: m.creditsTaken ?? 0,
+		subjects: m.subjects
+	}))
+};
 function mods(...list) {
 	return list.map(([subject, mark]) => ({
 		subject,
@@ -1079,7 +1155,7 @@ function mods(...list) {
 	}));
 }
 function pool() {
-	return POOL.map((p) => {
+	return [...POOL, NANDI].map((p) => {
 		const v = (cond) => cond ? "verified" : "not-started";
 		return {
 			...p,
@@ -1171,6 +1247,15 @@ function applications() {
 				status: "requested"
 			}]
 		}, 4752),
+		a("app-nandi", "fund-ridge-dev", UNI_ACCOUNT.userId, "paid", {
+			amount: UNI_AWARD,
+			paymentReference: "RDG-26-0427",
+			agreement: {
+				signedName: "Nandi (surname on file)",
+				signedAt: hoursAgo(4920),
+				terms: []
+			}
+		}, 4704),
 		a("app-lerato", "fund-ridge-dev", "stu-lerato", "offered", { amount: 58e3 }, 20),
 		a("app-sipho", "fund-ridge-dev", "stu-sipho", "shortlisted", { initiatedBy: "student" }, 30),
 		a("app-ayesha", "fund-ridge-dev", "stu-ayesha", "accepted", {
@@ -1194,6 +1279,13 @@ function messages() {
 			from: "student",
 			text: "Tutor request: Data Structures and Algorithms. I failed the second test. A tutor once a week before exams would really help.",
 			at: hoursAgo(10)
+		},
+		{
+			id: "m-n1",
+			applicationId: "app-nandi",
+			from: "sponsor",
+			text: "Welcome to the Future Developers programme, Nandi. Keep adding your marks after each test so we can support you early.",
+			at: hoursAgo(4560)
 		},
 		{
 			id: "m-a1",
@@ -1336,6 +1428,16 @@ function documents(start) {
 			issuer: "verified",
 			h: 4752
 		}), 4752),
+		share("d-na-adm", "app-nandi", "admission-letter", "approved", snap("admission-letter", "UJ_admission_Nandi.pdf", [{
+			label: "Institution",
+			value: "University of Johannesburg"
+		}, {
+			label: "Qualification",
+			value: "BSc Information Technology"
+		}], {
+			issuer: "verified",
+			h: 4800
+		}), 4800),
 		share("d-za-sem", "app-zanele", "semester-results", "approved", snap("semester-results", "NMU_semester1_record_Zanele.pdf", [{
 			label: "Average",
 			value: "64%"
@@ -1359,6 +1461,7 @@ function decisions() {
 	return { [DEMO_SPONSOR_ID]: [
 		d("stu-kagiso", "positive", void 0, 4824),
 		d("stu-zanele", "positive", void 0, 4776),
+		d(UNI_ACCOUNT.userId, "positive", void 0, 4944),
 		d("stu-lerato", "positive", void 0, 21),
 		d("stu-sipho", "positive", void 0, 30),
 		d("stu-pieter", "negative", "Gap is larger than one award can cover", 40),

@@ -8,7 +8,7 @@ import { TextField } from '../components/forms/Fields';
 import { useStudentContext } from '../hooks/useStudent';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePlatform } from '../platform/PlatformProvider';
-import { DEMO_ACCOUNTS, JUDGE_ACCOUNTS, demoStudent } from '../data/platformSeed';
+import { DEMO_ACCOUNTS, JUDGE_ACCOUNTS, UNI_ACCOUNT, isDemoLogin } from '../data/platformSeed';
 import { backendEnabled, signInWithBackend } from '../platform/backend';
 import { cn } from '../utils/cn';
 
@@ -36,7 +36,7 @@ export default function SignInPage() {
 
   /** Browser-only demo sign-in, used when there is no backend or it can't be reached. */
   const deviceSession = (r: Role): Session => ({ role: r, userId: DEMO_ACCOUNTS[r].userId, email: DEMO_ACCOUNTS[r].email, demo: true });
-  const judgeSession = (j: (typeof JUDGE_ACCOUNTS)[number]): Session => ({ role: 'student', userId: j.userId, email: j.email, demo: true });
+  const judgeSession = (j: { userId: string; email: string }): Session => ({ role: 'student', userId: j.userId, email: j.email, demo: true });
 
   const enterWithBackend = async (address: string, pass: string, fallback: Session | null) => {
     setBusy(true);
@@ -53,7 +53,7 @@ export default function SignInPage() {
   };
 
   const enter = (r: Role) => (backendEnabled ? void enterWithBackend(DEMO_ACCOUNTS[r].email, DEMO_ACCOUNTS[r].password, deviceSession(r)) : finish(deviceSession(r)));
-  const enterJudge = (j: (typeof JUDGE_ACCOUNTS)[number]) => (backendEnabled ? void enterWithBackend(j.email, j.password, judgeSession(j)) : finish(judgeSession(j)));
+  const enterJudge = (j: { userId: string; email: string; password: string }) => (backendEnabled ? void enterWithBackend(j.email, j.password, judgeSession(j)) : finish(judgeSession(j)));
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -62,7 +62,7 @@ export default function SignInPage() {
       return;
     }
     const match = Object.entries(DEMO_ACCOUNTS).find(([, a]) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password);
-    const judge = JUDGE_ACCOUNTS.find((a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password);
+    const judge = [...JUDGE_ACCOUNTS, UNI_ACCOUNT].find((a) => a.email.toLowerCase() === email.trim().toLowerCase() && a.password === password);
     if (judge) return enterJudge(judge);
     if (backendEnabled) return void enterWithBackend(email.trim(), password, match ? deviceSession(match[0] as Role) : null);
     if (!match) {
@@ -194,6 +194,12 @@ export default function SignInPage() {
                     </Button>
                   ))}
                 </div>
+                <p className="mt-3 text-xs text-muted">
+                  Want to try a student already at university? <span className="font-mono text-ink">{UNI_ACCOUNT.email}</span> is a funded first-year: add module marks and ask the sponsor for a tutor.
+                </p>
+                <Button variant="secondary" size="sm" className="mt-2 w-full" disabled={busy} onClick={() => enterJudge(UNI_ACCOUNT)}>
+                  Try as Nandi, first-year at UJ
+                </Button>
               </div>
             )}
             <p className="mt-2 text-xs text-muted">Tip: open a student and a sponsor tab side by side. Changes appear instantly.</p>
@@ -202,7 +208,7 @@ export default function SignInPage() {
           <div className="mt-6 space-y-2 text-sm">
             {role === 'student' ? (
               <>
-                {state && !demoStudent(state.id) && (
+                {state && !isDemoLogin(state.id) && (
                   <button
                     type="button"
                     onClick={() => {

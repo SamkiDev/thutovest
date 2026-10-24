@@ -17,6 +17,7 @@ Built by **Team Thuto** for the FNB App of the Year Hackathon 2026, challenge **
 | Student (Tatenda, Grade 12, 17) | `tatenda@thutovest.demo` | `Demo#2026` |
 | Sponsor (Ridgeline Technologies) | `funding@ridgeline.demo` | `Demo#2026` |
 | One student login per judge | `judge1@thutovest.demo` to `judge5@thutovest.demo` | `Demo#2026` |
+| University student (Nandi, first-year at UJ, funded by Ridgeline) | `nandi@thutovest.demo` | `Demo#2026` |
 
 The sign-in page has one-click buttons for all of them. Each judge login starts from the same story as Tatenda (a Grade 12 learner with a guardian's consent on file) under its own name, with a plan of its own, so judges don't change each other's work. The demo passwords are public on purpose and locked, so nobody can change them.
 
@@ -33,7 +34,8 @@ The sign-in page has one-click buttons for all of them. Each judge login starts 
 5. **Sponsor:** approve the documents, then **Approve funding** and **Pay institution**. Payment stays locked until every required document is approved, and it only ever goes to the institution.
 6. **Safety:** as the sponsor, send "pay a R500 admin fee". The message is blocked and the sponsor suspended.
 7. **Student progress:** open **Marks and progress**, tap **Use a sample report**, then **Save and analyse**. Maths and Physical Sciences slip, the APS drops from 31 to 30, and the advice names the saved courses now out of reach.
-8. **Sponsor:** on the overview, **Student progress** shows Zanele, a first-year at Nelson Mandela University, below Ridgeline's 60% pass mark, with her module marks (Data Structures and Algorithms at 44%). Send her an **early warning** and arrange the tutor she asked for.
+8. **University student:** sign in as Nandi, a first-year whose Ridgeline bursary is paid. In **Marks and progress**, tap **Use a sample report** and **Save and analyse**: Mathematics 1A falls from 62% to 55%. Send Ridgeline a **tutor request** for it.
+9. **Sponsor:** on the overview, **Student progress** shows Nandi's new module marks and her request, and Zanele, a first-year at Nelson Mandela University, below Ridgeline's 60% pass mark, with her module marks (Data Structures and Algorithms at 44%). Send her an **early warning** and arrange the tutor she asked for.
 
 **Reset demo** in the menu puts your own account back to the start: your plan, applications, offers and messages. Other demo accounts are not affected.
 
@@ -153,11 +155,11 @@ A Meta WhatsApp Cloud API version (`supabase/functions/whatsapp-webhook`) is als
 npm run typecheck    # TypeScript, strict
 npm run build        # production build
 npm run audit        # known vulnerabilities in dependencies
-npm test             # 92 offline checks, no network or keys needed
+npm test             # 95 offline checks, no network or keys needed
 npm run test:live    # 38 attack probes against the live backend (changes nothing)
 ```
 
-- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 60 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, each account's reset touching only its own records, who may see marks and send warnings or tutor requests, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
+- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 63 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, each account's reset touching only its own records, who may see marks and send warnings or tutor requests, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
 - `npm run test:live` reads the public values from `.env.local` and tries what an attacker would: reading every table signed out, forged tokens, oversized requests, students and sponsors acting on each other's records, and replacing the whole state. Every probe must be refused and the data must be unchanged afterwards.
 
 ## Security

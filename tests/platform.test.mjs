@@ -13,8 +13,9 @@ const USERS = {
   'tok-noprofile': { id: 'u-3', email: 'x@y.z' },
   'tok-judge1': { id: 'u-4', email: 'judge1@thutovest.demo' },
   'tok-community': { id: 'u-5', email: 'grants@community.demo' },
+  'tok-nandi': { id: 'u-6', email: 'nandi@thutovest.demo' },
 };
-const PROFILES = { 'u-1': { role: 'student', app_user_id: 'stu-tatenda' }, 'u-2': { role: 'sponsor', app_user_id: 'sp-ridgeline' }, 'u-4': { role: 'student', app_user_id: 'stu-judge1' }, 'u-5': { role: 'sponsor', app_user_id: 'sp-community' } };
+const PROFILES = { 'u-1': { role: 'student', app_user_id: 'stu-tatenda' }, 'u-2': { role: 'sponsor', app_user_id: 'sp-ridgeline' }, 'u-4': { role: 'student', app_user_id: 'stu-judge1' }, 'u-5': { role: 'sponsor', app_user_id: 'sp-community' }, 'u-6': { role: 'student', app_user_id: 'stu-nandi' } };
 let db = null; // { state, version }
 let failNextCommit = 0;
 let commits = 0;
@@ -237,6 +238,12 @@ const tut = db.state.applications.find((a) => a.id === 'app-zanele').tutorReques
 check('the funding sponsor can arrange a requested tutor', r.status === 200 && tut.status === 'arranged' && tut.reply === 'A tutor starts on Monday.');
 r = await call({ op: 'act', action: { type: 'answerTutor', applicationId: 'app-zanele', requestId: 'tut-zanele', arranged: false, note: '' } }, 'tok-ridge');
 check('a tutor request cannot be answered twice (403)', r.status === 403);
+r = await call({ op: 'load' }, 'tok-ridge');
+check('the university demo student starts funded, with module marks the sponsor can see', r.body.state.applications.some((a) => a.id === 'app-nandi' && a.status === 'paid') && r.body.state.pool.find((p) => p.id === 'stu-nandi')?.results?.[1]?.subjects?.length === 4);
+r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: 'app-nandi', subject: 'Mathematics 1A', note: '', studentName: 'Nandi' } }, 'tok-nandi');
+check('the university demo student can ask her sponsor for a tutor', r.status === 200 && db.state.applications.find((a) => a.id === 'app-nandi').tutorRequests?.length === 1);
+await call({ op: 'act', action: { type: 'reset' } }, 'tok-nandi');
+check('her own reset puts her bursary back to the start', db.state.applications.find((a) => a.id === 'app-nandi')?.status === 'paid' && !db.state.applications.find((a) => a.id === 'app-nandi').tutorRequests);
 r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: 'app-tatenda-quick', subject: 'Mathematics', note: '', studentName: 'Tatenda' } }, 'tok-tatenda');
 check('a student cannot ask for a tutor without a bursary (403)', r.status === 403);
 r = await call({ op: 'act', action: { type: 'requestTutor', applicationId: 'app-zanele', subject: 'Mathematics', note: '', studentName: 'Tatenda' } }, 'tok-tatenda');
