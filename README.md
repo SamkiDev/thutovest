@@ -27,12 +27,38 @@ The sign-in page has one-click buttons for both. The demo passwords are public o
 
 1. **Student:** sign in as Tatenda. The assistant has found a Ridgeline bursary match. Approve **Share my profile**.
 2. **Sponsor:** sign in as Ridgeline in another tab. Open **Candidates**, choose Tatenda and **Make offer**. The admission letter is always required.
-3. **Student:** the offer arrives live. Open **Sponsors**, then **Review, sign and accept**. Tatenda is 17, so her guardian Nomsa co-signs.
+3. **Student:** the offer arrives live. Open **Sponsors**, then **Review, sign and accept**. Ridgeline's own terms are in the agreement (it pays tuition and accommodation, with a 60% pass mark and one year of work-back). Tatenda is 17, so her guardian Nomsa co-signs. Her funding gap then drops from R92,400 to R32,400, and other sponsors only see what is left.
 4. **Student:** open **Documents** and **Upload and share** the admission letter. Tick "simulate an edited document" first to see a forgery caught.
 5. **Sponsor:** approve the documents, then **Approve funding** and **Pay institution**. Payment stays locked until every required document is approved, and it only ever goes to the institution.
 6. **Safety:** as the sponsor, send "pay a R500 admin fee". The message is blocked and the sponsor suspended.
 
 The demo data is shared by everyone using the demo accounts. **Reset demo** in the menu restores it for everyone.
+
+## What it does
+
+**For students (free)**
+
+- A personal plan from choosing a course to first year, with one next best action at every step
+- Course matches by field, APS, budget, province and preferred institutions. Change the APS and every match is re-scored.
+- Risk Radar: early warnings for deadlines, missing documents and money gaps, each with its reason
+- Funding Gap Solver: NSFAS, ISFAP, Funza Lushaka, university aid and loans in one view
+- All 26 public universities, all 50 public TVET colleges and the DHET private college register, with official links
+- "Check a place before you pay": NSFAS 2026 accommodation rules and scam signs, before a student pays a deposit
+- A document vault with automatic checks, shared with a sponsor in one tap
+- WhatsApp: **Talk to ThutoVest** for students who are low on data
+
+**For sponsors**
+
+- Candidates ranked by fit and by what this sponsor tends to fund
+- Funds with their own terms: what the bursary pays for (tuition, accommodation, books, transport, living costs or the full cost), a minimum pass mark, work-back years, and whether it must be the student's only bursary
+- Offers, document review, funding approval and payment to the institution, with a forecast of when each fund runs out
+
+**Fair funding rules, enforced on the server**
+
+- A student holds at most two sponsor bursaries, so one can pay tuition and another the rest
+- Sponsors see the gap left after other bursaries, and no offer or acceptance can go above it
+- An "only bursary" can't be combined with another
+- Under-18s need a guardian to consent and co-sign, and money only ever goes to the institution
 
 ## Run it locally
 
@@ -79,6 +105,7 @@ phone ──► Twilio WhatsApp ──► Edge Function: whatsapp-twilio ──�
 
 | What it predicts | What it learns from | Where |
 | --- | --- | --- |
+| Which courses fit you best | Your field, APS, budget, province and preferred institutions | `src/utils/matching.ts` |
 | Which deadlines you will miss at your current pace | Your task completion history | `src/intelligence/forecast.ts` |
 | When you are most likely to act, so reminders land then | The hour and weekday of your past actions | `forecast.ts` |
 | The month your money runs out | Your costs, funding and payment timing | `forecast.ts` |
@@ -139,6 +166,7 @@ Full write-up: **[SECURITY.md](SECURITY.md)**. In short:
 - University application, financial aid and residence links for all 26 public universities (checked 24 October 2026), all 50 public TVET colleges with their NSFAS accommodation portals (checked 23 October 2026), and the DHET Register of Private Higher Education Institutions (14 October 2026 update)
 - The NSFAS 2026 accommodation rules used by "Check a place before you pay"
 - Document type, readability and tamper checks; scam moderation; forecasts and sponsor learning
+- Bursary terms, the two-bursary limit and the remaining-gap cap, checked on the server for every offer and acceptance
 
 **Simulated, and labelled in the app**
 
