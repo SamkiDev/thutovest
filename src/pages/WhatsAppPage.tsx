@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react';
-import { Check, CircleOff, Send, Smartphone, X } from 'lucide-react';
+import { Check, CircleOff, MessageCircle, Send, Smartphone, X } from 'lucide-react';
 import { useStudent } from '../hooks/useStudent';
 import { useToast } from '../hooks/useToast';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
@@ -13,6 +13,7 @@ import { TextField } from '../components/forms/Fields';
 import { LogoMark } from '../components/layout/Logo';
 import { BRAND } from '../config/brand';
 import { cn } from '../utils/cn';
+import { Why } from '../components/ui/Why';
 
 const ALERT_LABELS: [keyof WhatsAppAlertPrefs, string][] = [
   ['offers', 'New sponsor offers'],
@@ -43,8 +44,9 @@ export default function WhatsAppPage() {
 
       {/* Mobile order: link, chat, details. Desktop: chat pinned in the right column. */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-[1fr_24rem]">
-        <div className="lg:col-start-1 lg:row-start-1">
+        <div className="space-y-6 lg:col-start-1 lg:row-start-1">
           <LinkCard />
+          <TalkCard />
         </div>
         <div className="lg:col-start-2 lg:row-span-2 lg:row-start-1">
           <Simulator linked={Boolean(wa?.linkedAt)} />
@@ -270,6 +272,44 @@ function LinkCard() {
 /* ---------------- Simulator ---------------- */
 
 const QUICK = ['Menu', '1', '2', '3', '4', '5', '6'];
+
+/** The real bot on WhatsApp (Twilio sandbox). It answers as the demo student until accounts are linked on the server. */
+function TalkCard() {
+  const { number, display, joinCode } = BRAND.whatsappSandbox;
+  return (
+    <section className="card p-5 sm:p-6" aria-labelledby="talk-heading">
+      <h2 id="talk-heading" className="flex items-center gap-2 text-lg font-semibold">
+        <MessageCircle aria-hidden className="size-5 text-veld-600" /> Talk to ThutoVest
+      </h2>
+      <p className="mt-1 text-sm text-muted">Chat with our real WhatsApp bot on your phone.</p>
+      <ol className="mt-4 space-y-2 text-sm text-body">
+        <li className="flex gap-3">
+          <span className="num font-semibold text-veld-700">1</span>
+          <span>
+            Send <b className="text-ink">{joinCode}</b> to <span className="num whitespace-nowrap">{display}</span>
+          </span>
+        </li>
+        <li className="flex gap-3">
+          <span className="num font-semibold text-veld-700">2</span>
+          <span>
+            Then send <b className="text-ink">hi</b> for the menu
+          </span>
+        </li>
+      </ol>
+      <a
+        href={`https://wa.me/${number}?text=${encodeURIComponent(joinCode)}`}
+        target="_blank"
+        rel="noreferrer"
+        className="mt-4 inline-flex h-9 items-center gap-2 rounded-full bg-veld-600 px-4 text-sm font-semibold text-white hover:bg-veld-700"
+      >
+        <Send aria-hidden className="size-4" /> Open WhatsApp
+      </a>
+      <Why className="mt-3">
+        It shows the demo student’s updates for now. Your own alerts appear in the simulator until accounts link to the real bot.
+      </Why>
+    </section>
+  );
+}
 
 function Simulator({ linked }: { linked: boolean }) {
   const { messages, typing, send, clearChat } = useWhatsApp();
