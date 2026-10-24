@@ -1,9 +1,10 @@
 # Security review
 
-Reviewed 22 October 2026, before the hackathon build. ThutoVest is currently a
-browser-only React app with no server, database or API. Data lives in
-`localStorage`/`sessionStorage` on one device. Items that need a server are
-marked **N/A (now)** and listed under "Required when the Supabase backend lands".
+The checklist below was reviewed on 22 October 2026, when ThutoVest was still a
+browser-only React app. Items that needed a server were marked **N/A (now)**.
+The Supabase backend went live on 23 October 2026; see "Supabase backend" below
+for what it changed, and run the tests yourself with `npm test` and
+`npm run test:live`.
 
 | # | Check | Status | Where / what was done |
 |---|---|---|---|
@@ -13,7 +14,7 @@ marked **N/A (now)** and listed under "Required when the Supabase backend lands"
 | 4 | Row-level security enabled | N/A (now) | No database. Rules to port are in `src/platform/authorize.ts`. |
 | 5 | Sensitive data encrypted | Fail → mitigated | Browser storage is not encrypted. Fixed what we can: ID copies are no longer stored as an image preview (`UploadDocumentModal.tsx:109`), and ID numbers were already never stored. Full fix: Supabase Storage private bucket (encrypted at rest) and TLS. |
 | 6 | Auth enforced server-side | N/A (now) | Sign-in is a client-side demo (`SignInPage.tsx:46`). Must move to Supabase Auth. |
-| 7 | Record access locked to owners | Fixed (client) | Every platform action now goes through `authorize()` (`src/platform/authorize.ts:51`), wired in `PlatformProvider.tsx:27`. Students act only on their own applications; sponsors only on their own funds, applications and document shares. 17 rule tests pass. |
+| 7 | Record access locked to owners | Fixed (client) | Every platform action now goes through `authorize()` (`src/platform/authorize.ts:51`), wired in `PlatformProvider.tsx:27`. Students act only on their own applications; sponsors only on their own funds, applications and document shares. The same rules run on the server and are tested in `tests/platform.test.mjs`. |
 | 8 | Field tampering blocked (whitelist) | Fixed (client) | `sanitizeFund` (`authorize.ts:143`) forces `sponsorId`, `status` and `createdAt`. `sanitizeSponsor` (`authorize.ts:168`) forces every check to "not started", so a sponsor can't self-verify. Unknown document kinds are stripped. Tampered storage is rejected by `isPlatformState` (`authorize.ts:193`). |
 | 9 | Secure session cookies (HttpOnly, Secure, SameSite) | N/A (now) | No cookies. The demo session is in `sessionStorage` (`dataStore.ts:58`), one per tab. |
 | 10 | Passwords hashed (bcrypt/argon2) | N/A (now) | No user passwords are collected. The two demo passwords are deliberately public (shown on the sign-in page and slides). Real accounts will use Supabase Auth (bcrypt). |
@@ -38,10 +39,10 @@ Live on 23 October 2026. Checked against the live project: signed-out callers ge
 - **Responses trimmed per account (check 17):** `projectFor()` sends a student only their own applications, messages, documents and events; a sponsor only applications to their own funds; other sponsors' registration numbers are blanked.
 - **Published student profiles are whitelisted:** `publishCandidate` keeps only anonymised fields and clamps every number, so a surname or ID number sent by a modified browser is dropped.
 - **Other limits:** 3 MB request cap, 40 actions per minute per account, no request bodies or personal data in logs, one login per browser tab (sessionStorage).
-- **Tests:** 23 checks against a mocked Supabase passed, including signed-out actions, a student posing as another student or as a sponsor, whole-state replacement, forged candidate fields, server-side scam blocking and a lost write race.
+- **Tests:** 24 checks against a mocked Supabase pass (`tests/platform.test.mjs`), including signed-out actions, a student posing as another student or as a sponsor, whole-state replacement, forged candidate fields, server-side scam blocking, sponsor self-verification and a lost write race.
 - **Sponsors can't verify themselves:** the server refuses every `setSponsorCheck`, so organisation, representative and bank checks can only be set by the verification service. The browser-only demo still simulates them.
 - **Demo logins can't be hijacked:** the demo passwords are public, so a trigger on `auth.users` (`supabase/migrations/20261024090000_lock_demo_accounts.sql`) keeps the two demo accounts' password, email and phone unchanged. Tested live: a password change is accepted but has no effect, and the public password keeps working.
-- **Live check (24 October 2026):** 38 attack probes against the live project passed: signed-out reads of every table, forged tokens, a student acting as a sponsor or on another student's records, a sponsor touching other sponsors' funds or verifying itself, whole-state replacement and oversized requests. Both WhatsApp webhooks refused unsigned and forged requests. `npm audit`: 0 vulnerabilities. Git history and the live bundle hold no secrets (only the public anon key).
+- **Live check (24 October 2026, `npm run test:live`):** 38 attack probes against the live project passed: signed-out reads of every table, forged tokens, a student acting as a sponsor or on another student's records, a sponsor touching other sponsors' funds or verifying itself, whole-state replacement and oversized requests. Both WhatsApp webhooks refused unsigned and forged requests. `npm audit`: 0 vulnerabilities. Git history and the live bundle hold no secrets (only the public anon key).
 - **Known gaps:** trust levels in published profiles are still computed in the browser (the verification service would set them in production). Any demo account can use "Reset demo", which resets the shared demo data for everyone. New sponsor and student sign-ups still run browser-only.
 
 ## WhatsApp bot
@@ -51,8 +52,8 @@ Live on 23 October 2026. Checked against the live project: signed-out callers ge
 - **Linking:** the 6-digit code comes from `crypto.getRandomValues`, lasts 10 minutes, is stored hashed in live mode and must be sent from the number being linked. Consent is recorded.
 - **Data access:** the bot only reads a minimal snapshot, with no surname, ID, documents or message contents. Tables have RLS, and a column grant lets students change only `opted_out` and `alert_prefs` (`supabase/migrations/20261023120000_whatsapp.sql`).
 - **Logging:** message text and phone numbers are never logged. Secrets live only in Supabase function secrets.
-- **Tests:** 37 bot and signature tests and 10 webhook tests passed. The webhook tests run the real function against a mocked Graph API.
-- **Twilio channel (live for the hackathon):** `whatsapp-twilio` verifies `X-Twilio-Signature` on every request in constant time (forged, re-signed or tampered messages get 403), answers each MessageSid once, and replies with escaped TwiML. 16 tests against signed form posts passed. `DEMO_OPEN=true` lets anyone who joins the sandbox chat with the fictional demo student only; no real student data is reachable through it.
+- **Tests:** 16 Meta webhook checks (`tests/whatsapp-meta.test.mjs`) run the real function against a mocked Graph API.
+- **Twilio channel (live for the hackathon):** `whatsapp-twilio` verifies `X-Twilio-Signature` on every request in constant time (forged, re-signed or tampered messages get 403), answers each MessageSid once, and replies with escaped TwiML. 16 checks against signed form posts pass (`tests/whatsapp-twilio.test.mjs`). `DEMO_OPEN=true` lets anyone who joins the sandbox chat with the fictional demo student only; no real student data is reachable through it.
 
 ## Required when the Supabase backend lands
 

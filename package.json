@@ -11,7 +11,9 @@
     "preview": "vite preview",
     "audit": "npm audit --omit=dev --audit-level=moderate",
     "audit:all": "npm audit --audit-level=high",
-    "build:server": "vite build --config vite.server.config.ts"
+    "build:server": "vite build --config vite.server.config.ts",
+    "test": "node tests/run.mjs",
+    "test:live": "node tests/live-probe.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.118.0",
