@@ -149,7 +149,8 @@ export const TASKS: TaskDefinition[] = [
     action: { label: 'Plan funding', to: '/app/funding' },
   },
   {
-    id: 't-accommodation', stageId: 'registration', kind: 'registration', priority: 'medium', dueInDays: 30,
+    // High: places fill fast, and only students who'll live away from home see this step.
+    id: 't-accommodation', stageId: 'registration', kind: 'registration', priority: 'high', dueInDays: 30,
     title: 'Apply for accommodation',
     description: 'Places fill fast. Private places only if accredited.',
     action: { label: 'Open Residences', to: '/app/residences' },
