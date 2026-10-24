@@ -20,7 +20,7 @@ Built by **Team Thuto** for the FNB App of the Year Hackathon 2026, challenge **
 The sign-in page has one-click buttons for both. The demo passwords are public on purpose and locked, so nobody can change them.
 
 - **Watch it live:** open the student and the sponsor in two tabs, or on two phones. Offers, documents and payments appear on the other side in about 2 seconds.
-- **WhatsApp:** send `join salmon-castle` to **+1 415 523 8886**, then `hi`. (Twilio sandbox; replies come from the demo student.)
+- **WhatsApp:** in the app, open **WhatsApp updates** and tap **Open WhatsApp** under *Talk to ThutoVest*. Or send `join salmon-castle` to **+1 415 523 8886** yourself, then `hi`. Any phone can join. The bot always answers with the demo student Tatenda's updates, whoever is messaging; see [WhatsApp today and next](#whatsapp-today-and-next).
 - **Start fresh:** tap **Get started** to build your own plan. It is saved on your device only.
 
 ## Try it in three minutes
@@ -88,6 +88,23 @@ phone ──► Twilio WhatsApp ──► Edge Function: whatsapp-twilio ──�
 
 The assistant (`src/intelligence/agent.ts`) acts on low-risk items itself, such as reminders and blocking scams, and asks first before anything that shares data or commits the student. It never accepts an offer for the student. Every alert has a **Why?** panel showing the evidence. These are explainable rules built on each user's own data, not machine learning.
 
+## WhatsApp today and next
+
+**Today** the bot shows *how* a student without data keeps up: a numbered menu with deadlines, offers, documents, the funding gap, a "when you'll need data" plan and scam reports. It runs on real phones through the Twilio WhatsApp Sandbox (`supabase/functions/whatsapp-twilio`).
+
+- **Every reply comes from one fixed demo profile: Tatenda.** Deadlines are dated relative to today so it never goes stale, but it does not read anyone's account, so it does not change when you act in the app.
+- **It is the same for every phone.** If you sign up as a new student (for example "Cat"), the bot still answers as Tatenda: new sign-ups are saved on your device only, and the bot does not know who is messaging.
+- **Alerts are not sent to phones yet.** Linking a number and choosing alerts on the WhatsApp updates page happens in the in-app simulator, which plays the bot for your own account.
+
+**Next**, so each student gets their own updates:
+
+1. Real sign-up on the server, so every student's plan lives in the database.
+2. Link the student's own number to their account with the 6-digit code (the tables and code hashing are already in `supabase/migrations/20261023120000_whatsapp.sql`).
+3. The bot looks up whoever is messaging and answers from their own plan.
+4. Alerts are pushed to the phone when a sponsor makes an offer, asks for a document or pays, using approved message templates.
+
+A Meta WhatsApp Cloud API version (`supabase/functions/whatsapp-webhook`) is also built, and Meta has verified its webhook. It goes live once the business is verified with Meta.
+
 ## Testing
 
 ```bash
@@ -118,7 +135,7 @@ Full write-up: **[SECURITY.md](SECURITY.md)**. In short:
 **Real**
 
 - The live app, logins, server-side rules, row-level security and live sync between devices
-- The WhatsApp bot on real phones (Twilio sandbox)
+- The WhatsApp bot on real phones (Twilio sandbox), answering from a fixed demo profile
 - University application, financial aid and residence links for 13 universities (checked 19 October 2026), all 50 public TVET colleges with their NSFAS accommodation portals (checked 23 October 2026), and the DHET Register of Private Higher Education Institutions (14 October 2026 update)
 - The NSFAS 2026 accommodation rules used by "Check a place before you pay"
 - Document type, readability and tamper checks; scam moderation; forecasts and sponsor learning
@@ -133,6 +150,7 @@ Full write-up: **[SECURITY.md](SECURITY.md)**. In short:
 **Not built yet**
 
 - Real sign-up through Supabase Auth (new accounts are saved on the device), MFA and stronger password rules
+- Personal WhatsApp updates: the bot answers as the demo student, and alerts reach the in-app simulator, not phones (see [WhatsApp today and next](#whatsapp-today-and-next))
 - Private document storage on the server (documents stay on the device)
 - Automated tests in CI, an audit log, and point-in-time backups
 
