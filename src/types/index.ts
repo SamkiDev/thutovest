@@ -59,6 +59,8 @@ export interface StudentProfile {
   documentsReady: DocumentKey[];
   /** Under-18s need a linked guardian before sponsors can contact them. */
   isAdult: boolean;
+  /** Optional. Lets disability-only bursaries match; sponsors see yes or no only. */
+  hasDisability?: boolean;
 }
 
 export interface CostBreakdown {

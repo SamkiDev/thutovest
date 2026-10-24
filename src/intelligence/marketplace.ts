@@ -33,6 +33,7 @@ export function liveCandidate(state: StudentState): CandidateProfile {
     householdIncome: state.profile.householdIncome,
     apsEstimate: state.profile.apsEstimate,
     isAdult: state.profile.isAdult,
+    ...(state.profile.hasDisability ? { hasDisability: true } : {}),
     trust: studentTrust(state),
     checks: studentChecks(state.verification),
     totalCost: f.totalCost,

@@ -294,6 +294,7 @@ function sanitizeCandidate(p: CandidateProfile, studentId: string): CandidatePro
     householdIncome: clip(p.householdIncome, 40) as CandidateProfile['householdIncome'],
     apsEstimate: aps,
     isAdult: p.isAdult === true,
+    ...(p.hasDisability === true ? { hasDisability: true } : {}),
     trust: isTrust(p.trust) ? p.trust : 0,
     checks,
     totalCost: count(p.totalCost, LIMITS.maxAmount),

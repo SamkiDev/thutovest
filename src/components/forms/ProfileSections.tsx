@@ -67,6 +67,17 @@ export function AboutSection({ draft, update, errors }: SectionProps) {
         onChange={(v) => update({ isAdult: v === 'yes' })}
         columns={2}
       />
+      <ChoiceCards<'yes' | 'no'>
+        legend="Do you have a disability? (optional)"
+        description="Some bursaries are only for students with a disability. Sponsors only see yes or no, never details."
+        options={[
+          { value: 'no', label: 'No, or I’d rather not say' },
+          { value: 'yes', label: 'Yes' },
+        ]}
+        value={draft.hasDisability ? 'yes' : 'no'}
+        onChange={(v) => update({ hasDisability: v === 'yes' })}
+        columns={2}
+      />
       <SelectField
         label="Which province do you live in?"
         hint="Used to highlight institutions close to home."
