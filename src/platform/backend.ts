@@ -96,7 +96,15 @@ export function watchBackendSession(onLost: () => void): () => void {
     if (active && !data.session) onLost();
   });
   const { data } = client.auth.onAuthStateChange((event, session) => {
-    if (active && (event === 'SIGNED_OUT' || !session)) onLost();
+    if (!active || (event !== 'SIGNED_OUT' && session)) return;
+    // Supabase also relays a sign-out from any other tab of this browser, though each tab
+    // keeps its own login: check this tab's own session before treating it as lost.
+    // (Deferred: calling the client inside this callback can deadlock.)
+    window.setTimeout(() => {
+      client.auth.getSession().then(({ data: d }) => {
+        if (active && !d.session) onLost();
+      });
+    }, 0);
   });
   // Browsers pause timers in background tabs; check (and refresh) the login when the tab comes back.
   const onVisible = () => {

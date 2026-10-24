@@ -42,8 +42,13 @@ function SessionNotice() {
   const navigate = useNavigate();
   useEffect(() => {
     if (!sessionLost) return;
-    clearSessionLost();
-    navigate('/signin', { replace: true, state: { expired: true } });
+    const to = sessionLost === 'sponsor' ? '/signin?role=sponsor' : '/signin';
+    // After any page's own redirect to sign-in, so the message isn't lost.
+    const t = window.setTimeout(() => {
+      navigate(to, { replace: true, state: { expired: true } });
+      clearSessionLost();
+    }, 0);
+    return () => window.clearTimeout(t);
   }, [sessionLost, clearSessionLost, navigate]);
   return null;
 }

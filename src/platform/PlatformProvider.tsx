@@ -16,8 +16,8 @@ interface PlatformContextValue {
   incoming: { seq: number; events: PlatformEvent[] };
   /** True when this tab is signed in to the shared backend rather than running in the browser only. */
   backend: boolean;
-  /** Set when the login ended on its own (expired or revoked); the UI asks the user to sign in again. */
-  sessionLost: boolean;
+  /** The role whose login ended on its own (expired or revoked); the UI asks them to sign in again. */
+  sessionLost: Session['role'] | null;
   clearSessionLost: () => void;
 }
 
@@ -50,15 +50,16 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
   const current = useRef(platform);
   current.current = platform;
   const [incoming, setIncoming] = useState<{ seq: number; events: PlatformEvent[] }>({ seq: 0, events: [] });
-  const [sessionLost, setSessionLost] = useState(false);
+  const [sessionLost, setSessionLost] = useState<Session['role'] | null>(null);
 
   /** The login ended without the user signing out: drop this tab's session and say so. */
   const loseSession = useCallback(() => {
     if (!sessionRef.current?.backend) return;
+    const role = sessionRef.current.role;
     sessionStore.save(KEYS.session, null);
     sessionRef.current = null;
     setSession(null);
-    setSessionLost(true);
+    setSessionLost(role);
   }, []);
 
   // Backend bookkeeping: the last version applied, this tab's own events, and requests in flight.
@@ -166,9 +167,9 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     sessionStore.save(KEYS.session, s);
     sessionRef.current = s;
     setSession(s);
-    setSessionLost(false);
+    setSessionLost(null);
   }, []);
-  const clearSessionLost = useCallback(() => setSessionLost(false), []);
+  const clearSessionLost = useCallback(() => setSessionLost(null), []);
   const signOut = useCallback(() => {
     if (sessionRef.current?.backend) void signOutOfBackend();
     sessionStore.save(KEYS.session, null);
