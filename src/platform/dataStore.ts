@@ -77,4 +77,12 @@ export const KEYS = {
   student: 'student:v2',
   platform: 'platform:v1',
   session: 'session',
+  /** Ids of sponsors registered in this browser, so they can sign back in (like a student's plan on this device). */
+  deviceSponsors: 'device-sponsors:v1',
 } as const;
+
+export const deviceSponsorIds = (): string[] => dataStore.load<string[]>(KEYS.deviceSponsors) ?? [];
+
+export function rememberDeviceSponsor(id: string) {
+  dataStore.save(KEYS.deviceSponsors, [...new Set([...deviceSponsorIds(), id])]);
+}

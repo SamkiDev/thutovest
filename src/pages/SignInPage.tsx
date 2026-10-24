@@ -10,6 +10,7 @@ import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { usePlatform } from '../platform/PlatformProvider';
 import { DEMO_ACCOUNTS, JUDGE_ACCOUNTS, UNI_ACCOUNT, isDemoLogin } from '../data/platformSeed';
 import { backendEnabled, signInWithBackend } from '../platform/backend';
+import { deviceSponsorIds } from '../platform/dataStore';
 import { cn } from '../utils/cn';
 
 export default function SignInPage() {
@@ -82,8 +83,9 @@ export default function SignInPage() {
     );
   };
 
-  // On the shared backend these belong to other people, so the "this device" shortcut is browser-only.
-  const otherSponsors = backendEnabled ? [] : platform.sponsors.filter((s) => !s.isDemo);
+  // Only organisations registered in this browser, never other people's sponsors from the shared backend.
+  const mine = new Set(deviceSponsorIds());
+  const otherSponsors = platform.sponsors.filter((s) => !s.isDemo && (mine.has(s.id) || !backendEnabled));
 
   return (
     <div className="grid min-h-dvh bg-paper lg:grid-cols-[1fr_1.1fr]">

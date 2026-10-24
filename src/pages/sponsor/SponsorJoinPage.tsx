@@ -9,6 +9,7 @@ import type { SponsorOrg, SponsorType } from '../../types';
 import { REGISTRATION_HINT, validRegistration } from '../../utils/trust';
 import { makeId } from '../../utils/createState';
 import { LIMITS } from '../../platform/authorize';
+import { rememberDeviceSponsor } from '../../platform/dataStore';
 
 export default function SponsorJoinPage() {
   const { dispatchPlatform, signIn } = usePlatform();
@@ -43,6 +44,7 @@ export default function SponsorJoinPage() {
       createdAt: new Date().toISOString(),
     };
     dispatchPlatform({ type: 'registerSponsor', sponsor });
+    rememberDeviceSponsor(sponsor.id);
     signIn({ role: 'sponsor', userId: sponsor.id, email: '', demo: false });
     navigate('/sponsor/organisation');
   };
