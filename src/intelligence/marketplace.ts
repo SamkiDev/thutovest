@@ -11,6 +11,7 @@ import { addDays, daysUntil, formatDate, todayISO } from '../utils/dates';
 import { studentChecks, studentTrust, TRUST_LABEL } from '../utils/trust';
 import { onTimeRate } from './forecast';
 import { coversText, remainingGap, stackingBlocker, termsOf } from '../platform/bursaryRules';
+import { visibleToSponsors } from '../platform/guardianRules';
 
 const fieldName = (f: string) => FIELDS.find((x) => x.value === f)?.label ?? f;
 
@@ -171,7 +172,7 @@ export interface RankedCandidate {
 
 export function rankCandidates(fund: Fund, platform: PlatformState, candidates: CandidateProfile[], prefs: LearnedPreferences): RankedCandidate[] {
   return candidates
-    .filter((c) => c.discoverable && c.trust >= 1)
+    .filter((c) => c.discoverable && c.trust >= 1 && visibleToSponsors(c))
     .map((c) => {
       const fit = fundFit(fund, c, platform);
       // Coverage 25 + on-time record 20 + verification 15 + base 20 = 80 before learning.

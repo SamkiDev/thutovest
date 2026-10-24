@@ -5,7 +5,7 @@ import type { FundApplication, FundingAgreement } from '../types';
 import { SignAgreementModal } from '../components/documents/SignAgreementModal';
 import { FundingTimeline } from '../components/documents/FundingTimeline';
 import { ShareStatusPill } from '../components/documents/DocumentParts';
-import { DOCUMENT_INFO } from '../data/documents';
+import { DOCUMENT_INFO, docName } from '../data/documents';
 import { APPLICATION_STATUS_LABEL as STATUS_LABEL } from '../data/labels';
 import { useStudent } from '../hooks/useStudent';
 import { useToast } from '../hooks/useToast';
@@ -132,7 +132,7 @@ export default function SponsorsPage() {
                     Documents to share in the app before payment:{' '}
                     {platform.documents
                       .filter((d) => d.applicationId === app.id && d.required)
-                      .map((d) => DOCUMENT_INFO[d.kind].label.toLowerCase())
+                      .map((d) => docName(d.kind))
                       .join(', ')}
                     .
                   </p>

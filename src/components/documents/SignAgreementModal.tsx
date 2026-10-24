@@ -3,7 +3,7 @@ import { PenLine, ShieldCheck } from 'lucide-react';
 import type { DocumentKind, FundApplication, FundingAgreement, FundTerms } from '../../types';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
-import { DOCUMENT_INFO, fundingTerms } from '../../data/documents';
+import { DOCUMENT_INFO, fundingTerms, docName } from '../../data/documents';
 import { formatZAR } from '../../utils/format';
 
 /** Accepting an offer = signing the funding agreement in the app (with guardian co-signature for under-18s). */
@@ -38,7 +38,11 @@ export function SignAgreementModal({
   const [guardianOk, setGuardianOk] = useState(false);
   const [error, setError] = useState<string | null>(null);
   if (!app) return null;
-  const terms = fundingTerms(sponsorName, formatZAR(app.amount ?? 0), institution, requiredDocs.map((k) => DOCUMENT_INFO[k].label.toLowerCase()), bursaryTerms);
+  const terms = [
+    ...fundingTerms(sponsorName, formatZAR(app.amount ?? 0), institution, requiredDocs.map((k) => docName(k)), bursaryTerms),
+    // A minor can't enter this contract alone: the guardian assists and consents to its conditions.
+    ...(isAdult ? [] : [`${firstName} is under 18, so ${guardianName || 'their parent or guardian'} assists with this agreement and consents to its conditions by co-signing below.`]),
+  ];
 
   const sign = () => {
     if (!name.trim().toLowerCase().startsWith(firstName.toLowerCase()) || name.trim().split(/\s+/).length < 2) {

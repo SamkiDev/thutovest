@@ -14,7 +14,7 @@ export function DocumentPaper({ doc, className }: { doc: DocLike; className?: st
   if (doc.text) {
     return (
       <div className={cn('rounded-lg border border-line bg-white p-4 text-[0.6875rem] leading-relaxed text-ink shadow-sm', className)}>
-        <p className="mb-1 font-semibold">Motivation letter</p>
+        <p className="mb-1 font-semibold">{DOCUMENT_INFO[doc.kind].label}</p>
         <p className="line-clamp-[8] whitespace-pre-line text-body">{doc.text}</p>
       </div>
     );

@@ -17,7 +17,8 @@ import { createPlatformSeed } from '../data/platformSeed';
 import { screenMessage } from '../intelligence/moderation';
 import { formatZAR } from '../utils/format';
 import { makeId } from '../utils/createState';
-import { DOCUMENT_INFO } from '../data/documents';
+import { DOCUMENT_INFO, docName } from '../data/documents';
+import { GUARDIAN_DOCS, isMinor } from './guardianRules';
 import { addDays, todayISO } from '../utils/dates';
 
 export type PlatformAction =
@@ -123,7 +124,9 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
       if (!fund || !sponsor || sponsor.status !== 'active') return state;
       const r = upsertApplication(state, action.fundId, action.studentId, { status: 'offered', amount: action.amount, offerNote: action.note }, 'sponsor');
       let next = decide(r.state, sponsor.id, { studentId: action.studentId, fundId: action.fundId, outcome: 'positive' });
-      const kinds = [...new Set<DocumentKind>(['admission-letter', ...action.requiredDocs])];
+      // Under-18s: the guardian's consent form, ID and proof of guardianship are always required (POPIA, and a minor's contract).
+      const student = state.pool.find((p) => p.id === action.studentId);
+      const kinds = [...new Set<DocumentKind>(['admission-letter', ...action.requiredDocs, ...(student && isMinor(student) ? GUARDIAN_DOCS : [])])];
       const due = addDays(todayISO(), 14);
       next = {
         ...next,
@@ -135,7 +138,7 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
       next = addMessage(next, {
         applicationId: r.app.id,
         from: 'system',
-        text: `${sponsor.name} offered ${formatZAR(action.amount)} from ${fund.name}. Documents needed before payment: ${kinds.map((k) => DOCUMENT_INFO[k].label.toLowerCase()).join(', ')}. Paid straight to the institution.`,
+        text: `${sponsor.name} offered ${formatZAR(action.amount)} from ${fund.name}. Documents needed before payment: ${kinds.map((k) => docName(k)).join(', ')}. Paid straight to the institution.`,
       });
       if (action.note.trim()) {
         const screen = screenMessage(action.note, 'sponsor');
@@ -233,8 +236,8 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
         ...state,
         documents: state.documents.map((d) => (d.id === share.id ? { ...d, status: 'shared', sharedAt: now(), snapshot: action.snapshot, reviewNote: undefined } : d)),
       };
-      next = addMessage(next, { applicationId: share.applicationId, from: 'system', text: `${action.studentName} shared their ${DOCUMENT_INFO[share.kind].label.toLowerCase()} in the app.` });
-      return event(next, { audience: 'sponsor', sponsorId: sponsor?.id, kind: 'document', text: `${action.studentName} shared a ${DOCUMENT_INFO[share.kind].label.toLowerCase()}` });
+      next = addMessage(next, { applicationId: share.applicationId, from: 'system', text: `${action.studentName} shared their ${docName(share.kind)} in the app.` });
+      return event(next, { audience: 'sponsor', sponsorId: sponsor?.id, kind: 'document', text: `${action.studentName} shared a ${docName(share.kind)}` });
     }
 
     case 'reviewDocument': {
@@ -246,7 +249,7 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
         ...state,
         documents: state.documents.map((d) => (d.id === share.id ? { ...d, status, reviewedAt: now(), reviewNote: action.note, dueOn: action.approve ? d.dueOn : addDays(todayISO(), 7) } : d)),
       };
-      const label = DOCUMENT_INFO[share.kind].label.toLowerCase();
+      const label = docName(share.kind);
       next = addMessage(next, {
         applicationId: share.applicationId,
         from: 'system',
@@ -278,7 +281,7 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
       next = addMessage(next, {
         applicationId: app.id,
         from: 'system',
-        text: `Sponsor requested a ${DOCUMENT_INFO[action.kind].label.toLowerCase()} in the app${action.note ? `: ${action.note}` : ''}.`,
+        text: `Sponsor requested a ${docName(action.kind)} in the app${action.note ? `: ${action.note}` : ''}.`,
       });
       return event(next, { audience: 'student', studentId: app.studentId, kind: 'document', text: `New document request: ${DOCUMENT_INFO[action.kind].label}` });
     }
@@ -287,7 +290,7 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
       const share = state.documents.find((d) => d.id === action.shareId);
       const app = share ? state.applications.find((a) => a.id === share.applicationId) : undefined;
       if (!share || !app) return state;
-      const label = DOCUMENT_INFO[share.kind].label.toLowerCase();
+      const label = docName(share.kind);
       const next = addMessage(state, { applicationId: app.id, from: 'system', text: `Reminder from your sponsor: please share your ${label} in the app.` });
       return event(next, { audience: 'student', studentId: app.studentId, kind: 'document', text: `Reminder: share your ${label}` });
     }

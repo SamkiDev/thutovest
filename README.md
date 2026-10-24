@@ -58,7 +58,16 @@ The demo data is shared by everyone using the demo accounts. **Reset demo** in t
 - A student holds at most two sponsor bursaries, so one can pay tuition and another the rest
 - Sponsors see the gap left after other bursaries, and no offer or acceptance can go above it
 - An "only bursary" can't be combined with another
-- Under-18s need a guardian to consent and co-sign, and money only ever goes to the institution
+- Money only ever goes to the institution
+
+**Children (under 18)**
+
+POPIA treats under-18s as children, and a minor can't sign a bursary agreement alone, so:
+
+- A parent or guardian reads and ticks a consent statement on the Verification page. The exact wording and time are kept, and the consent form goes into the student's documents.
+- Until then the child is hidden from every sponsor and can't share their profile, enforced on the server.
+- Every offer to an under-18 automatically requires the guardian consent form, the guardian's certified ID and proof of guardianship: a birth certificate, or a sworn affidavit or court order if the guardian isn't a parent. Sponsors can't untick them.
+- The agreement states that the guardian assists with it, and the guardian co-signs.
 
 ## Run it locally
 
@@ -138,11 +147,11 @@ A Meta WhatsApp Cloud API version (`supabase/functions/whatsapp-webhook`) is als
 npm run typecheck    # TypeScript, strict
 npm run build        # production build
 npm run audit        # known vulnerabilities in dependencies
-npm test             # 66 offline checks, no network or keys needed
+npm test             # 72 offline checks, no network or keys needed
 npm run test:live    # 38 attack probes against the live backend (changes nothing)
 ```
 
-- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 34 server checks (signed-out actions, expired logins, bursary limits, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
+- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 40 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
 - `npm run test:live` reads the public values from `.env.local` and tries what an attacker would: reading every table signed out, forged tokens, oversized requests, students and sponsors acting on each other's records, and replacing the whole state. Every probe must be refused and the data must be unchanged afterwards.
 
 ## Security

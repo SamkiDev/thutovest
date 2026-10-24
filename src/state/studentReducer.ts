@@ -44,6 +44,7 @@ export type StudentAction =
   | { type: 'hydrate'; state: StudentState | null }
   | { type: 'setVerification'; key: StudentCheckKey; item: VerificationItem; log?: string }
   | { type: 'setGuardian'; name: string; relationship: string }
+  | { type: 'recordGuardianConsent'; text: string; at: string; document: VaultDocument }
   | { type: 'setDiscoverable'; value: boolean }
   | { type: 'whatsappRequestCode'; phone: string; code: string; expiresAt: string }
   | { type: 'whatsappLinked' }
@@ -265,6 +266,18 @@ export function studentReducer(state: StudentState | null, action: StudentAction
         ...state,
         verification: { ...state.verification, guardianName: action.name, guardianRelationship: action.relationship },
       };
+
+    case 'recordGuardianConsent':
+      // The consent text and time are kept, and the signed form goes into the vault to share with sponsors.
+      return log(
+        {
+          ...state,
+          verification: { ...state.verification, guardianConsentText: action.text, guardianConsentAt: action.at },
+          documents: [action.document, ...(state.documents ?? []).filter((d) => d.kind !== 'guardian-consent')],
+        },
+        'Guardian consent form added to your documents',
+        'profile',
+      );
 
     case 'whatsappRequestCode':
       return {

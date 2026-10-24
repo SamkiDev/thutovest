@@ -6,6 +6,7 @@ import { addDays, todayISO } from './dates';
 import { matchAll } from './matching';
 import { emptyVerification } from './trust';
 import { DEMO_ACCOUNTS } from '../data/platformSeed';
+import { guardianConsentDocument, guardianConsentStatement } from '../platform/guardianRules';
 
 export const BUDGET_SOURCE_ID = 'src-own';
 
@@ -132,9 +133,12 @@ export function createDemoState(): StudentState {
       income: { status: 'not-started' },
       guardianName: 'Nomsa',
       guardianRelationship: 'Mother',
+      guardianConsentText: guardianConsentStatement('Tatenda', 'Nomsa', 'Mother'),
+      guardianConsentAt: daysAgoAt(9, 20),
     },
     discoverable: true,
     documents: [
+      guardianConsentDocument('Tatenda', 'Nomsa', 'Mother', guardianConsentStatement('Tatenda', 'Nomsa', 'Mother'), daysAgoAt(9, 20)),
       {
         id: 'doc-tatenda-id',
         kind: 'id-copy',

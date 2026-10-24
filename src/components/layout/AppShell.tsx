@@ -39,6 +39,7 @@ import { useWhatsApp } from '../../whatsapp/WhatsAppProvider';
 import { liveCandidate } from '../../intelligence/marketplace';
 import { actOnPlatform, saveStudentState } from '../../platform/backend';
 import { createDemoState } from '../../utils/createState';
+import { visibleToSponsors } from '../../platform/guardianRules';
 
 const NAV = [
   { to: '/app', label: 'Dashboard', short: 'Home', icon: LayoutDashboard, end: true, mobile: true },
@@ -75,7 +76,12 @@ export function AppShell() {
   }, [state, session, signIn]);
 
   // Signed in to the backend: publish the anonymised profile sponsors see, whenever it changes.
-  const candidate = useMemo(() => (backend && state && session?.userId === state.id ? JSON.stringify(liveCandidate(state)) : ''), [backend, state, session?.userId]);
+  // A child's profile is only published once a parent or guardian has consented.
+  const candidate = useMemo(() => {
+    if (!backend || !state || session?.userId !== state.id) return '';
+    const c = liveCandidate(state);
+    return visibleToSponsors(c) ? JSON.stringify(c) : '';
+  }, [backend, state, session?.userId]);
   useEffect(() => {
     if (!candidate) return;
     const t = window.setTimeout(() => dispatchPlatform({ type: 'publishCandidate', profile: JSON.parse(candidate) }), 1500);

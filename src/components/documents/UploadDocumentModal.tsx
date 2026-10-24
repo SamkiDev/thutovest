@@ -5,7 +5,7 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Spinner } from '../ui/Misc';
 import { CheckBadge, CheckFindings, DocumentPaper, formatBytes } from './DocumentParts';
-import { ACCEPTED_TYPES, DOCUMENT_INFO, MAX_FILE_BYTES, sniffFileType } from '../../data/documents';
+import { ACCEPTED_TYPES, DOCUMENT_INFO, MAX_FILE_BYTES, sniffFileType, docName } from '../../data/documents';
 import { checkDocument, sampleFile, type FileFacts } from '../../intelligence/documentCheck';
 import { institutionById } from '../../data/institutions';
 import { makeId } from '../../utils/createState';
@@ -140,7 +140,7 @@ export function UploadDocumentModal({
     <Modal
       open
       onClose={onClose}
-      title={`Add ${info.label.toLowerCase()}`}
+      title={`Add ${docName(kind)}`}
       description={info.hint}
       size="lg"
       footer={

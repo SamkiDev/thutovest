@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Brain, CircleAlert, CircleCheck, Lock, Search, ShieldCheck, Users } from 'lucide-react';
 import type { CandidateProfile, DocumentKind, Fund } from '../../types';
 import { DOCUMENT_INFO, OFFER_DOCUMENT_OPTIONS } from '../../data/documents';
+import { GUARDIAN_DOCS, isMinor } from '../../platform/guardianRules';
 import { useSponsor } from '../../hooks/useSponsor';
 import { useToast } from '../../hooks/useToast';
 import { useDocumentTitle } from '../../hooks/useDocumentTitle';
@@ -419,7 +420,22 @@ function OfferModal({
                 </label>
               );
             })}
+            {isMinor(r.candidate) &&
+              GUARDIAN_DOCS.map((k) => (
+                <label key={k} className="flex items-start gap-2 rounded-xl border border-veld-500 bg-veld-50/60 p-3 text-sm">
+                  <input type="checkbox" checked disabled className="mt-0.5 size-4 accent-[var(--color-veld-600)]" />
+                  <span>
+                    <span className="block font-semibold text-ink">{DOCUMENT_INFO[k].label}</span>
+                    <span className="block text-xs text-muted">Required for under-18s</span>
+                  </span>
+                </label>
+              ))}
           </div>
+          {isMinor(r.candidate) && (
+            <p className="mt-2 text-xs text-muted">
+              {r.candidate.firstName} is under 18, so a parent or guardian must consent and co-sign. The law requires this for a child’s information and for a bursary agreement.
+            </p>
+          )}
         </fieldset>
         {error && (
           <p role="alert" className="rounded-xl bg-clay-50 p-3 text-sm text-clay-700">

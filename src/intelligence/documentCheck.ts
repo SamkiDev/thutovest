@@ -5,12 +5,15 @@
  * (type, size, match, freshness, tamper signals) are real and explainable.
  * ------------------------------------------------------------------ */
 import type { DocumentCheck, DocumentFinding, DocumentKind, StudentState } from '../types';
-import { DOCUMENT_INFO, MAX_FILE_BYTES } from '../data/documents';
+import { DOCUMENT_INFO, MAX_FILE_BYTES, docName } from '../data/documents';
 import { institutionById } from '../data/institutions';
 import { STUDY_OPTIONS } from '../data/studyOptions';
 import { formatDate, todayISO, addDays } from '../utils/dates';
 
 const KIND_HINTS: { kind: DocumentKind; words: RegExp }[] = [
+  // Guardian documents first: their names also contain words like "ID" and "affidavit".
+  { kind: 'guardian-id', words: /(guardian|parent|mother|father)[-_ ]?id/i },
+  { kind: 'guardianship-proof', words: /(birth[-_ ]?cert|guardianship|court[-_ ]?order)/i },
   { kind: 'admission-letter', words: /(admission|admit|offer|accept|provisional)/i },
   { kind: 'latest-results', words: /(result|report|nsc|matric|statement of results|grade ?1[12])/i },
   { kind: 'income-proof', words: /(payslip|pay slip|sassa|affidavit|income|salary)/i },
@@ -49,15 +52,20 @@ export function checkDocument(kind: DocumentKind, file: FileFacts, state: Studen
 
   // 2. Is it the right document?
   if (detectedKind && detectedKind !== kind) {
-    findings.push({ label: 'Document type', ok: false, detail: `This looks like a ${DOCUMENT_INFO[detectedKind].label.toLowerCase()}, not a ${DOCUMENT_INFO[kind].label.toLowerCase()}.`, severity: 'warning' });
+    findings.push({ label: 'Document type', ok: false, detail: `This looks like a ${docName(detectedKind)}, not a ${docName(kind)}.`, severity: 'warning' });
   } else {
-    findings.push({ label: 'Document type', ok: true, detail: `Recognised as ${DOCUMENT_INFO[kind].label.toLowerCase()}` });
+    findings.push({ label: 'Document type', ok: true, detail: `Recognised as ${docName(kind)}` });
   }
 
-  // 3. Matches the student
-  findings.push({ label: 'Name matches your profile', ok: true, detail: `${p.firstName} found on the document` });
+  // 3. Matches the student (or, for a guardian's ID, the guardian on file)
+  const guardian = state.verification.guardianName;
+  if (kind === 'guardian-id') {
+    findings.push({ label: 'Name matches your guardian', ok: Boolean(guardian), detail: guardian ? `${guardian} found on the document` : 'Add your guardian on the Verification page first', severity: guardian ? undefined : 'warning' });
+  } else {
+    findings.push({ label: 'Name matches your profile', ok: true, detail: `${p.firstName} found on the document` });
+  }
 
-  const extracted: { label: string; value: string }[] = [{ label: 'Name', value: `${p.firstName} (surname hidden)` }];
+  const extracted: { label: string; value: string }[] = [{ label: 'Name', value: kind === 'guardian-id' ? `${guardian ?? 'Guardian'} (surname hidden)` : `${p.firstName} (surname hidden)` }];
   const issued = addDays(todayISO(), -6);
 
   if (kind === 'admission-letter') {
@@ -82,6 +90,18 @@ export function checkDocument(kind: DocumentKind, file: FileFacts, state: Studen
   } else if (kind === 'income-proof') {
     extracted.push({ label: 'Documents found', value: 'Payslip or SASSA letter' }, { label: 'Household income', value: p.householdIncome === 'under-350k' ? 'Up to R350,000 a year' : 'Band on file' });
     findings.push({ label: 'Dated within 3 months', ok: true, detail: `Dated ${formatDate(issued)}` });
+  } else if (kind === 'guardian-id') {
+    extracted.push({ label: 'Certified on', value: formatDate(issued) }, { label: 'ID number', value: 'Hidden. Never shown to sponsors' });
+    findings.push({ label: 'Certified within 3 months', ok: true, detail: `Certified ${formatDate(issued)}` });
+  } else if (kind === 'guardianship-proof') {
+    const parent = /mother|father/i.test(state.verification.guardianRelationship ?? '');
+    extracted.push({ label: 'Document', value: parent ? 'Unabridged birth certificate' : 'Sworn affidavit or court order' }, { label: 'Guardian named', value: guardian ?? 'Guardian on file' });
+    findings.push({
+      label: parent ? 'Parent named on the certificate' : 'Guardianship stated under oath',
+      ok: Boolean(guardian),
+      detail: guardian ? `${guardian} is named as ${p.firstName}’s ${(state.verification.guardianRelationship ?? 'guardian').toLowerCase()}` : 'Add your guardian on the Verification page first',
+      severity: guardian ? undefined : 'warning',
+    });
   } else if (kind === 'registration-proof') {
     extracted.push({ label: 'Institution', value: inst?.name ?? 'Institution' }, { label: 'Year', value: String(new Date().getFullYear() + 1) });
   }
@@ -137,6 +157,9 @@ export function sampleFile(kind: DocumentKind, firstName: string, instShort = 'U
     'motivation-letter': 'motivation.txt',
     'registration-proof': `${instShort}_proof_of_registration_${firstName}.pdf`,
     'semester-results': `${instShort}_semester1_academic_record_${firstName}.pdf`,
+    'guardian-consent': `Guardian_consent_${firstName}.txt`,
+    'guardian-id': `certified_guardian_ID_copy_${firstName}.pdf`,
+    'guardianship-proof': `unabridged_birth_certificate_${firstName}.pdf`,
   };
   return { fileName: name[kind], mimeType: 'application/pdf', size: 180_000 + Math.round(Math.random() * 120_000) };
 }

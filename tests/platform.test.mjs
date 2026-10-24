@@ -127,7 +127,8 @@ r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
 check('a write that loses a race is retried and succeeds', r.status === 200 && commits === c0 + 1);
 
 // 8b. Bursary terms, the remaining gap and the two-bursary rule (state is back to the seed after the reset above)
-const publishGap = (gap) => call({ op: 'act', action: { type: 'publishCandidate', profile: { id: 'stu-tatenda', firstName: 'Tatenda', gap, totalCost: 150000, discoverable: true, trust: 1, checks: {} } } }, 'tok-tatenda');
+const publishAs = (extra) => call({ op: 'act', action: { type: 'publishCandidate', profile: { id: 'stu-tatenda', firstName: 'Tatenda', gap: 80000, totalCost: 150000, discoverable: true, trust: 1, checks: {}, ...extra } } }, 'tok-tatenda');
+const publishGap = (gap) => publishAs({ gap, isAdult: true });
 const offerFrom = (fid, amount) => call({ op: 'act', action: { type: 'sendOffer', fundId: fid, studentId: 'stu-tatenda', studentName: 'Tatenda', amount, note: '', requiredDocs: [] } }, 'tok-ridge');
 const acceptFrom = (fid) => {
   const app = db.state.applications.find((a) => a.fundId === fid && a.studentId === 'stu-tatenda' && a.status === 'offered');
@@ -166,6 +167,31 @@ const savedTerms = db.state.funds.find((f) => f.id === 'fund-test-terms')?.terms
 check('fund terms are whitelisted on the server', JSON.stringify(savedTerms) === JSON.stringify({ covers: ['tuition'], workBackYears: 2 }), JSON.stringify(savedTerms));
 r = await offerFrom('fund-test-terms', 10000);
 check('control: the same offer from a fund that allows a second bursary goes through', r.status === 200);
+
+// 8c. Children: hidden until a guardian consents, and offers to them always need the guardian's documents
+r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
+await publishAs({ isAdult: false, checks: { identity: 'verified', guardian: 'not-started' } });
+r = await call({ op: 'load' }, 'tok-ridge');
+check('a child without guardian consent is hidden from sponsors', r.status === 200 && !r.body.state.pool.some((p) => p.id === 'stu-tatenda'));
+r = await offerFrom('fund-ridge-dev', 20000);
+check('a sponsor cannot make an offer to a child without guardian consent (403)', r.status === 403);
+r = await call({ op: 'act', action: { type: 'expressInterest', fundId: 'fund-ridge-dev', studentId: 'stu-tatenda', studentName: 'Tatenda', by: 'student' } }, 'tok-tatenda');
+check('a child without guardian consent cannot share their profile with a sponsor (403)', r.status === 403);
+
+await publishAs({ isAdult: false, checks: { identity: 'verified', guardian: 'verified' } });
+r = await call({ op: 'load' }, 'tok-ridge');
+check('once a guardian consents, the child is visible to sponsors', r.body.state.pool.some((p) => p.id === 'stu-tatenda'));
+r = await offerFrom('fund-ridge-dev', 20000);
+const minorApp = db.state.applications.find((a) => a.fundId === 'fund-ridge-dev' && a.studentId === 'stu-tatenda' && a.status === 'offered');
+const minorKinds = db.state.documents.filter((d) => d.applicationId === minorApp?.id).map((d) => d.kind);
+check('an offer to a child always requires the guardian consent form, ID and proof of guardianship', r.status === 200 && ['guardian-consent', 'guardian-id', 'guardianship-proof'].every((k) => minorKinds.includes(k)), minorKinds.join(','));
+
+r = await call({ op: 'act', action: { type: 'reset' } }, 'tok-tatenda');
+await publishGap(80000);
+await offerFrom('fund-ridge-dev', 20000);
+const adultApp = db.state.applications.find((a) => a.fundId === 'fund-ridge-dev' && a.studentId === 'stu-tatenda' && a.status === 'offered');
+const adultKinds = db.state.documents.filter((d) => d.applicationId === adultApp?.id).map((d) => d.kind);
+check('an offer to an adult does not add guardian documents', Boolean(adultApp) && !adultKinds.some((k) => k.startsWith('guardian')), adultKinds.join(','));
 
 // 9. Junk input
 let res = await handler(new Request(`${SB}/functions/v1/platform`, { method: 'POST', body: 'not json' }));

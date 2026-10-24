@@ -91,7 +91,34 @@ var DOCUMENT_INFO = {
 		short: "Semester results",
 		hint: "Your academic record after each semester, for funded students.",
 		issuerCheck: true
+	},
+	"guardian-consent": {
+		label: "Guardian consent form",
+		short: "Guardian consent",
+		hint: "Created when your parent or guardian consents on the Verification page.",
+		issuerCheck: false,
+		guardianOnly: true,
+		fromConsent: true
+	},
+	"guardian-id": {
+		label: "Certified copy of guardian’s ID",
+		short: "Guardian ID",
+		hint: "Your parent or guardian’s ID, certified within the last 3 months.",
+		issuerCheck: false,
+		guardianOnly: true
+	},
+	"guardianship-proof": {
+		label: "Proof of guardianship",
+		short: "Guardianship",
+		hint: "Your birth certificate. If your guardian isn’t your parent: a sworn affidavit or a court order.",
+		issuerCheck: false,
+		guardianOnly: true
 	}
+};
+/** A document's name inside a sentence: only the first letter is lowered, so "ID" stays "ID". */
+var docName = (kind) => {
+	const label = DOCUMENT_INFO[kind].label;
+	return label.charAt(0).toLowerCase() + label.slice(1);
 };
 // src/utils/trust.ts
 /** Registration number formats: company 2019/123456/07, NPO 123-456 NPO, trust IT1234/2015. */
@@ -101,6 +128,22 @@ function validRegistration(type, value) {
 	if (type === "npo") return /^\d{3}-\d{3}\s?NPO$/.test(v);
 	return /^IT\s?\d{1,6}\/\d{4}$/.test(v);
 }
+// src/platform/guardianRules.ts
+/**
+* Children (under 18). POPIA (sections 34 and 35) needs a parent's or guardian's
+* consent before a child's information is processed, and a minor needs a guardian
+* to assist with a contract such as a bursary agreement. Used by the app and,
+* through authorize(), the reducer and project(), by the server.
+*/
+/** Required on every offer to an under-18, on top of what the sponsor asks for. */
+var GUARDIAN_DOCS = [
+	"guardian-consent",
+	"guardian-id",
+	"guardianship-proof"
+];
+var isMinor = (c) => c.isAdult === false;
+/** Sponsors only ever see a child once a parent or guardian has consented. */
+var visibleToSponsors = (c) => !isMinor(c) || c.checks?.guardian === "verified";
 // src/platform/authorize.ts
 var LIMITS = {
 	message: 1e3,
@@ -146,10 +189,15 @@ function authorize(state, action, session) {
 	switch (action.type) {
 		case "hydrate":
 		case "reset": return action;
-		case "expressInterest": return student && action.studentId === student ? {
-			...action,
-			studentName: clip(action.studentName, LIMITS.name)
-		} : null;
+		case "expressInterest": {
+			if (!student || action.studentId !== student) return null;
+			const me = state.pool.find((p) => p.id === student);
+			if (me && !visibleToSponsors(me)) return null;
+			return {
+				...action,
+				studentName: clip(action.studentName, LIMITS.name)
+			};
+		}
 		case "respondOffer": {
 			const { app } = appOf(state, action.applicationId);
 			if (!student || !app || app.studentId !== student) return null;
@@ -207,6 +255,7 @@ function authorize(state, action, session) {
 			const fund = state.funds.find((f) => f.id === action.fundId);
 			if (stackingBlocker(state, action.studentId, fund)) return null;
 			const candidate = state.pool.find((p) => p.id === action.studentId);
+			if (candidate && !visibleToSponsors(candidate)) return null;
 			if (candidate && amount > remainingGap(candidate, state, fund.id)) return null;
 			return {
 				...action,
@@ -1303,7 +1352,12 @@ function platformReducer(state, action) {
 				fundId: action.fundId,
 				outcome: "positive"
 			});
-			const kinds = [.../* @__PURE__ */ new Set(["admission-letter", ...action.requiredDocs])];
+			const student = state.pool.find((p) => p.id === action.studentId);
+			const kinds = [.../* @__PURE__ */ new Set([
+				"admission-letter",
+				...action.requiredDocs,
+				...student && isMinor(student) ? GUARDIAN_DOCS : []
+			])];
 			const due = addDays(todayISO(), 14);
 			next = {
 				...next,
@@ -1320,7 +1374,7 @@ function platformReducer(state, action) {
 			next = addMessage(next, {
 				applicationId: r.app.id,
 				from: "system",
-				text: `${sponsor.name} offered ${formatZAR(action.amount)} from ${fund.name}. Documents needed before payment: ${kinds.map((k) => DOCUMENT_INFO[k].label.toLowerCase()).join(", ")}. Paid straight to the institution.`
+				text: `${sponsor.name} offered ${formatZAR(action.amount)} from ${fund.name}. Documents needed before payment: ${kinds.map((k) => docName(k)).join(", ")}. Paid straight to the institution.`
 			});
 			if (action.note.trim()) {
 				const screen = screenMessage(action.note, "sponsor");
@@ -1463,13 +1517,13 @@ function platformReducer(state, action) {
 			next = addMessage(next, {
 				applicationId: share.applicationId,
 				from: "system",
-				text: `${action.studentName} shared their ${DOCUMENT_INFO[share.kind].label.toLowerCase()} in the app.`
+				text: `${action.studentName} shared their ${docName(share.kind)} in the app.`
 			});
 			return event(next, {
 				audience: "sponsor",
 				sponsorId: sponsor?.id,
 				kind: "document",
-				text: `${action.studentName} shared a ${DOCUMENT_INFO[share.kind].label.toLowerCase()}`
+				text: `${action.studentName} shared a ${docName(share.kind)}`
 			});
 		}
 		case "reviewDocument": {
@@ -1487,7 +1541,7 @@ function platformReducer(state, action) {
 					dueOn: action.approve ? d.dueOn : addDays(todayISO(), 7)
 				} : d)
 			};
-			const label = DOCUMENT_INFO[share.kind].label.toLowerCase();
+			const label = docName(share.kind);
 			next = addMessage(next, {
 				applicationId: share.applicationId,
 				from: "system",
@@ -1521,7 +1575,7 @@ function platformReducer(state, action) {
 			next = addMessage(next, {
 				applicationId: app.id,
 				from: "system",
-				text: `Sponsor requested a ${DOCUMENT_INFO[action.kind].label.toLowerCase()} in the app${action.note ? `: ${action.note}` : ""}.`
+				text: `Sponsor requested a ${docName(action.kind)} in the app${action.note ? `: ${action.note}` : ""}.`
 			});
 			return event(next, {
 				audience: "student",
@@ -1534,7 +1588,7 @@ function platformReducer(state, action) {
 			const share = state.documents.find((d) => d.id === action.shareId);
 			const app = share ? state.applications.find((a) => a.id === share.applicationId) : void 0;
 			if (!share || !app) return state;
-			const label = DOCUMENT_INFO[share.kind].label.toLowerCase();
+			const label = docName(share.kind);
 			return event(addMessage(state, {
 				applicationId: app.id,
 				from: "system",
@@ -1677,7 +1731,7 @@ function projectFor(state, session) {
 	const ids = new Set(apps.map((a) => a.id));
 	return {
 		...base,
-		pool: state.pool,
+		pool: state.pool.filter(visibleToSponsors),
 		applications: apps,
 		messages: state.messages.filter((m) => ids.has(m.applicationId)),
 		documents: state.documents.filter((d) => ids.has(d.applicationId)),

@@ -1,4 +1,5 @@
 import type { PlatformState, Session } from '../types';
+import { visibleToSponsors } from './guardianRules';
 
 /**
  * What one signed-in account may read from the shared marketplace. The server
@@ -40,7 +41,8 @@ export function projectFor(state: PlatformState, session: Session | null): Platf
   const ids = new Set(apps.map((a) => a.id));
   return {
     ...base,
-    pool: state.pool,
+    // A child stays hidden from every sponsor until a parent or guardian has consented (POPIA s35).
+    pool: state.pool.filter(visibleToSponsors),
     applications: apps,
     messages: state.messages.filter((m) => ids.has(m.applicationId)),
     documents: state.documents.filter((d) => ids.has(d.applicationId)),

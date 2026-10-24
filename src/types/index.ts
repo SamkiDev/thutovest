@@ -288,7 +288,12 @@ export type DocumentKind =
   | 'income-proof'
   | 'motivation-letter'
   | 'registration-proof'
-  | 'semester-results';
+  | 'semester-results'
+  /** Under-18s only: created when the parent or guardian consents in the app. */
+  | 'guardian-consent'
+  | 'guardian-id'
+  /** Birth certificate, or a sworn affidavit or court order if the guardian isn't a parent. */
+  | 'guardianship-proof';
 
 export interface DocumentFinding {
   label: string;
@@ -370,6 +375,9 @@ export interface VerificationItem {
 export type StudentVerification = Record<StudentCheckKey, VerificationItem> & {
   guardianName?: string;
   guardianRelationship?: string;
+  /** POPIA consent for a child: exactly what the guardian agreed to, and when. */
+  guardianConsentText?: string;
+  guardianConsentAt?: string;
 };
 
 /** 0 Unverified · 1 ID verified · 2 Verified · 3 Fully verified */

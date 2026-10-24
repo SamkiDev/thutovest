@@ -25,6 +25,7 @@ import type { PlatformAction } from './platformReducer';
 import { DOCUMENT_INFO } from '../data/documents';
 import { validRegistration } from '../utils/trust';
 import { remainingGap, sanitizeTerms, stackingBlocker } from './bursaryRules';
+import { visibleToSponsors } from './guardianRules';
 
 export const LIMITS = {
   message: 1000,
@@ -73,8 +74,13 @@ export function authorize(state: PlatformState, action: PlatformAction, session:
       return action;
 
     // ---- Student actions: only on the student's own applications ----
-    case 'expressInterest':
-      return student && action.studentId === student ? { ...action, studentName: clip(action.studentName, LIMITS.name) } : null;
+    case 'expressInterest': {
+      if (!student || action.studentId !== student) return null;
+      // A child can't reach out to sponsors before a parent or guardian has consented.
+      const me = state.pool.find((p) => p.id === student);
+      if (me && !visibleToSponsors(me)) return null;
+      return { ...action, studentName: clip(action.studentName, LIMITS.name) };
+    }
     case 'respondOffer': {
       const { app } = appOf(state, action.applicationId);
       if (!student || !app || app.studentId !== student) return null;
@@ -128,6 +134,7 @@ export function authorize(state: PlatformState, action: PlatformAction, session:
       const fund = state.funds.find((f) => f.id === action.fundId)!;
       if (stackingBlocker(state, action.studentId, fund)) return null;
       const candidate = state.pool.find((p) => p.id === action.studentId);
+      if (candidate && !visibleToSponsors(candidate)) return null; // a child without guardian consent
       if (candidate && amount > remainingGap(candidate, state, fund.id)) return null;
       return { ...action, amount, note: clip(action.note, LIMITS.note), studentName: clip(action.studentName, LIMITS.name), requiredDocs: action.requiredDocs.filter(isDocKind) };
     }

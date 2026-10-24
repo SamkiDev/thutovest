@@ -7,7 +7,7 @@ import { useToast } from '../hooks/useToast';
 import { useDocuments, type RequestView } from '../hooks/useDocuments';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
 import { PageHeader, EmptyState } from '../components/ui/Misc';
-import { Button } from '../components/ui/Button';
+import { Button, ButtonLink } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { CheckRunner } from '../components/verification/CheckRunner';
 import { UploadDocumentModal } from '../components/documents/UploadDocumentModal';
@@ -33,6 +33,8 @@ export default function DocumentsPage() {
   useDocumentTitle('Documents');
 
   const inst = institutionById(state.profile.preferredInstitutionIds[0] ?? '');
+  // Guardian documents are only for under-18s.
+  const vaultKinds = VAULT_ORDER.filter((k) => !DOCUMENT_INFO[k].guardianOnly || !state.profile.isAdult);
 
   const byKind = useMemo(() => Object.fromEntries(vault.map((d) => [d.kind, d])) as Partial<Record<DocumentKind, VaultDocument>>, [vault]);
 
@@ -116,11 +118,11 @@ export default function DocumentsPage() {
             <FolderLock aria-hidden className="size-5 text-veld-600" /> Your vault
           </h2>
           <p className="text-sm text-muted">
-            {vault.length} of {VAULT_ORDER.length} documents added
+            {vault.length} of {vaultKinds.length} documents added
           </p>
         </div>
         <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {VAULT_ORDER.map((kind) => {
+          {vaultKinds.map((kind) => {
             const doc = byKind[kind];
             const info = DOCUMENT_INFO[kind];
             return (
@@ -152,9 +154,11 @@ export default function DocumentsPage() {
                           Confirm with {kind === 'latest-results' ? 'school' : inst?.shortName ?? 'institution'}
                         </Button>
                       )}
-                      <Button size="sm" variant="secondary" onClick={() => (info.writeInApp ? setWriting(true) : setUploadKind(kind))}>
-                        {info.writeInApp ? 'Edit' : 'Replace'}
-                      </Button>
+                      {!info.fromConsent && (
+                        <Button size="sm" variant="secondary" onClick={() => (info.writeInApp ? setWriting(true) : setUploadKind(kind))}>
+                          {info.writeInApp ? 'Edit' : 'Replace'}
+                        </Button>
+                      )}
                       <button
                         type="button"
                         onClick={() => {
@@ -168,6 +172,13 @@ export default function DocumentsPage() {
                       </button>
                     </div>
                   </>
+                ) : info.fromConsent ? (
+                  <div className="mt-4 flex flex-1 flex-col justify-end">
+                    <div className="mb-3 rounded-lg border border-dashed border-line-strong px-3 py-5 text-center text-xs text-subtle">Not given yet</div>
+                    <ButtonLink to="/app/verify" size="sm" variant="secondary">
+                      Get consent
+                    </ButtonLink>
+                  </div>
                 ) : (
                   <div className="mt-4 flex flex-1 flex-col justify-end">
                     <div className="mb-3 rounded-lg border border-dashed border-line-strong px-3 py-5 text-center text-xs text-subtle">Not added yet</div>

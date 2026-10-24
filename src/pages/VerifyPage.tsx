@@ -15,6 +15,7 @@ import { formatZAR } from '../utils/format';
 import { institutionById } from '../data/institutions';
 import { timeAgo } from '../utils/dates';
 import { cn } from '../utils/cn';
+import { guardianConsentDocument, guardianConsentStatement } from '../platform/guardianRules';
 
 function stepsFor(key: StudentCheckKey, guardianName: string, institution: string): CheckStep[] {
   switch (key) {
@@ -62,6 +63,8 @@ export default function VerifyPage() {
   const [gName, setGName] = useState(state.verification.guardianName ?? '');
   const [gRel, setGRel] = useState(state.verification.guardianRelationship ?? 'Mother');
   const [gError, setGError] = useState<string | null>(null);
+  const [gAgreed, setGAgreed] = useState(false);
+  const consentText = guardianConsentStatement(state.profile.firstName, gName.trim(), gRel);
   useDocumentTitle('Verification');
 
   const trust = studentTrust(state);
@@ -76,6 +79,10 @@ export default function VerifyPage() {
   const startGuardian = () => {
     if (!gName.trim()) {
       setGError('Enter your parent or guardian’s first name.');
+      return;
+    }
+    if (!gAgreed) {
+      setGError('Your parent or guardian must read the consent and tick the box.');
       return;
     }
     setGError(null);
@@ -180,6 +187,21 @@ export default function VerifyPage() {
                       <Button size="sm" onClick={startGuardian}>
                         Guardian consents now
                       </Button>
+                      <div className="sm:col-span-3">
+                        <p className="rounded-lg bg-surface p-3 text-sm text-body">{consentText}</p>
+                        <label className="mt-2 flex items-start gap-2 text-sm text-body">
+                          <input
+                            type="checkbox"
+                            checked={gAgreed}
+                            onChange={(e) => {
+                              setGAgreed(e.target.checked);
+                              setGError(null);
+                            }}
+                            className="mt-0.5 size-4 shrink-0 accent-[var(--color-veld-600)]"
+                          />
+                          <span>I am {state.profile.firstName}’s parent or legal guardian, and I agree.</span>
+                        </label>
+                      </div>
                       {gError && <p className="text-xs font-medium text-clay-600 sm:col-span-3">{gError}</p>}
                     </div>
                   )}
@@ -267,6 +289,12 @@ export default function VerifyPage() {
               item: ok ? { status: 'verified', note: 'Passed' } : { status: 'failed', note: failed },
               log: ok ? `${current.title} verified` : `${current.title} check failed: ${failed}`,
             });
+            if (ok && current.key === 'guardian') {
+              const at = new Date().toISOString();
+              const name = gName.trim() || state.verification.guardianName || 'Guardian';
+              const text = guardianConsentStatement(state.profile.firstName, name, gRel);
+              dispatch({ type: 'recordGuardianConsent', text, at, document: guardianConsentDocument(state.profile.firstName, name, gRel, text, at) });
+            }
             if (ok) {
               const after = studentTrust({ ...state, verification: { ...state.verification, [current.key]: { status: 'verified' } } });
               notify(after > before ? `${current.title} verified. You’re now “${TRUST_LABEL[after]}”.` : `${current.title} verified.`);
