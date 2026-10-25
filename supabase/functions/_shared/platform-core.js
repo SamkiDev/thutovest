@@ -159,9 +159,15 @@ var isEnrolledStage = (stage) => stage === "first-year" || stage === "continuing
 * so it is always fair: it explains the requirement, says plainly that no
 * decision has been made, and points to help.
 */
-function warningText(sponsorName, fundName, latest, passMark, note) {
+function warningText(sponsorName, fundName, latest, passMark, note, atSchool = false) {
 	const standing = passMark ? latest.average < passMark ? `below the ${passMark}% this bursary requires` : `close to the ${passMark}% this bursary requires` : "lower than before";
-	const parts = [
+	const parts = atSchool ? [
+		`Early warning from ${sponsorName} about your ${fundName}.`,
+		`Your latest average is ${latest.average}% (${latest.term}), ${standing}.`,
+		"This is not a decision to withdraw your offer.",
+		`Your bursary starts after matric and depends on your final results. ${passMark ? `If your marks ${latest.average < passMark ? "stay" : "fall"} below the requirement` : "If your marks keep falling"}, your chances of being funded after matric could drop.`,
+		"Let’s make a plan together: reply here, and ask your teacher about extra classes. Siyavula has free Maths and Physical Sciences practice, and past NSC papers are free from the Department of Basic Education."
+	] : [
 		`Early warning from ${sponsorName} about your ${fundName}.`,
 		`Your latest average is ${latest.average}% (${latest.term}), ${standing}.`,
 		"This is not a decision to stop your funding.",
@@ -2496,7 +2502,8 @@ function platformReducer(state, action) {
 		}
 		case "sendProgressWarning": {
 			const app = state.applications.find((a) => a.id === action.applicationId);
-			const latest = state.pool.find((p) => p.id === app?.studentId)?.results?.at(-1);
+			const candidate = state.pool.find((p) => p.id === app?.studentId);
+			const latest = candidate?.results?.at(-1);
 			if (!app || !latest) return state;
 			const { fund, sponsor } = sponsorOfFund(state, app.fundId);
 			if (!fund || !sponsor) return state;
@@ -2513,7 +2520,7 @@ function platformReducer(state, action) {
 			next = addMessage(next, {
 				applicationId: app.id,
 				from: "sponsor",
-				text: warningText(sponsor.name, fund.name, latest, passMark, action.note)
+				text: warningText(sponsor.name, fund.name, latest, passMark, action.note, !isEnrolledStage(candidate?.educationStage))
 			});
 			return event(next, {
 				audience: "student",

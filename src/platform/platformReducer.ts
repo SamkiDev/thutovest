@@ -17,7 +17,7 @@ import { createPlatformSeed } from '../data/platformSeed';
 import { screenMessage } from '../intelligence/moderation';
 import { formatZAR } from '../utils/format';
 import { makeId } from '../utils/createState';
-import { warningText } from './progressRules';
+import { isEnrolledStage, warningText } from './progressRules';
 import { DOCUMENT_INFO, docName } from '../data/documents';
 import { GUARDIAN_DOCS, isMinor } from './guardianRules';
 import { addDays, todayISO } from '../utils/dates';
@@ -438,14 +438,15 @@ export function platformReducer(state: PlatformState, action: PlatformAction): P
 
     case 'sendProgressWarning': {
       const app = state.applications.find((a) => a.id === action.applicationId);
-      const latest = state.pool.find((p) => p.id === app?.studentId)?.results?.at(-1);
+      const candidate = state.pool.find((p) => p.id === app?.studentId);
+      const latest = candidate?.results?.at(-1);
       if (!app || !latest) return state;
       const { fund, sponsor } = sponsorOfFund(state, app.fundId);
       if (!fund || !sponsor) return state;
       const passMark = fund.terms?.minPassMark;
       const warning = { id: makeId('warn'), at: now(), term: latest.term, average: latest.average, passMark, note: action.note || undefined };
       let next = patchApp(state, app.id, { warnings: [...(app.warnings ?? []), warning] });
-      next = addMessage(next, { applicationId: app.id, from: 'sponsor', text: warningText(sponsor.name, fund.name, latest, passMark, action.note) });
+      next = addMessage(next, { applicationId: app.id, from: 'sponsor', text: warningText(sponsor.name, fund.name, latest, passMark, action.note, !isEnrolledStage(candidate?.educationStage)) });
       return event(next, { audience: 'student', studentId: app.studentId, kind: 'message', text: `${sponsor.name} sent an early warning about your results` });
     }
 

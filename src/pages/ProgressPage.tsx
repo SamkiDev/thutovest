@@ -462,7 +462,10 @@ function TutorPanel({
               <p className="font-semibold">Early warning, {formatDate(w.at.slice(0, 10))}</p>
               <p className="mt-0.5">
                 {sponsorName} noticed your average of {w.average}% for {w.term}
-                {w.passMark ? ` against the ${w.passMark}% this bursary asks for` : ''}. No decision has been made. Reply in your messages and ask for a tutor below.
+                {w.passMark ? ` against the ${w.passMark}% this bursary asks for` : ''}. No decision has been made.{' '}
+                {canAskTutor
+                  ? 'Reply in your messages and ask for a tutor below.'
+                  : 'Your bursary starts after matric and depends on your final results, so low marks now could lower your chances of being funded. Reply in your messages, and ask your teacher about extra classes.'}
               </p>
             </div>
           ))}

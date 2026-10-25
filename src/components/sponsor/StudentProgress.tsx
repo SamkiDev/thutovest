@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ArrowDownRight, ArrowUpRight, Minus, ShieldAlert, UserRoundPlus } from 'lucide-react';
 import type { CandidateProfile, Fund, FundApplication } from '../../types';
 import type { PlatformAction } from '../../platform/platformReducer';
-import { analyseResults, isFunded, STATUS_LABEL, warningText, type ProgressStatus } from '../../platform/progressRules';
+import { analyseResults, isEnrolledStage, isFunded, STATUS_LABEL, warningText, type ProgressStatus } from '../../platform/progressRules';
 import { institutionById } from '../../data/institutions';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
@@ -165,7 +165,7 @@ export function StudentProgress({
         {warnRow?.a.latest && (
           <div className="space-y-3">
             <blockquote className="rounded-xl bg-sunken p-3 text-sm text-body">
-              {warningText(sponsorName, warnRow.fund?.name ?? 'bursary', warnRow.a.latest, warnRow.fund?.terms?.minPassMark, note.trim())}
+              {warningText(sponsorName, warnRow.fund?.name ?? 'bursary', warnRow.a.latest, warnRow.fund?.terms?.minPassMark, note.trim(), !isEnrolledStage(warnRow.c?.educationStage))}
             </blockquote>
             <label className="block text-sm font-semibold text-ink">
               Add a personal note <span className="font-normal text-subtle">Optional</span>

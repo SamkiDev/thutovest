@@ -155,21 +155,30 @@ export const STATUS_LABEL: Record<ProgressStatus, string> = {
  * so it is always fair: it explains the requirement, says plainly that no
  * decision has been made, and points to help.
  */
-export function warningText(sponsorName: string, fundName: string, latest: TermSummary, passMark: number | undefined, note: string): string {
+export function warningText(sponsorName: string, fundName: string, latest: TermSummary, passMark: number | undefined, note: string, atSchool = false): string {
   const standing = passMark
     ? latest.average < passMark
       ? `below the ${passMark}% this bursary requires`
       : `close to the ${passMark}% this bursary requires`
     : 'lower than before';
-  const parts = [
-    `Early warning from ${sponsorName} about your ${fundName}.`,
-    `Your latest average is ${latest.average}% (${latest.term}), ${standing}.`,
-    'This is not a decision to stop your funding.',
-    passMark
-      ? `If your results don’t satisfy the bursary’s requirement at the next review, you could be at risk of losing this funding.`
-      : 'If your results keep falling, your funding could be reviewed.',
-    'Let’s make a plan together: reply here, and ask us for a tutor if it would help.',
-  ];
+  // A school learner's bursary starts after matric and depends on final results; tutors through the sponsor come later.
+  const parts = atSchool
+    ? [
+        `Early warning from ${sponsorName} about your ${fundName}.`,
+        `Your latest average is ${latest.average}% (${latest.term}), ${standing}.`,
+        'This is not a decision to withdraw your offer.',
+        `Your bursary starts after matric and depends on your final results. ${passMark ? `If your marks ${latest.average < passMark ? 'stay' : 'fall'} below the requirement` : 'If your marks keep falling'}, your chances of being funded after matric could drop.`,
+        'Let’s make a plan together: reply here, and ask your teacher about extra classes. Siyavula has free Maths and Physical Sciences practice, and past NSC papers are free from the Department of Basic Education.',
+      ]
+    : [
+        `Early warning from ${sponsorName} about your ${fundName}.`,
+        `Your latest average is ${latest.average}% (${latest.term}), ${standing}.`,
+        'This is not a decision to stop your funding.',
+        passMark
+          ? `If your results don’t satisfy the bursary’s requirement at the next review, you could be at risk of losing this funding.`
+          : 'If your results keep falling, your funding could be reviewed.',
+        'Let’s make a plan together: reply here, and ask us for a tutor if it would help.',
+      ];
   if (note) parts.push(note);
   return parts.join(' ');
 }

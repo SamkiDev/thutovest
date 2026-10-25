@@ -105,6 +105,32 @@ export function runAgent(state: StudentState, engine: EngineResult, platform: Pl
     }
   }
 
+  // 2c'. An early warning from a sponsor always reaches the dashboard, at school or university.
+  for (const app of activeApps.filter((a) => a.warnings?.length)) {
+    const w = app.warnings!.at(-1)!;
+    const fund = platform.funds.find((f) => f.id === app.fundId);
+    const sponsor = platform.sponsors.find((s) => s.id === fund?.sponsorId);
+    const atSchool = !isEnrolledStage(state.profile.educationStage);
+    items.push({
+      id: `warned-${app.id}-${w.id}`,
+      kind: 'warning',
+      title: `${sponsor?.name ?? 'Your sponsor'} sent an early warning about your marks`,
+      detail: atSchool
+        ? `Your average of ${w.average}% is ${w.passMark && w.average < w.passMark ? `below the ${w.passMark}%` : 'close to the mark'} your bursary asks for. Your offer depends on your final results, so act now.`
+        : `Your average of ${w.average}% is ${w.passMark && w.average < w.passMark ? `below the ${w.passMark}%` : 'close to the mark'} your bursary asks for. No decision has been made yet.`,
+      evidence: [
+        `${w.term}: average ${w.average}%`,
+        ...(w.passMark ? [`${fund?.name ?? 'Your bursary'} asks for ${w.passMark}%`] : []),
+        'This is a warning, not a decision',
+        atSchool ? 'Ask your teacher about extra classes, and use free practice such as Siyavula' : 'Ask your sponsor for a tutor from Marks and progress',
+      ],
+      mode: 'approval',
+      approveLabel: 'Got it',
+      effect: { type: 'none' },
+      link: { label: 'See my progress', to: '/app/progress' },
+    });
+  }
+
   // 2c. Results slipping on a bursary: help early with a tutor, so funding is never lost out of nowhere.
   if (isEnrolledStage(state.profile.educationStage) && state.marks?.length) {
     for (const app of activeApps) {
