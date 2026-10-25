@@ -115,7 +115,8 @@ export function UploadDocumentModal({
 
   const useSample = () => {
     const inst = institutionById(state.profile.preferredInstitutionIds[0] ?? '')?.shortName;
-    const f = { ...sampleFile(kind, state.profile.firstName, inst), isSample: true };
+    const enrolled = state.profile.educationStage === 'first-year' || state.profile.educationStage === 'continuing';
+    const f = { ...sampleFile(kind, state.profile.firstName, inst, enrolled), isSample: true };
     setFacts(f);
     run(f);
   };

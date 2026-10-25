@@ -191,6 +191,8 @@ export function rankCandidates(fund: Fund, platform: PlatformState, candidates: 
         institutionName: c.institutionId ? institutionById(c.institutionId)?.shortName ?? '' : '',
       };
     })
+    // Fully funded by other bursaries: nothing left for this sponsor to fund, so they leave the list (their own sponsors still see them).
+    .filter((r) => r.application || !(r.fit.remainingGap <= 0 && r.fit.remainingGap < r.candidate.gap))
     .sort((a, b) => Number(b.fit.eligible) - Number(a.fit.eligible) || b.score - a.score);
 }
 

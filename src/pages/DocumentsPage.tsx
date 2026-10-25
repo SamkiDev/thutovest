@@ -13,7 +13,7 @@ import { CheckRunner } from '../components/verification/CheckRunner';
 import { UploadDocumentModal } from '../components/documents/UploadDocumentModal';
 import { CheckBadge, CheckFindings, DocumentPaper, IssuerBadge, ShareStatusPill, formatBytes } from '../components/documents/DocumentParts';
 import { DOCUMENT_INFO, VAULT_ORDER } from '../data/documents';
-import { checkMotivation } from '../intelligence/documentCheck';
+import { checkMotivation, sampleMotivation } from '../intelligence/documentCheck';
 import { institutionById } from '../data/institutions';
 import { formatDate, daysUntil, relativeDays, timeAgo } from '../utils/dates';
 import { makeId } from '../utils/createState';
@@ -50,7 +50,9 @@ export default function DocumentsPage() {
     const doc = byKind[k];
     if (req && doc && doc.check.status !== 'failed' && req.share.status === 'requested') setConfirmShare({ req, doc });
     else {
-      setUploadKind(k);
+      // Written in the app, never uploaded.
+      if (DOCUMENT_INFO[k].writeInApp) setWriting(true);
+      else setUploadKind(k);
       setAfterUploadShare(p.get('share'));
     }
   }, [location.search, requests, byKind]);
@@ -61,7 +63,8 @@ export default function DocumentsPage() {
     // A resubmission always needs a new upload, never the copy the sponsor already rejected.
     if (doc && doc.check.status !== 'failed' && req.share.status !== 'resubmit') setConfirmShare({ req, doc });
     else {
-      setUploadKind(req.share.kind);
+      if (DOCUMENT_INFO[req.share.kind].writeInApp) setWriting(true);
+      else setUploadKind(req.share.kind);
       setAfterUploadShare(req.share.id);
     }
   };
@@ -302,12 +305,13 @@ export default function DocumentsPage() {
       <MotivationEditor
         open={writing}
         initial={byKind['motivation-letter']?.text ?? ''}
-        onClose={() => setWriting(false)}
+        onClose={() => {
+          setWriting(false);
+          setAfterUploadShare(null);
+        }}
         onSave={(text) => {
           const check = checkMotivation(text, state);
-          dispatch({
-            type: 'addDocument',
-            document: {
+          const doc: VaultDocument = {
               id: makeId('vault'),
               kind: 'motivation-letter',
               fileName: 'Motivation letter (written in the app)',
@@ -317,10 +321,14 @@ export default function DocumentsPage() {
               text: text.replace(/[\w.+-]+@[\w-]+\.[\w.-]+/g, '[email removed]').replace(/(\+27|\b0)\d{2}[\s-]?\d{3}[\s-]?\d{4}\b/g, '[number removed]'),
               check,
               issuer: 'not-started',
-            },
-          });
+          };
+          dispatch({ type: 'addDocument', document: doc });
           setWriting(false);
           notify('Motivation letter saved to your vault.');
+          // Written for a sponsor's request: offer to share it straight away.
+          const req = afterUploadShare ? requests.find((r) => r.share.id === afterUploadShare) : open.find((r) => r.share.kind === 'motivation-letter');
+          setAfterUploadShare(null);
+          if (req) setConfirmShare({ req, doc });
         }}
       />
 
@@ -372,6 +380,9 @@ function MotivationEditor({ open, initial, onClose, onSave }: { open: boolean; i
         <>
           <Button variant="ghost" onClick={onClose}>
             Cancel
+          </Button>
+          <Button variant="secondary" onClick={() => setText(sampleMotivation(state))}>
+            Use a sample letter
           </Button>
           <Button onClick={() => onSave(text.trim())} disabled={check.status === 'failed'}>
             Save to vault
