@@ -264,6 +264,18 @@ check('published results and module marks are whitelisted and clamped', pubResul
 r = await call({ op: 'load' }, 'tok-tatenda');
 check('the student sees their own tutor request', r.body.state.applications.some((a) => a.tutorRequests?.length));
 
+// 8e. Scam requests written in everyday language are blocked; normal bursary talk is not
+r = await resetAll();
+const lastOn = (appId) => db.state.messages.filter((m) => m.applicationId === appId).at(-1);
+await call({ op: 'act', action: { type: 'sendMessage', applicationId: 'app-lerato', from: 'sponsor', text: 'We will pay R58,000 directly to your university. Please send me your certified ID copy.' } }, 'tok-ridge');
+check('a sponsor can talk about an award paid to the university', !lastOn('app-lerato').blocked && db.state.sponsors.find((x) => x.id === 'sp-ridgeline').status === 'active');
+await call({ op: 'act', action: { type: 'sendMessage', applicationId: 'app-lerato', from: 'sponsor', text: 'send me R500' } }, 'tok-ridge');
+check('"send me R500" is blocked and the sponsor suspended', lastOn('app-lerato').from === 'system' && db.state.messages.some((m) => m.applicationId === 'app-lerato' && m.blocked && m.text === 'send me R500') && db.state.sponsors.find((x) => x.id === 'sp-ridgeline').status === 'suspended');
+r = await resetAll();
+await call({ op: 'act', action: { type: 'sendMessage', applicationId: 'app-lerato', from: 'sponsor', text: 'send your final matric marks documents and R500 for the spot' } }, 'tok-ridge');
+check('"send your documents and R500 for the spot" is blocked', db.state.messages.some((m) => m.applicationId === 'app-lerato' && m.blocked && /R500 for the spot/.test(m.text)));
+r = await resetAll();
+
 // 9. Junk input
 let res = await handler(new Request(`${SB}/functions/v1/platform`, { method: 'POST', body: 'not json' }));
 check('malformed body is rejected (400)', res.status === 400);
