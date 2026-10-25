@@ -1,7 +1,7 @@
 import { useId } from 'react';
 import { Building, GraduationCap, Laptop, School, Users } from 'lucide-react';
 import type { ApplicationProgress, DocumentKey, EducationStage, FundingNeed, IncomeBand, LivingArrangement, Province, StudyField, StudyModePreference } from '../../types';
-import type { ProfileDraft, ProfileErrors } from '../../utils/validation';
+import { isEnrolledDraft, type ProfileDraft, type ProfileErrors } from '../../utils/validation';
 import { ChipGroup, ChoiceCards, MoneyInput, SelectField, TextField } from './Fields';
 import {
   APPLICATION_PROGRESS,
@@ -92,37 +92,43 @@ export function AboutSection({ draft, update, errors }: SectionProps) {
 
 export function GoalsSection({ draft, update, errors }: SectionProps) {
   const apsId = useId();
+  const enrolled = isEnrolledDraft(draft);
+  const max = enrolled ? 1 : 3;
   const toggleInstitution = (id: string) => {
     const has = draft.preferredInstitutionIds.includes(id);
+    // Enrolled students study at one place: picking another replaces it.
+    if (enrolled) return update({ preferredInstitutionIds: has ? [] : [id] });
     if (!has && draft.preferredInstitutionIds.length >= 3) return;
     update({ preferredInstitutionIds: has ? draft.preferredInstitutionIds.filter((x) => x !== id) : [...draft.preferredInstitutionIds, id] });
   };
   return (
     <div className="space-y-8">
       <ChipGroup<StudyField>
-        legend="Which field interests you most?"
-        description="Pick one. You can explore other fields later."
+        legend={enrolled ? 'What are you studying?' : 'Which field interests you most?'}
+        description={enrolled ? 'Pick the field closest to your qualification.' : 'Pick one. You can explore other fields later.'}
         options={FIELDS}
         selected={draft.field ? [draft.field] : []}
         onToggle={(v) => update({ field: v })}
         error={errors.field}
       />
       <ChoiceCards<StudyModePreference>
-        legend="How would you like to study?"
+        legend={enrolled ? 'How do you study?' : 'How would you like to study?'}
         options={STUDY_MODES.map((m) => ({ ...m, icon: m.value === 'distance' ? <Laptop aria-hidden className="size-5" /> : <Building aria-hidden className="size-5" /> }))}
         value={draft.studyMode}
         onChange={(v) => update({ studyMode: v })}
         columns={4}
       />
       <fieldset>
-        <legend className="mb-1.5 text-sm font-semibold text-ink">Preferred institutions</legend>
+        <legend className="mb-1.5 text-sm font-semibold text-ink">{enrolled ? 'Where do you study?' : 'Preferred institutions'}</legend>
         <p className="-mt-0.5 mb-3 text-xs text-muted">
-          Optional. Choose up to three ({draft.preferredInstitutionIds.length}/3 selected).
+          {enrolled
+            ? 'Choose your university or college, so sponsors and residence rules match where you are.'
+            : `Optional. Choose up to three (${draft.preferredInstitutionIds.length}/3 selected).`}
         </p>
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {INSTITUTIONS.map((i) => {
             const on = draft.preferredInstitutionIds.includes(i.id);
-            const disabled = !on && draft.preferredInstitutionIds.length >= 3;
+            const disabled = !enrolled && !on && draft.preferredInstitutionIds.length >= max;
             return (
               <label
                 key={i.id}
@@ -133,7 +139,8 @@ export function GoalsSection({ draft, update, errors }: SectionProps) {
                 )}
               >
                 <input
-                  type="checkbox"
+                  type={enrolled ? 'radio' : 'checkbox'}
+                  name={enrolled ? 'study-institution' : undefined}
                   checked={on}
                   disabled={disabled}
                   onChange={() => toggleInstitution(i.id)}
@@ -151,6 +158,11 @@ export function GoalsSection({ draft, update, errors }: SectionProps) {
         </div>
         {errors.preferredInstitutionIds && <p className="mt-1.5 text-xs font-medium text-clay-600">{errors.preferredInstitutionIds}</p>}
       </fieldset>
+      {enrolled ? (
+        <p className="rounded-xl bg-sunken p-3 text-sm text-body">
+          No APS needed: you are already studying. After this, add your marks in <b>Marks and progress</b> so you can keep your funding.
+        </p>
+      ) : (
       <div className="sm:max-w-xs">
         <label htmlFor={apsId} className="mb-1.5 block text-sm font-semibold text-ink">
           Estimated APS <span className="ml-1 font-normal text-subtle">Optional</span>
@@ -174,6 +186,7 @@ export function GoalsSection({ draft, update, errors }: SectionProps) {
           {errors.apsEstimate ?? 'Your Admission Point Score from your latest results, if you know it.'}
         </p>
       </div>
+      )}
     </div>
   );
 }
@@ -233,19 +246,22 @@ export function MoneySection({ draft, update, errors }: SectionProps) {
 }
 
 export function ApplicationSection({ draft, update }: SectionProps) {
+  const enrolled = isEnrolledDraft(draft);
   return (
     <div className="space-y-8">
-      <ChoiceCards<ApplicationProgress>
-        legend="How far are you with applications?"
-        options={APPLICATION_PROGRESS}
-        value={draft.applicationProgress}
-        onChange={(v) => update({ applicationProgress: v })}
-        columns={3}
-      />
+      {!enrolled && (
+        <ChoiceCards<ApplicationProgress>
+          legend="How far are you with applications?"
+          options={APPLICATION_PROGRESS}
+          value={draft.applicationProgress}
+          onChange={(v) => update({ applicationProgress: v })}
+          columns={3}
+        />
+      )}
       <ChipGroup<DocumentKey>
         legend="Which documents do you already have ready?"
         description="Checklist only. Don’t upload anything here."
-        options={DOCUMENTS}
+        options={enrolled ? DOCUMENTS.map((d) => (d.value === 'latest-results' ? { ...d, label: 'Latest academic record' } : d)) : DOCUMENTS}
         selected={draft.documentsReady}
         multiple
         onToggle={(v) =>

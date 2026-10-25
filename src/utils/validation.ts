@@ -26,6 +26,9 @@ export const EMPTY_DRAFT: ProfileDraft = {
 
 export type ProfileSection = 'about' | 'goals' | 'money' | 'applications';
 
+/** Already at university or college: they don't choose institutions, give an APS or apply again. */
+export const isEnrolledDraft = (d: Pick<ProfileDraft, 'educationStage'>) => d.educationStage === 'first-year' || d.educationStage === 'continuing';
+
 export function validateSection(d: ProfileDraft, section: ProfileSection): ProfileErrors {
   const e: ProfileErrors = {};
   if (section === 'about') {
@@ -37,7 +40,8 @@ export function validateSection(d: ProfileDraft, section: ProfileSection): Profi
   }
   if (section === 'goals') {
     if (!d.field) e.field = 'Choose the field you’re most interested in.';
-    if (d.preferredInstitutionIds.length > 3) e.preferredInstitutionIds = 'Choose up to three institutions.';
+    if (isEnrolledDraft(d) && d.preferredInstitutionIds.length > 1) e.preferredInstitutionIds = 'Choose the one institution where you study.';
+    else if (d.preferredInstitutionIds.length > 3) e.preferredInstitutionIds = 'Choose up to three institutions.';
     if (d.apsEstimate != null && (d.apsEstimate < 0 || d.apsEstimate > 49)) e.apsEstimate = 'APS is usually between 0 and 49.';
   }
   if (section === 'money') {
@@ -57,8 +61,11 @@ export function validateAll(d: ProfileDraft): ProfileErrors {
 }
 
 export function toProfile(d: ProfileDraft): StudentProfile {
+  const enrolled = isEnrolledDraft(d);
   return {
     ...d,
+    // Enrolled students have been accepted already, and an APS no longer applies to them.
+    ...(enrolled ? { applicationProgress: 'accepted' as const, apsEstimate: null, preferredInstitutionIds: d.preferredInstitutionIds.slice(0, 1) } : {}),
     firstName: d.firstName.trim().replace(/^\p{L}/u, (c) => c.toUpperCase()),
     field: d.field ?? 'computing',
     educationStage: d.educationStage ?? 'grade12',

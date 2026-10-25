@@ -8,7 +8,7 @@ import { Spinner } from '../components/ui/Misc';
 import { AboutSection, ApplicationSection, GoalsSection, MoneySection } from '../components/forms/ProfileSections';
 import { useStudentContext } from '../hooks/useStudent';
 import { useDocumentTitle } from '../hooks/useDocumentTitle';
-import { EMPTY_DRAFT, toProfile, validateSection, type ProfileDraft, type ProfileErrors, type ProfileSection } from '../utils/validation';
+import { EMPTY_DRAFT, isEnrolledDraft, toProfile, validateSection, type ProfileDraft, type ProfileErrors, type ProfileSection } from '../utils/validation';
 import {
   APPLICATION_PROGRESS,
   DOCUMENTS,
@@ -30,6 +30,14 @@ const STEPS: { id: ProfileSection | 'review'; title: string; description: string
   { id: 'applications', title: 'Applications', description: 'Tell us what’s done so your to-do list starts in the right place.' },
   { id: 'review', title: 'Review', description: 'Check your answers, then build your pathway.' },
 ];
+
+/** Students already at university or college get questions about their studies, not about applying. */
+const ENROLLED_COPY: Partial<Record<(typeof STEPS)[number]['id'], { title: string; description: string }>> = {
+  goals: { title: 'Your studies', description: 'What and where you study. This shapes your funding matches.' },
+  applications: { title: 'Documents', description: 'Tell us which documents you have, so your to-do list starts in the right place.' },
+};
+const stepTitle = (s: (typeof STEPS)[number], enrolled: boolean) => (enrolled && ENROLLED_COPY[s.id]?.title) || s.title;
+const stepDescription = (s: (typeof STEPS)[number], enrolled: boolean) => (enrolled && ENROLLED_COPY[s.id]?.description) || s.description;
 
 const DRAFT_KEY = `${BRAND.storagePrefix}:onboarding-draft`;
 
@@ -175,7 +183,7 @@ export default function OnboardingPage() {
         {/* Progress */}
         <nav aria-label="Setup progress">
           <p className="mb-2 text-sm font-semibold text-muted lg:hidden">
-            Step {step + 1} of {STEPS.length}: <span className="text-ink">{current.title}</span>
+            Step {step + 1} of {STEPS.length}: <span className="text-ink">{stepTitle(current, isEnrolledDraft(draft))}</span>
           </p>
           <div className="flex gap-1.5 lg:hidden" aria-hidden>
             {STEPS.map((s, i) => (
@@ -203,11 +211,11 @@ export default function OnboardingPage() {
                   <span className="pt-1">
                     {done ? (
                       <button type="button" onClick={() => setStep(i)} className="text-sm font-semibold text-ink hover:text-veld-700 hover:underline">
-                        {s.title}
+                        {stepTitle(s, isEnrolledDraft(draft))}
                       </button>
                     ) : (
                       <span className={cn('text-sm font-semibold', active ? 'text-ink' : 'text-muted')} aria-current={active ? 'step' : undefined}>
-                        {s.title}
+                        {stepTitle(s, isEnrolledDraft(draft))}
                       </span>
                     )}
                   </span>
@@ -224,9 +232,9 @@ export default function OnboardingPage() {
         <main>
           <div className="card p-5 sm:p-8">
             <h1 ref={headingRef} tabIndex={-1} className="text-[1.75rem] font-bold outline-none sm:text-[2rem]">
-              {current.title}
+              {stepTitle(current, isEnrolledDraft(draft))}
             </h1>
-            <p className="mt-1 mb-8 text-muted">{current.description}</p>
+            <p className="mt-1 mb-8 text-muted">{stepDescription(current, isEnrolledDraft(draft))}</p>
 
             {current.id === 'about' && <AboutSection draft={draft} update={update} errors={errors} />}
             {current.id === 'goals' && <GoalsSection draft={draft} update={update} errors={errors} />}
@@ -275,16 +283,26 @@ function Review({ draft, onEdit }: { draft: ProfileDraft; onEdit: (step: number)
         ['18 or older', draft.isAdult ? 'Yes' : 'No, guardian consent needed for sponsors'],
       ],
     },
-    {
-      step: 1,
-      title: 'Study goals',
-      rows: [
-        ['Field', FIELDS.find((f) => f.value === draft.field)?.label ?? 'Not chosen'],
-        ['Study mode', STUDY_MODES.find((m) => m.value === draft.studyMode)?.label ?? ''],
-        ['Institutions', draft.preferredInstitutionIds.map((id) => institutionById(id)?.shortName).join(', ') || 'Open to any'],
-        ['Estimated APS', draft.apsEstimate != null ? String(draft.apsEstimate) : 'Not given'],
-      ],
-    },
+    isEnrolledDraft(draft)
+      ? {
+          step: 1,
+          title: 'Your studies',
+          rows: [
+            ['Field', FIELDS.find((f) => f.value === draft.field)?.label ?? 'Not chosen'],
+            ['Study mode', STUDY_MODES.find((m) => m.value === draft.studyMode)?.label ?? ''],
+            ['Where you study', institutionById(draft.preferredInstitutionIds[0] ?? '')?.shortName ?? 'Not chosen'],
+          ],
+        }
+      : {
+          step: 1,
+          title: 'Study goals',
+          rows: [
+            ['Field', FIELDS.find((f) => f.value === draft.field)?.label ?? 'Not chosen'],
+            ['Study mode', STUDY_MODES.find((m) => m.value === draft.studyMode)?.label ?? ''],
+            ['Institutions', draft.preferredInstitutionIds.map((id) => institutionById(id)?.shortName).join(', ') || 'Open to any'],
+            ['Estimated APS', draft.apsEstimate != null ? String(draft.apsEstimate) : 'Not given'],
+          ],
+        },
     {
       step: 2,
       title: 'Money and funding',
@@ -297,9 +315,9 @@ function Review({ draft, onEdit }: { draft: ProfileDraft; onEdit: (step: number)
     },
     {
       step: 3,
-      title: 'Applications',
+      title: isEnrolledDraft(draft) ? 'Documents' : 'Applications',
       rows: [
-        ['Progress', APPLICATION_PROGRESS.find((a) => a.value === draft.applicationProgress)?.label ?? ''],
+        ['Progress', isEnrolledDraft(draft) ? 'Already studying' : (APPLICATION_PROGRESS.find((a) => a.value === draft.applicationProgress)?.label ?? '')],
         ['Documents ready', draft.documentsReady.map((d) => DOCUMENTS.find((x) => x.value === d)?.label).join(', ') || 'None yet'],
       ],
     },
