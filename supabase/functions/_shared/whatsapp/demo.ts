@@ -16,7 +16,7 @@ export function demoSnapshot(now = new Date()): BotSnapshot {
     deadlines: [
       { id: 'submit-first-choice', title: 'Submit your first-choice application', dueDate: iso(now, 6), daysLeft: 6, status: 'in-progress', where: 'university-site' },
       { id: 'upload-results', title: 'Upload your latest school results', dueDate: iso(now, 6), daysLeft: 6, status: 'todo', where: 'app' },
-      { id: 'nsfas-apply', title: 'Complete your NSFAS application', dueDate: iso(now, 12), daysLeft: 12, status: 'todo', where: 'university-site' },
+      { id: 'isfap-apply', title: 'Complete your ISFAP application', dueDate: iso(now, 12), daysLeft: 12, status: 'todo', where: 'university-site' },
       { id: 'residence', title: 'Apply for residence', dueDate: iso(now, 20), daysLeft: 20, status: 'todo', where: 'university-site' },
     ],
     offers: [

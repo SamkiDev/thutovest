@@ -84,7 +84,8 @@ export const DEMO_PROFILE: StudentProfile = {
   apsEstimate: 32,
   annualBudget: 18000,
   fundingNeed: 'yes',
-  householdIncome: 'under-350k',
+  // The "missing middle": too much for NSFAS, nowhere near enough for fees.
+  householdIncome: '350k-600k',
   livingArrangement: 'residence',
   applicationProgress: 'started',
   documentsReady: ['id-copy'],
@@ -117,6 +118,7 @@ export function createDemoState(userId?: string): StudentState {
   ];
   return {
     ...base,
+    demoRevision: 2,
     costs: { tuition: 58200, accommodation: 42000, books: 6500, transport: 4800, other: 5400 },
     fundingSources: [
       { id: BUDGET_SOURCE_ID, label: 'Family contribution', kind: 'family', amount: 18000 },
@@ -219,7 +221,13 @@ export function createDemoState(userId?: string): StudentState {
 
 /** Demo plans saved before marks existed get the demo marks, so every judge sees the same starting story. */
 export function upgradeDemoState(state: StudentState): StudentState {
-  return state.isDemoStudent && state.marks === undefined ? { ...state, marks: createDemoState(state.id).marks } : state;
+  if (!state.isDemoStudent) return state;
+  let next = state.marks === undefined ? { ...state, marks: createDemoState(state.id).marks } : state;
+  // Revision 2: the Grade 12 demo story moved to the missing-middle income band (once, so a judge's own edits stay).
+  if ((next.demoRevision ?? 1) < 2) {
+    next = { ...next, demoRevision: 2, profile: demoStudent(next.id) ? { ...next.profile, householdIncome: '350k-600k' } : next.profile };
+  }
+  return next;
 }
 
 /** Nandi: a first-year at UJ whose Ridgeline bursary is already paid. Used to try marks, advice and tutor requests. */
@@ -252,6 +260,7 @@ export function createUniDemoState(): StudentState {
     ...base,
     taskStatus: { ...base.taskStatus, ...Object.fromEntries(done.map((id) => [id, 'completed' as TaskStatus])) },
     taskHistory: [...base.taskHistory.filter((e) => stillOpen.has(e.taskId)), ...done.map((taskId, i) => ({ taskId, status: 'completed' as TaskStatus, at: daysAgoAt(330 - i * 12, 19) }))],
+    demoRevision: 2,
     costs: { tuition: 58200, accommodation: 42000, books: 6500, transport: 3600, other: 5400 },
     fundingSources: [
       { id: BUDGET_SOURCE_ID, label: 'Family contribution', kind: 'family', amount: 12000 },

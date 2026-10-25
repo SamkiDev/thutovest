@@ -263,6 +263,8 @@ export interface StudentState {
   whatsapp?: WhatsAppLink;
   /** Marks the student added, oldest first. Analysed every time a new set is added. */
   marks?: MarkRecord[];
+  /** Built-in demo plans only: which version of the demo story this plan has been upgraded to. */
+  demoRevision?: number;
 }
 
 export interface SubjectMark {

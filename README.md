@@ -16,7 +16,7 @@ Built by **Team Thuto** (Samalani Maluwa, Reshoketswe Makhura and Tebogo Sasa) f
 
 | Sign in as | Email | Password |
 | --- | --- | --- |
-| Student (Tatenda, Grade 12, 17) | `tatenda@thutovest.demo` | `Demo#2026` |
+| Student (Tatenda, Grade 12, 17, from a missing-middle family) | `tatenda@thutovest.demo` | `Demo#2026` |
 | Sponsor (Ridgeline Technologies) | `funding@ridgeline.demo` | `Demo#2026` |
 | One student login per judge | `judge1@thutovest.demo` to `judge5@thutovest.demo` | `Demo#2026` |
 | University student (Nandi, first-year at UJ, funded by Ridgeline) | `nandi@thutovest.demo` | `Demo#2026` |
