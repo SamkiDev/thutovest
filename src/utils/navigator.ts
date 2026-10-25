@@ -9,6 +9,7 @@ import { institutionById } from '../data/institutions';
 import { formatDate, relativeDays } from './dates';
 import { formatZAR } from './format';
 import { fieldLabel, FIT_LABEL } from './matching';
+import { analyseMarks, isEnrolledStage, STATUS_LABEL } from '../platform/progressRules';
 
 interface Intent {
   id: string;
@@ -203,6 +204,31 @@ const INTENTS: Intent[] = [
 
 INTENTS.unshift(
   {
+    id: 'progress',
+    keywords: ['tutor', 'marks', 'mark', 'fail', 'pass mark', 'defund', 'lose my bursary', 'lose funding', 'losing', 'my progress', 'average', 'dropped', 'falling', 'slipping', 'test results'],
+    reply: (s) => {
+      const a = analyseMarks(s.marks ?? []);
+      const enrolled = isEnrolledStage(s.profile.educationStage);
+      const funded = s.fundingSources.some((f) => f.id.startsWith('sponsor-'));
+      const latest = a.latest
+        ? `Your latest results (${a.latest.term}): an average of ${a.latest.average}%${a.change != null ? `, ${a.change < 0 ? 'down' : 'up'} ${Math.abs(a.change)} points` : ''}. Status: ${STATUS_LABEL[a.status]}.${a.reasons[0] ? ` ${a.reasons[0]}.` : ''}`
+        : 'You haven’t added any marks yet.';
+      return {
+        paragraphs: [
+          latest,
+          'Add your marks after every test or term in Marks and progress. ThutoVest compares them with last time and with your bursary’s pass mark, so a slipping subject shows up early.',
+          enrolled && funded
+            ? 'If a subject slips, your assistant offers to ask your sponsor for a tutor. You approve it with one tap. Only your sponsor sees your marks.'
+            : enrolled
+              ? 'Once a sponsor funds you, you can ask them for a tutor in one tap. Until then, your university’s tutoring centre is free for registered students.'
+              : 'While you’re at school, ask your teacher for extra classes. Siyavula has free Maths and Physical Sciences practice. Once you’re at university with a bursary, you can ask your sponsor for a tutor here.',
+          'You won’t be defunded out of nowhere: a sponsor can send an early warning first, which says no decision has been made and offers help.',
+        ],
+        actions: [{ label: 'Open Marks and progress', to: '/app/progress' }],
+      };
+    },
+  },
+  {
     id: 'whatsapp',
     keywords: ['whatsapp', 'no data', 'low on data', 'data bundle', 'offline', 'sms', 'cheap'],
     reply: (s) => ({
@@ -302,6 +328,7 @@ export const SUGGESTED_QUESTIONS = [
   'Which documents do I still need?',
   'Which courses fit me best?',
   'What happens at registration?',
+  'How do I get a tutor if my marks drop?',
 ];
 
 /** Maps ?ask= shortcuts from journey actions to a full question. */
@@ -314,4 +341,5 @@ export const ASK_SHORTCUTS: Record<string, string> = {
   accommodation: 'How should I plan for accommodation?',
   next: 'What should I do next?',
   support: 'Where can I find student support?',
+  progress: 'How do I get a tutor if my marks drop?',
 };

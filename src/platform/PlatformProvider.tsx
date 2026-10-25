@@ -19,6 +19,8 @@ interface PlatformContextValue {
   /** The role whose login ended on its own (expired or revoked); the UI asks them to sign in again. */
   sessionLost: Session['role'] | null;
   clearSessionLost: () => void;
+  /** True once this account's view has arrived from the server (always true on this device only). */
+  platformReady: boolean;
 }
 
 const PlatformContext = createContext<PlatformContextValue | null>(null);
@@ -64,6 +66,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
 
   // Backend bookkeeping: the last version applied, this tab's own events, and requests in flight.
   const version = useRef(0);
+  const [loadedFor, setLoadedFor] = useState<string | null>(null);
   const ownEvents = useRef(new Set<string>());
   const inFlight = useRef(0);
   const reloadAfter = useRef(false);
@@ -84,6 +87,7 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     (reply: PlatformReply, own: boolean) => {
       if (!remoteRef.current || !isPlatformState(reply.state) || reply.version < version.current) return;
       version.current = reply.version;
+      setLoadedFor(sessionRef.current?.userId ?? null);
       reply.ownEventIds?.forEach((id) => ownEvents.current.add(id));
       if (!own) announce(reply.state);
       hydrate(reply.state);
@@ -177,9 +181,10 @@ export function PlatformProvider({ children }: { children: ReactNode }) {
     setSession(null);
   }, []);
 
+  const platformReady = !remote || (loadedFor != null && loadedFor === session?.userId);
   const value = useMemo(
-    () => ({ platform, dispatchPlatform, session, signIn, signOut, incoming, backend: remote, sessionLost, clearSessionLost }),
-    [platform, dispatchPlatform, session, signIn, signOut, incoming, remote, sessionLost, clearSessionLost],
+    () => ({ platform, dispatchPlatform, session, signIn, signOut, incoming, backend: remote, sessionLost, clearSessionLost, platformReady }),
+    [platform, dispatchPlatform, session, signIn, signOut, incoming, remote, sessionLost, clearSessionLost, platformReady],
   );
   return <PlatformContext.Provider value={value}>{children}</PlatformContext.Provider>;
 }

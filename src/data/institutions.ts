@@ -1,4 +1,5 @@
 import type { Institution } from '../types';
+import { TVET_COLLEGES } from './tvetColleges';
 
 /**
  * All 26 South African public universities, with links to their OFFICIAL pages.
@@ -157,4 +158,19 @@ export const INSTITUTIONS: Institution[] = [
   },
 ];
 
-export const institutionById = (id: string): Institution | undefined => INSTITUTIONS.find((i) => i.id === id);
+/** Public TVET colleges as places of study, for students already enrolled at one. */
+const TVET_AS_INSTITUTIONS: Institution[] = TVET_COLLEGES.map((c) => ({
+  id: c.id,
+  name: c.name,
+  shortName: c.name.replace(/ TVET College$/, ''),
+  city: c.province,
+  province: c.province,
+  type: 'tvet',
+  website: c.website,
+  apply: { label: 'College website', url: c.website },
+  funding: { label: 'NSFAS', url: 'https://www.nsfas.org.za' },
+}));
+
+export const institutionById = (id: string): Institution | undefined => INSTITUTIONS.find((i) => i.id === id) ?? TVET_AS_INSTITUTIONS.find((i) => i.id === id);
+
+export { TVET_AS_INSTITUTIONS };

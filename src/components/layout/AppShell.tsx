@@ -40,6 +40,7 @@ import { useWhatsApp } from '../../whatsapp/WhatsAppProvider';
 import { liveCandidate } from '../../intelligence/marketplace';
 import { actOnPlatform, saveStudentState } from '../../platform/backend';
 import { createDemoState } from '../../utils/createState';
+import { isFunded } from '../../platform/progressRules';
 import { visibleToSponsors } from '../../platform/guardianRules';
 
 const NAV = [
@@ -62,7 +63,7 @@ const NAV = [
 
 export function AppShell() {
   const { state, engine, dispatch } = useStudentContext();
-  const { platform, session, signIn, signOut, dispatchPlatform, backend } = usePlatform();
+  const { platform, session, signIn, signOut, dispatchPlatform, backend, platformReady } = usePlatform();
   const [menuOpen, setMenuOpen] = useState(false);
   useLiveToasts((e) => (e.audience === 'student' || e.audience === 'all') && e.studentId === state?.id);
   const [confirmReset, setConfirmReset] = useState(false);
@@ -89,6 +90,14 @@ export function AppShell() {
     const t = window.setTimeout(() => dispatchPlatform({ type: 'publishCandidate', profile: JSON.parse(candidate) }), 1500);
     return () => window.clearTimeout(t);
   }, [candidate, dispatchPlatform]);
+
+  // A sponsor bursary in the plan must match an active application on the platform, or it is dropped.
+  useEffect(() => {
+    if (!state || !platformReady || (backend && session?.userId !== state.id)) return;
+    const active = new Set(platform.applications.filter((a) => a.studentId === state.id && isFunded(a)).map((a) => `sponsor-${a.id}`));
+    const stale = state.fundingSources.filter((s) => s.id.startsWith('sponsor-') && !active.has(s.id)).map((s) => s.id);
+    if (stale.length) dispatch({ type: 'removeSponsorAwards', ids: stale });
+  }, [state, platform.applications, platformReady, backend, session?.userId, dispatch]);
 
   const { unread: waUnread } = useWhatsApp();
 

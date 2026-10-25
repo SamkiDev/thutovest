@@ -54,6 +54,8 @@ export type StudentAction =
   | { type: 'whatsappUnlink' }
   | { type: 'agentDecision'; id: string; decision: AgentDecision }
   | { type: 'addSponsorAward'; applicationId: string; label: string; amount: number }
+  /** Bursaries whose application is no longer active (reset, declined or withdrawn). */
+  | { type: 'removeSponsorAwards'; ids: string[] }
   | { type: 'log'; text: string; kind: ActivityItem['kind'] }
   | { type: 'addDocument'; document: VaultDocument }
   | { type: 'removeDocument'; id: string }
@@ -322,6 +324,16 @@ export function studentReducer(state: StudentState | null, action: StudentAction
           fundingSources: [...state.fundingSources, { id, label: action.label, kind: 'bursary', amount: action.amount }],
         },
         `Accepted ${action.label} (${formatZAR(action.amount)}, paid to your institution)`,
+        'funding',
+      );
+    }
+
+    case 'removeSponsorAwards': {
+      const gone = state.fundingSources.filter((s) => action.ids.includes(s.id));
+      if (!gone.length) return state;
+      return log(
+        { ...state, fundingSources: state.fundingSources.filter((s) => !action.ids.includes(s.id)) },
+        `Removed ${gone.map((s) => s.label).join(', ')} from your funding: the award is no longer active`,
         'funding',
       );
     }

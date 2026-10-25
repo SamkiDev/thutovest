@@ -15,7 +15,7 @@ import {
   PROVINCES,
   STUDY_MODES,
 } from '../../data/labels';
-import { INSTITUTIONS } from '../../data/institutions';
+import { INSTITUTIONS, TVET_AS_INSTITUTIONS } from '../../data/institutions';
 import { cn } from '../../utils/cn';
 
 interface SectionProps {
@@ -157,6 +157,17 @@ export function GoalsSection({ draft, update, errors }: SectionProps) {
           })}
         </div>
         {errors.preferredInstitutionIds && <p className="mt-1.5 text-xs font-medium text-clay-600">{errors.preferredInstitutionIds}</p>}
+        {enrolled && (
+          <div className="mt-4 sm:max-w-md">
+            <SelectField
+              label="Or, at a TVET college?"
+              hint="All 50 public TVET colleges."
+              value={TVET_AS_INSTITUTIONS.some((c) => c.id === draft.preferredInstitutionIds[0]) ? draft.preferredInstitutionIds[0] : ''}
+              onChange={(e) => update({ preferredInstitutionIds: e.target.value ? [e.target.value] : [] })}
+              options={[{ value: '', label: 'Choose your college' }, ...TVET_AS_INSTITUTIONS.map((c) => ({ value: c.id, label: c.name }))]}
+            />
+          </div>
+        )}
       </fieldset>
       {enrolled ? (
         <p className="rounded-xl bg-sunken p-3 text-sm text-body">

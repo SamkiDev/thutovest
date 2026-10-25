@@ -11,7 +11,7 @@ import { PageHeader } from '../components/ui/Misc';
 import { Button } from '../components/ui/Button';
 import { Modal } from '../components/ui/Modal';
 import { AboutSection, ApplicationSection, GoalsSection, MoneySection } from '../components/forms/ProfileSections';
-import { validateAll, toProfile, type ProfileDraft, type ProfileErrors } from '../utils/validation';
+import { isEnrolledDraft, validateAll, toProfile, type ProfileDraft, type ProfileErrors } from '../utils/validation';
 import { studentReducer } from '../state/studentReducer';
 import { computeEngine } from '../utils/engine';
 import { formatZAR } from '../utils/format';
@@ -108,9 +108,9 @@ export default function ProfilePage() {
 
   const sections = [
     { id: 'about', title: 'About you', el: <AboutSection draft={draft} update={update} errors={errors} /> },
-    { id: 'goals', title: 'Study interests', el: <GoalsSection draft={draft} update={update} errors={errors} /> },
+    { id: 'goals', title: isEnrolledDraft(draft) ? 'Your studies' : 'Study interests', el: <GoalsSection draft={draft} update={update} errors={errors} /> },
     { id: 'money', title: 'Budget and funding preferences', el: <MoneySection draft={draft} update={update} errors={errors} /> },
-    { id: 'apps', title: 'Applications and documents', el: <ApplicationSection draft={draft} update={update} errors={errors} /> },
+    { id: 'apps', title: isEnrolledDraft(draft) ? 'Documents' : 'Applications and documents', el: <ApplicationSection draft={draft} update={update} errors={errors} /> },
   ];
 
   return (
