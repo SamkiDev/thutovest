@@ -6,7 +6,7 @@ ThutoVest walks a South African matriculant from choosing a course to starting f
 
 Built by **Team Thuto** (Samalani Maluwa, Reshoketswe Makhura and Tebogo Sasa) for the FNB App of the Year Hackathon 2026, challenge **Access to Higher Education**. "Thuto" means learning in Setswana and Sesotho; "vest" means investing in a student.
 
-**Presentation:** [docs/ThutoVest_Presentation.pdf](docs/ThutoVest_Presentation.pdf), 21 slides on why, who, what and how, including how a student is supported from admission to graduation.
+**Presentation:** [docs/ThutoVest_Presentation.pdf](docs/ThutoVest_Presentation.pdf), 20 slides told as one route, from "I want to study" to "I can graduate": the problem, Tatenda's story, how the app plans, funds, protects and keeps students funded, how it is built, and how to try it.
 
 > **This is a prototype.** Every sponsor, student and award in it is fictional and labelled as demo data. Identity checks, bank checks and payments are simulated. Institution links, TVET colleges and the private college register are real and sourced. See [What is real and what is simulated](#what-is-real-and-what-is-simulated).
 
@@ -41,7 +41,7 @@ Open two tabs side by side first: one for the student, one for the sponsor.
 8. **University student:** sign in as Nandi, a first-year whose Ridgeline bursary is paid. In **Marks and progress**, tap **Use a sample report** and **Save and analyse**: Mathematics 1A falls from 62% to 55%. On the dashboard, the assistant offers to send Ridgeline a **tutor request** for it; approve it.
 9. **Sponsor:** on the overview, **Student progress** shows Nandi's new module marks and her request, and Zanele, a first-year at Nelson Mandela University, below Ridgeline's 60% pass mark, with her module marks (Data Structures and Algorithms at 44%). Send her an **early warning** and arrange the tutor she asked for.
 
-**Reset demo** in the menu puts your own account back to the start: your plan, applications, offers and messages. Other demo accounts are not affected.
+**Reset demo** in the menu (students and the demo sponsor) puts your own account back to the start: your plan, applications, offers and messages. Other demo accounts are not affected.
 
 ## What it does
 
@@ -53,6 +53,9 @@ Open two tabs side by side first: one for the student, one for the sponsor.
 - Risk Radar: early warnings for deadlines, missing documents and money gaps, each with its reason
 - Funding Gap Solver: NSFAS, ISFAP, Funza Lushaka, university aid and loans in one view
 - All 26 public universities, all 50 public TVET colleges and the DHET private college register, with official links
+- Sign-up that fits the student: Grade 11 and 12 learners choose preferred institutions and an APS; students already studying choose where they study (any university or TVET college)
+- An optional, private disability question, so disability-only bursaries can match (sponsors see yes or no only)
+- Early warnings in plain words: a Grade 12 learner hears that their offer depends on final results; a university student is offered a tutor. Every warning also shows on the dashboard
 - "Check a place before you pay": NSFAS 2026 accommodation rules and scam signs, before a student pays a deposit
 - A document vault with automatic checks, shared with a sponsor in one tap
 - WhatsApp: **Talk to ThutoVest** for students who are low on data
@@ -159,11 +162,11 @@ A Meta WhatsApp Cloud API version (`supabase/functions/whatsapp-webhook`) is als
 npm run typecheck    # TypeScript, strict
 npm run build        # production build
 npm run audit        # known vulnerabilities in dependencies
-npm test             # 95 offline checks, no network or keys needed
+npm test             # 99 offline checks, no network or keys needed
 npm run test:live    # 38 attack probes against the live backend (changes nothing)
 ```
 
-- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 63 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, each account's reset touching only its own records, who may see marks and send warnings or tutor requests, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
+- `npm test` runs the real Edge Functions under Node with Supabase, Twilio and Meta mocked: 67 server checks (signed-out actions, expired logins, bursary limits, guardian rules for under-18s, each account's reset touching only its own records, who may see marks and send warnings or tutor requests, a student posing as another student or a sponsor, forged profile fields, scam blocking, sponsor self-verification, a lost write race) and 32 webhook checks (bad, re-signed and tampered signatures, replays, rate limits, refused ID numbers and files, XML injection).
 - `npm run test:live` reads the public values from `.env.local` and tries what an attacker would: reading every table signed out, forged tokens, oversized requests, students and sponsors acting on each other's records, and replacing the whole state. Every probe must be refused and the data must be unchanged afterwards.
 
 ## Security
