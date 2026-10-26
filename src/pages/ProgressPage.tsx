@@ -265,7 +265,9 @@ function Summary({ analysis: a, school, profileAps, onUseAps }: { analysis: Prog
         </div>
       )}
       <Why className="mt-3">
-        The average leaves out Life Orientation. APS counts your best six subjects by NSC level (80% and above is 7). A drop of 5 points or more (overall or in one subject), or being within 3 points of a bursary’s pass mark, is flagged to watch. Below the pass mark, or a subject under 40%, is at risk.
+        {school
+          ? 'The average leaves out Life Orientation. APS counts your best six subjects by NSC level (80% and above is 7). A drop of 5 points or more (overall or in one subject), or being within 3 points of a bursary’s pass mark, is flagged to watch. Below the pass mark, or a subject under 40%, is at risk.'
+          : 'The average is across all your modules. A drop of 5 points or more (overall or in one module), or being within 3 points of your bursary’s pass mark, is flagged to watch. Below the pass mark, a module under 40%, or fewer than half your credits passed, is at risk.'}
       </Why>
     </section>
   );
