@@ -39,12 +39,12 @@ function Hero() {
       <div className="mx-auto grid max-w-[76rem] items-center gap-12 px-4 pt-10 pb-16 sm:px-6 sm:pt-16 lg:grid-cols-[1.05fr_1fr] lg:gap-12 lg:px-10 lg:pt-20 lg:pb-24">
         <div>
           <h1 className="font-display leading-[0.98] font-bold tracking-[-0.03em]">
-            <span className="block text-[2.6rem] text-ink-400 sm:text-[3.6rem] lg:text-[4.1rem]">From “I want to study”</span>
+            <span className="block text-[2.25rem] text-ink-400 min-[380px]:text-[2.6rem] sm:text-[3.6rem] lg:text-[4.1rem]">From “I want to study”</span>
             <span aria-hidden className="relative my-2 ml-4 block h-10 w-[3px] bg-veld-600 sm:h-12">
               <span className="absolute -top-1 -left-[3.5px] size-2.5 rounded-full border-2 border-veld-600 bg-paper" />
               <span className="absolute -bottom-1 -left-[3.5px] size-2.5 rounded-full bg-veld-600" />
             </span>
-            <span className="block text-[2.6rem] text-ink sm:text-[3.6rem] lg:text-[4.1rem]">to “I can graduate.”</span>
+            <span className="block text-[2.25rem] text-ink min-[380px]:text-[2.6rem] sm:text-[3.6rem] lg:text-[4.1rem]">to “I can graduate.”</span>
           </h1>
           <p className="mt-8 max-w-[34rem] text-[1.0625rem] leading-relaxed text-body">
             Your deadlines, funding gap and verified sponsors who pay your university directly. One plan.
