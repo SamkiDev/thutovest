@@ -6,7 +6,7 @@ ThutoVest walks a South African matriculant from choosing a course to starting f
 
 Built by **Team Thuto** (Samalani Maluwa, Reshoketswe Makhura and Tebogo Sasa) for the FNB App of the Year Hackathon 2026, challenge **Access to Higher Education**. "Thuto" means learning in Setswana and Sesotho; "vest" means investing in a student.
 
-**Presentation:** [docs/ThutoVest_Presentation.pdf](docs/ThutoVest_Presentation.pdf), 20 slides told as one route, from "I want to study" to "I can graduate": the problem, Tatenda's story, how the app plans, funds, protects and keeps students funded, how it is built, and how to try it.
+**Presentation:** [docs/ThutoVest_Presentation.pdf](docs/ThutoVest_Presentation.pdf), 21 slides told as one route, from "I want to study" to "I can graduate": the problem, Tatenda's story, how the app plans (including WhatsApp for students without Wi-Fi and every official link in one place), funds, protects and keeps students funded, how it is built, and how to try it.
 
 > **This is a prototype.** Every sponsor, student and award in it is fictional and labelled as demo data. Identity checks, bank checks and payments are simulated. Institution links, TVET colleges and the private college register are real and sourced. See [What is real and what is simulated](#what-is-real-and-what-is-simulated).
 
