@@ -86,7 +86,7 @@ export function SponsorShell() {
 
   return (
     <div className="min-h-dvh lg:pl-[17rem]">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[17rem] flex-col bg-ink-900 px-4 py-5 text-white lg:flex" aria-label="Main">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-[17rem] flex-col overflow-y-auto overscroll-contain bg-ink-900 px-4 py-5 text-white lg:flex [&>*]:shrink-0" aria-label="Main">
         <Link to="/" className="mb-8 flex items-center gap-2 px-2" aria-label="Home">
           <Logo dark />
           <span className="rounded-md bg-white/10 px-1.5 py-0.5 text-[0.6875rem] font-semibold text-white/80">Sponsors</span>
@@ -109,7 +109,7 @@ export function SponsorShell() {
       {menuOpen && (
         <div className="fixed inset-0 z-40 lg:hidden" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="absolute inset-0 bg-ink/40" onClick={() => setMenuOpen(false)} aria-hidden />
-          <div className="rise absolute inset-y-0 right-0 flex w-[min(20rem,88vw)] flex-col bg-ink-900 p-4 text-white">
+          <div className="rise absolute inset-y-0 right-0 flex w-[min(20rem,88vw)] flex-col overflow-y-auto overscroll-contain bg-ink-900 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] text-white [&>*]:shrink-0">
             <div className="mb-6 flex items-center justify-between">
               <Logo dark />
               <button type="button" onClick={() => setMenuOpen(false)} className="grid size-11 place-items-center rounded-full hover:bg-white/10" aria-label="Close menu" autoFocus>
