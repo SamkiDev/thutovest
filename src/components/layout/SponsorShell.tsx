@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BadgeCheck, Building, FlaskConical, HandCoins, LayoutDashboard, LogOut, Menu, MessagesSquare, Receipt, ShieldAlert, Users, X } from 'lucide-react';
+import { BadgeCheck, Building, FlaskConical, HandCoins, LayoutDashboard, LogOut, Menu, MessagesSquare, Receipt, RotateCcw, ShieldAlert, Users, X } from 'lucide-react';
 import { Logo } from './Logo';
 import { useSponsor } from '../../hooks/useSponsor';
 import { usePlatform } from '../../platform/PlatformProvider';
 import { useLiveToasts } from '../../hooks/useLiveToasts';
 import { cn } from '../../utils/cn';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
+import { actOnPlatform } from '../../platform/backend';
 
 const NAV = [
   { to: '/sponsor', label: 'Overview', short: 'Overview', icon: LayoutDashboard, end: true, mobile: true },
@@ -18,8 +21,10 @@ const NAV = [
 
 export function SponsorShell() {
   const { sponsor, verified, applications } = useSponsor();
-  const { session, signOut } = usePlatform();
+  const { session, signOut, backend, dispatchPlatform } = usePlatform();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmReset, setConfirmReset] = useState(false);
+  const [resetting, setResetting] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   useLiveToasts((e) => (e.audience === 'sponsor' || e.audience === 'all') && e.sponsorId === sponsor?.id);
@@ -81,6 +86,18 @@ export function SponsorShell() {
       >
         <LogOut aria-hidden className="size-3.5" /> Sign out
       </button>
+      {sponsor.isDemo && (
+        <button
+          type="button"
+          onClick={() => {
+            setMenuOpen(false);
+            setConfirmReset(true);
+          }}
+          className="ml-4 inline-flex items-center gap-1.5 font-semibold text-veld-300 hover:text-white"
+        >
+          <RotateCcw aria-hidden className="size-3.5" /> Reset demo
+        </button>
+      )}
     </div>
   );
 
@@ -149,6 +166,40 @@ export function SponsorShell() {
           ))}
         </ul>
       </nav>
+      <Modal
+        open={confirmReset}
+        onClose={() => setConfirmReset(false)}
+        title="Reset the demo?"
+        description={`This puts ${sponsor.name}, its funds and the students' applications to them back to the start. Other demo accounts are not affected.`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setConfirmReset(false)}>
+              Keep my data
+            </Button>
+            <Button
+              variant="dark"
+              disabled={resetting}
+              onClick={async () => {
+                // Signed in to the backend: reset this sponsor on the server first, while the login is still valid.
+                if (backend) {
+                  setResetting(true);
+                  await actOnPlatform({ type: 'reset' }).catch(() => undefined);
+                  setResetting(false);
+                } else {
+                  dispatchPlatform({ type: 'reset' });
+                }
+                setConfirmReset(false);
+                signOut();
+                navigate('/signin?role=sponsor');
+              }}
+            >
+              Reset demo
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-body">Use this if a demo run went wrong, for example after testing the scam filter suspended the sponsor.</p>
+      </Modal>
     </div>
   );
 }
